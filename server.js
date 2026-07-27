@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // SQLite Veritabanı Bağlantısı
-const db = new sqlite3.Database('./intern-tasks-site.db', (err) => {
+const db = new sqlite3.Database('./intern-task-site.db', (err) => {
   if (err) console.error('Veritabanı hatası:', err.message);
   else console.log('SQLite veritabanına bağlandı.');
 });
