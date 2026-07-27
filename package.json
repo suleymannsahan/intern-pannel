@@ -1,5 +1,5 @@
 {
-  "name": "intern-task-site",
+  "name": "intern-tasks-site",
   "version": "1.0.0",
   "description": "",
   "main": "server.js",
@@ -13,9 +13,9 @@
   "type": "commonjs",
   "dependencies": {
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^11.0.0",
     "cors": "^2.8.6",
     "express": "^4.18.2",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "sqlite3": "^6.0.1"
   }
 }

@@ -1,5 +1,5 @@
 const express = require('express');
-const sqlite3 = require('better-sqlite3').verbose();
+const sqlite3 = require('sqlite3').verbose();
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
@@ -12,7 +12,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // SQLite Veritabanı Bağlantısı
-const db = new sqlite3.Database('./intern-task-site.db', (err) => {
+const db = new sqlite3.Database('./intern-tasks-site.db', (err) => {
   if (err) console.error('Veritabanı hatası:', err.message);
   else console.log('SQLite veritabanına bağlandı.');
 });
@@ -53,14 +53,27 @@ db.serialize(() => {
 
 // Kayıt Ol
 app.post('/api/register', async (req, res) => {
-  const { name, email, password, role } = req.body;
-  const hashedPassword = await bcrypt.hash(password, 10);
+  try {
+    const { name, email, password, role } = req.body;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ error: 'Lütfen tüm alanları doldurun!' });
+    }
 
-  const query = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`;
-  db.run(query, [name, email, hashedPassword, role], function (err) {
-    if (err) return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
-    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: this.lastID });
-  });
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const query = `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`;
+    db.run(query, [name, email, hashedPassword, role], function (err) {
+      if (err) {
+        if (err.message.includes('UNIQUE constraint failed')) {
+          return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
+        }
+        return res.status(500).json({ error: 'Veritabanı hatası: ' + err.message });
+      }
+      res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: this.lastID });
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+  }
 });
 
 // Giriş Yap
@@ -87,7 +100,7 @@ app.post('/api/reset-password', async (req, res) => {
   });
 });
 
-// Kullanıcı Listesi (Mühendis/Lider için Stajyer Seçimi)
+// Kullanıcı Listesi
 app.get('/api/users', (req, res) => {
   db.all(`SELECT id, name, email, role FROM users`, [], (err, rows) => {
     if (err) return res.status(500).json({ error: err.message });
@@ -140,7 +153,7 @@ app.get('/api/daily-logs', (req, res) => {
   });
 });
 
-// Sunucuyu Bütün Ağ Cihazlarına Açma (0.0.0.0)
+// Sunucuyu Çalıştır
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Sunucu aktif! Yerel erişim: http://localhost:${PORT}`);
+  console.log(`Sunucu aktif! http://localhost:${PORT}`);
 });
