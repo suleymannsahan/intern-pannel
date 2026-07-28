@@ -261,7 +261,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Stajyer Silme
+// Stajyer Silme //
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;
