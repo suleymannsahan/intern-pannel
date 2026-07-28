@@ -5,7 +5,8 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 
 const app = express();
-const PORT = 5000;
+// Render veya bulut sunucuların atadığı portu kullanır, yoksa 5000 varsayılandır.
+const PORT = process.env.PORT || 5000;
 
 app.use(cors());
 app.use(express.json());
@@ -163,7 +164,7 @@ app.get('/api/tasks', (req, res) => {
   });
 });
 
-// Görevi Tamamlama (Erkenden Bitirme) Endpoint'i
+// Görevi Tamamlama Endpoint'i
 app.put('/api/tasks/:id/complete', (req, res) => {
   const taskId = req.params.id;
   db.run(`UPDATE tasks SET status = 'COMPLETED' WHERE id = ?`, [taskId], function (err) {
@@ -262,5 +263,5 @@ app.put('/api/tasks/:id', (req, res) => {
 
 // Sunucuyu Çalıştır
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Sunucu aktif! http://localhost:${PORT}`);
+  console.log(`Sunucu aktif! Port: ${PORT}`);
 });

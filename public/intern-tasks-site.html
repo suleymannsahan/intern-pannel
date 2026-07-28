@@ -238,6 +238,10 @@
 
   <!-- JAVASCRIPT -->
   <script>
+    // Live/Production Ortamı İçin API Bağlantı Adresi
+    // Render URL'inizi buraya yapıştırın (Örn: 'https://stajyer-api.onrender.com')
+    const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com'; 
+
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
     let usersList = [];
     let tasksList = [];
@@ -332,7 +336,7 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
-      const res = await fetch('/api/login', {
+      const res = await fetch(`${API_BASE_URL}/api/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -357,7 +361,7 @@
       const startDate = document.getElementById('regStartDate').value;
       const endDate = document.getElementById('regEndDate').value;
 
-      const res = await fetch('/api/register', {
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password, role, startDate, endDate })
@@ -377,7 +381,7 @@
       const email = document.getElementById('resetEmail').value;
       const newPassword = document.getElementById('resetNewPass').value;
 
-      const res = await fetch('/api/reset-password', {
+      const res = await fetch(`${API_BASE_URL}/api/reset-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, newPassword })
@@ -428,17 +432,17 @@
     }
 
     async function loadUsers() {
-      const res = await fetch('/api/users');
+      const res = await fetch(`${API_BASE_URL}/api/users`);
       usersList = await res.json();
     }
 
     async function loadLogs() {
-      const res = await fetch('/api/daily-logs');
+      const res = await fetch(`${API_BASE_URL}/api/daily-logs`);
       dailyLogsList = await res.json();
     }
 
     async function loadTasks() {
-      const res = await fetch(`/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`);
+      const res = await fetch(`${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`);
       tasksList = await res.json();
       renderTaskList();
     }
@@ -543,7 +547,7 @@
       const today = new Date().toISOString().split('T')[0];
       const workDays = calculateWorkDays(today, endDate);
 
-      const res = await fetch('/api/tasks', {
+      const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -662,7 +666,7 @@
       if (!confirm('Bu görevi başarıyla tamamladığınızı onaylıyor musunuz? Görev geçmiş görevlere aktarılacaktır.')) return;
 
       try {
-        const response = await fetch(`/api/tasks/${taskId}/complete`, {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/complete`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' }
         });
@@ -710,7 +714,6 @@
       document.getElementById('editTaskModal').classList.remove('hidden');
     }
 
-    // STAJYER PROFİL MODALI (GÜNCELLENDİ)
     function openInternProfileModal(internId) {
       const intern = usersList.find(u => u.id === internId);
       if (!intern) return;
@@ -824,7 +827,7 @@
       const endDate = document.getElementById('modalEndDate').value;
 
       try {
-        const res = await fetch(`/api/users/${internId}/intern-dates`, {
+        const res = await fetch(`${API_BASE_URL}/api/users/${internId}/intern-dates`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ startDate, endDate })
@@ -848,7 +851,7 @@
       if (!confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
 
       try {
-        const response = await fetch(`/api/tasks/${taskId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -880,7 +883,7 @@
       if (!confirm(`${internName} isimli stajyeri ve ona ait tüm görevleri silmek istediğinize emin misiniz?`)) return;
 
       try {
-        const response = await fetch(`/api/users/${internId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/users/${internId}`, {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
@@ -925,7 +928,7 @@
 
     async function updateTask(taskId, updatedData) {
       try {
-        const response = await fetch(`/api/tasks/${taskId}`, {
+        const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ ...updatedData, userRole: currentUser.role })
@@ -951,7 +954,7 @@
       const note = document.getElementById('logNoteText').value;
       const todayStr = new Date().toISOString().split('T')[0];
 
-      const res = await fetch('/api/daily-logs', {
+      const res = await fetch(`${API_BASE_URL}/api/daily-logs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, internId: currentUser.id, logDate: todayStr, note })
