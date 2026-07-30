@@ -707,10 +707,10 @@
             </div>
             ${isLeader ? `
               <div class="flex items-center gap-1 shrink-0">
-                <button onclick="openManageUserModal(${u.id})" title="Kullanıcıyı Düzenle" class="text-xs text-amber-400 hover:text-amber-300 p-1">
+                <button onclick="openManageUserModal('${u.id}')" title="Kullanıcıyı Düzenle" class="text-xs text-amber-400 hover:text-amber-300 p-1">
                   <i class="fa-solid fa-pen"></i>
                 </button>
-                <button onclick="deleteAnyUser(${u.id}, '${u.name}')" title="Kullanıcıyı Sil" class="text-xs text-rose-400 hover:text-rose-300 p-1">
+                <button onclick="deleteAnyUser('${u.id}', '${u.name.replace(/'/g, "\\'")}')" title="Kullanıcıyı Sil" class="text-xs text-rose-400 hover:text-rose-300 p-1">
                   <i class="fa-solid fa-trash-can"></i>
                 </button>
               </div>
@@ -1303,6 +1303,8 @@
     // Ekip Liderinin Herhangi Bir Kullanıcıyı Silmesi
     async function deleteAnyUser(userId, userName) {
       if (!confirm(`${userName} isimli kullanıcıyı ve ilişkili tüm verilerini silmek istediğinize emin misiniz?`)) return;
+
+      console.log("Silinmeye çalışılan User ID:", userId); // Hata takibi için
 
       try {
         const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
