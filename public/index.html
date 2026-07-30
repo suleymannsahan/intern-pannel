@@ -148,7 +148,7 @@
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-5">
             <div class="flex justify-between items-center mb-3">
               <h3 class="font-bold text-sm text-slate-300"><i class="fa-solid fa-users me-2"></i>Stajyer İş Yükü ve Bitiş Süreleri</h3>
-              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-arrow-down-short-wide me-1"></i>Görev yoğunluğuna göre sıralı (Az $\rightarrow$ Çok)</span>
+              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-arrow-down-short-wide me-1"></i>Görev yoğunluğuna göre sıralı (Az → Çok)</span>
             </div>
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
@@ -374,7 +374,6 @@
       }
     }
 
-    // KULLANICININ KENDİ HESABINI SİLMESİ
     async function handleDeleteOwnAccount() {
       if (!confirm("Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve size atanmış tüm veriler temizlenecektir!")) {
         return;
@@ -438,27 +437,25 @@
       });
     }
 
-    // GERÇEK MAİL GÖNDERME FONKSİYONU
+    // DÜZELTİLDİ: Doğrulama kodu gönderme fonksiyonu HTML ID'leri ile eşleştirildi
     async function sendLeaderVerificationCode() {
-      const sendBtn = document.getElementById('sendLeaderCodeBtn'); // Butonunuzun ID'si
-      const emailInput = document.getElementById('leaderEmailInput'); // E-posta input ID'si
+      const sendBtn = document.getElementById('btnSendCode');
+      const emailInput = document.getElementById('regEmail');
 
       if (!emailInput || !emailInput.value) {
-        alert("Lütfen geçerli bir e-posta adresi girin.");
+        alert("Lütfen önce geçerli bir e-posta adresi girin.");
         return;
       }
 
-      // Butonu pasif yap ve yükleniyor durumuna getir
       sendBtn.disabled = true;
       const originalText = sendBtn.innerText;
       sendBtn.innerText = "Gönderiliyor...";
 
       try {
-        // 10 saniyelik zaman aşımı (Timeout) kontrolü
         const controller = new AbortController();
         const timeoutId = setTimeout(() => controller.abort(), 10000);
 
-        const response = await fetch('/api/send-verification-code', {
+        const response = await fetch(`${API_BASE_URL}/api/send-verification-code`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: emailInput.value }),
@@ -482,7 +479,6 @@
           alert('Hata: ' + error.message);
         }
       } finally {
-        // İşlem bitince veya hataya düşünde butonu tekrar aktif et
         sendBtn.disabled = false;
         sendBtn.innerText = originalText;
       }
@@ -509,6 +505,7 @@
     function closeEditTaskModal() { document.getElementById('editTaskModal').classList.add('hidden'); }
 
     function calculateWorkDays(startDateStr, endDateStr) {
+      if (!startDateStr || !endDateStr) return 0;
       let count = 0;
       let curDate = new Date(startDateStr);
       const endDate = new Date(endDateStr);
@@ -553,19 +550,23 @@
       const email = document.getElementById('loginEmail').value;
       const password = document.getElementById('loginPassword').value;
 
-      const res = await fetch(`${API_BASE_URL}/api/login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      });
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password })
+        });
 
-      const data = await res.json();
-      if (res.ok) {
-        currentUser = data;
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-        showDashboard();
-      } else {
-        alert(data.error);
+        const data = await res.json();
+        if (res.ok) {
+          currentUser = data;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          showDashboard();
+        } else {
+          alert(data.error);
+        }
+      } catch (err) {
+        console.error("Giriş hatası:", err);
       }
     }
 
@@ -717,19 +718,31 @@
     }
 
     async function loadUsers() {
-      const res = await fetch(`${API_BASE_URL}/api/users`);
-      usersList = await res.json();
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users`);
+        usersList = await res.json();
+      } catch (err) {
+        console.error("Kullanıcı listesi alınamadı:", err);
+      }
     }
 
     async function loadLogs() {
-      const res = await fetch(`${API_BASE_URL}/api/daily-logs`);
-      dailyLogsList = await res.json();
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/daily-logs`);
+        dailyLogsList = await res.json();
+      } catch (err) {
+        console.error("Log kayıtları alınamadı:", err);
+      }
     }
 
     async function loadTasks() {
-      const res = await fetch(`${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`);
-      tasksList = await res.json();
-      renderTaskList();
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`);
+        tasksList = await res.json();
+        renderTaskList();
+      } catch (err) {
+        console.error("Görevler yüklenemedi:", err);
+      }
     }
 
     function checkDailyLogWarning() {
@@ -762,15 +775,12 @@
       });
     }
 
-    // GÜNCELLENMİŞ VE DÜZELTİLMİŞ STAJYER İŞ YÜKÜ LİSTESİ RENDERİ
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
       
-      // Tüm stajyerleri filtrele
       let interns = usersList.filter(u => u.role === 'INTERN');
 
-      // Eğer sorumlu mühendis ise: Kendi stajyerleri + herhangi bir mühendise atanmamış stajyerleri göster
       if (currentUser.role === 'ENGINEER') {
         interns = interns.filter(u => 
           u.engineer_id == currentUser.id || 
@@ -787,7 +797,7 @@
       const todayStr = new Date().toISOString().split('T')[0];
 
       const processedInterns = interns.map(intern => {
-        const activeTasks = tasksList.filter(t => t.assigned_to === intern.id && t.status !== 'COMPLETED' && t.end_date >= todayStr);
+        const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'COMPLETED' && t.end_date >= todayStr);
         
         let totalWorkDays = 0;
         activeTasks.forEach(t => {
@@ -825,7 +835,6 @@
         };
       });
 
-      // İş yüküne göre küçükten büyüğe sırala
       processedInterns.sort((a, b) => a.loadScore - b.loadScore);
 
       processedInterns.forEach(item => {
@@ -1016,8 +1025,9 @@
       document.getElementById('logModal').classList.remove('hidden');
     }
 
+    // DÜZELTİLDİ: Atanan stajyer seçimi esnek tip kontrolüne tabi tutuldu (==)
     function openEditTaskModal(taskId) {
-      const task = tasksList.find(t => t.id === taskId);
+      const task = tasksList.find(t => t.id == taskId);
       if (!task) return;
 
       document.getElementById('editTaskId').value = task.id;
@@ -1033,7 +1043,7 @@
         const opt = document.createElement('option');
         opt.value = intern.id;
         opt.innerText = intern.name;
-        if (intern.id === task.assigned_to) opt.selected = true;
+        if (intern.id == task.assigned_to) opt.selected = true;
         select.appendChild(opt);
       });
 
@@ -1041,13 +1051,13 @@
     }
 
     function openInternProfileModal(internId) {
-      const intern = usersList.find(u => u.id === internId);
+      const intern = usersList.find(u => u.id == internId);
       if (!intern) return;
 
-      const internTasks = tasksList.filter(t => t.assigned_to === intern.id);
+      const internTasks = tasksList.filter(t => t.assigned_to == intern.id);
       const remainingWorkDays = calculateRemainingWorkDays(intern.intern_end_date);
       
-      const canEditDates = currentUser && (currentUser.id === intern.id || currentUser.role === 'LEADER');
+      const canEditDates = currentUser && (currentUser.id == intern.id || currentUser.role === 'LEADER');
 
       let html = `
         <div class="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
