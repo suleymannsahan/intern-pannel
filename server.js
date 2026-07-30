@@ -135,6 +135,37 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
+// Kullanıcı Kendi Profil Bilgilerini Güncelleme
+app.put('/api/users/profile', async (req, res) => {
+  try {
+    const { userId, name, email, password } = req.body;
+
+    if (!userId || !name || !email) {
+      return res.status(400).json({ error: 'Zorunlu alanlar eksik!' });
+    }
+
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
+      await db.execute({
+        sql: `UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?`,
+        args: [name, email, hashedPassword, userId]
+      });
+    } else {
+      await db.execute({
+        sql: `UPDATE users SET name = ?, email = ? WHERE id = ?`,
+        args: [name, email, userId]
+      });
+    }
+
+    res.json({ message: 'Profil başarıyla güncellendi.' });
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor!' });
+    }
+    res.status(500).json({ error: 'Profil güncellenirken hata oluştu: ' + error.message });
+  }
+});
+
 // Kullanıcı Listesi
 app.get('/api/users', async (req, res) => {
   try {
@@ -261,7 +292,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Stajyer Silme //
+// Stajyer Silme
 app.delete('/api/users/:id', async (req, res) => {
   try {
     const userId = req.params.id;

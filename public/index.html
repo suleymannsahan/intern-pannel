@@ -65,7 +65,6 @@
           </select>
         </div>
 
-        <!-- STAJYER EK ALANLARI -->
         <div id="internRegisterFields" class="space-y-3 p-3 bg-slate-900/60 rounded-xl border border-slate-700/60">
           <div>
             <label class="block text-xs font-semibold text-slate-300 mb-1">Sorumlu Mühendis Seçin</label>
@@ -85,7 +84,6 @@
           </div>
         </div>
 
-        <!-- EKİP LİDERİ MAİL DOĞRULAMA ALANI -->
         <div id="leaderVerificationFields" class="hidden space-y-2 p-3 bg-indigo-950/40 rounded-xl border border-indigo-700/50">
           <label class="block text-xs font-semibold text-indigo-300">Ekip Lideri Doğrulama Kodu</label>
           <div class="flex gap-2">
@@ -102,36 +100,45 @@
 
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
-    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center">
+    <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center z-10">
       <div class="flex items-center gap-3">
-        <!-- ŞİRKET LOGOSU -->
-        <img src="/C:\Users\slmne\OneDrive - Karadeniz Teknik Üniversitesi\Desktop\intern-task-site\public\Y_logo.svg" alt="Logo" class="h-8 w-auto object-contain border border-slate-700 rounded p-1 bg-slate-900" onerror="this.style.display='none'">
-        <i class="fa-solid fa-list-check text-indigo-400 text-xl"></i>
-        <span class="font-bold text-lg">Görevlendirme ve Takip Paneli</span>
+        <!-- SOL PENCERE AÇ/KAPA BUTONU -->
+        <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white p-2 rounded-lg bg-slate-700/50 border border-slate-600 transition-all">
+          <i class="fa-solid fa-bars text-lg"></i>
+        </button>
+        <span class="font-bold text-lg hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
       <div class="flex items-center gap-4">
         <div class="text-right">
           <div id="userInfoName" class="font-semibold text-sm"></div>
           <div id="userInfoRole" class="text-xs text-indigo-400"></div>
         </div>
+        <button onclick="openEditProfileModal()" class="bg-indigo-600/30 hover:bg-indigo-600/50 text-indigo-300 border border-indigo-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+          <i class="fa-solid fa-user-pen me-1"></i> Profili Düzenle
+        </button>
         <button onclick="handleLogout()" class="bg-slate-700 hover:bg-slate-600 text-slate-300 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">Çıkış</button>
       </div>
     </header>
 
-    <div class="flex-1 flex flex-col md:flex-row">
-      <!-- SOL TARAF: STAJYER / KULLANICI BİLGİ PANELİ -->
-      <aside id="leftSidebar" class="w-full md:w-80 bg-slate-800/50 border-r border-slate-700/80 p-5 space-y-4">
-        <h3 class="font-bold text-sm text-indigo-400 flex items-center gap-2 border-b border-slate-700 pb-3">
-          <i class="fa-solid fa-id-card"></i> Profil ve Staj Bilgileri
-        </h3>
+    <div class="flex-1 flex relative overflow-hidden">
+      <!-- SOL TARAF: AÇILIR / KAPANIR YAN MENÜ -->
+      <aside id="leftSidebar" class="w-80 bg-slate-800/95 border-r border-slate-700 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0">
+        <div class="flex justify-between items-center border-b border-slate-700 pb-3">
+          <h3 class="font-bold text-sm text-indigo-400 flex items-center gap-2">
+            <i class="fa-solid fa-users-gear"></i> Ekip ve Kullanıcı Rehberi
+          </h3>
+          <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white md:hidden">
+            <i class="fa-solid fa-xmark text-lg"></i>
+          </button>
+        </div>
         
-        <div id="sidebarContent" class="space-y-3 text-xs">
-          <!-- Dinamik Profil Detayları Yüklenecek -->
+        <div id="sidebarDirectory" class="space-y-4 text-xs">
+          <!-- Mühendisler, Ekip Liderleri ve Stajyerler Dinamik Yüklenecek -->
         </div>
       </aside>
 
       <!-- SAĞ TARAF: ANA İÇERİK -->
-      <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6">
+      <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto">
         
         <!-- UYARI BANNERI -->
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4 text-amber-300">
@@ -145,7 +152,10 @@
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="bg-slate-800 border border-slate-700 rounded-xl p-5">
-            <h3 class="font-bold text-sm mb-3 text-slate-300"><i class="fa-solid fa-users me-2"></i>Stajyer İş Yükü ve Bitiş Süreleri</h3>
+            <div class="flex justify-between items-center mb-3">
+              <h3 class="font-bold text-sm text-slate-300"><i class="fa-solid fa-users me-2"></i>Stajyer İş Yükü ve Bitiş Süreleri</h3>
+              <span class="text-[11px] text-slate-400"><i class="fa-solid fa-arrow-down-short-wide me-1"></i>Görev yoğunluğuna göre sıralı (Az $\rightarrow$ Çok)</span>
+            </div>
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
 
@@ -202,6 +212,31 @@
   </div>
 
   <!-- MODALLAR -->
+  <!-- KULLANICI BİLGİLERİNİ DÜZENLEME MODALI -->
+  <div id="editProfileModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md space-y-4">
+      <h3 class="font-bold text-lg text-indigo-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
+      <form onsubmit="handleSaveProfile(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-300">Ad Soyad</label>
+          <input type="text" id="editProfileName" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-300">E-Posta</label>
+          <input type="email" id="editProfileEmail" required class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-300">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
+          <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-700 text-xs rounded-lg">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Güncelle</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="internProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <button onclick="closeInternProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
@@ -296,6 +331,52 @@
       }
       handleRoleChange();
     };
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('leftSidebar');
+      sidebar.classList.toggle('-ml-80');
+    }
+
+    function openEditProfileModal() {
+      if (!currentUser) return;
+      document.getElementById('editProfileName').value = currentUser.name;
+      document.getElementById('editProfileEmail').value = currentUser.email;
+      document.getElementById('editProfilePassword').value = '';
+      document.getElementById('editProfileModal').classList.remove('hidden');
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById('editProfileModal').classList.add('hidden');
+    }
+
+    async function handleSaveProfile(e) {
+      e.preventDefault();
+      const name = document.getElementById('editProfileName').value;
+      const email = document.getElementById('editProfileEmail').value;
+      const password = document.getElementById('editProfilePassword').value;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id, name, email, password })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert("Profil bilgileriniz başarıyla güncellendi!");
+          currentUser.name = name;
+          currentUser.email = email;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          closeEditProfileModal();
+          showDashboard();
+        } else {
+          alert("Hata: " + data.error);
+        }
+      } catch (err) {
+        console.error("Profil güncelleme hatası:", err);
+      }
+    }
 
     function handleRoleChange() {
       const role = document.getElementById('regRole').value;
@@ -436,14 +517,12 @@
       const endDate = document.getElementById('regEndDate').value;
       const engineerId = document.getElementById('regEngineer').value;
 
-      // MAİL KONTROLÜ
       const existingUser = usersList.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (existingUser) {
         alert("Bu e-posta adresi zaten kullanımda! Lütfen farklı bir e-posta giriniz.");
         return;
       }
 
-      // EKİP LİDERİ MAİL DOĞRULAMASI KONTROLÜ
       if (role === 'LEADER') {
         const inputCode = document.getElementById('regVerificationCode').value;
         if (!generatedVerificationCode || inputCode !== generatedVerificationCode) {
@@ -511,7 +590,7 @@
       await loadUsers();
       await loadLogs();
       await loadTasks();
-      renderSidebar();
+      renderSidebarDirectory();
 
       if (isManager) {
         document.getElementById('leaderSection').classList.remove('hidden');
@@ -524,37 +603,66 @@
       }
     }
 
-    function renderSidebar() {
-      const sidebar = document.getElementById('sidebarContent');
-      let html = '';
+    // SOL MENÜYÜ ALAN ALAN AYIRARAK RENDER ETME
+    function renderSidebarDirectory() {
+      const container = document.getElementById('sidebarDirectory');
+      
+      const leaders = usersList.filter(u => u.role === 'LEADER');
+      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+      const interns = usersList.filter(u => u.role === 'INTERN');
 
-      if (currentUser.role === 'INTERN') {
-        const engineer = usersList.find(u => u.id == currentUser.engineer_id || u.id == currentUser.engineerId);
-        const engName = engineer ? engineer.name : 'Atanmadı';
-        const remainingDays = calculateRemainingWorkDays(currentUser.intern_end_date);
+      let html = `
+        <!-- EKİP LİDERLERİ -->
+        <div class="space-y-2">
+          <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
+            <i class="fa-solid fa-user-tie text-indigo-400"></i> Ekip Liderleri (${leaders.length})
+          </div>
+          <div class="space-y-1">
+            ${leaders.map(l => `
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-700/40">
+                <div class="font-semibold text-slate-200">${l.name}</div>
+                <div class="text-[10px] text-slate-400">${l.email}</div>
+              </div>
+            `).join('') || '<div class="text-slate-500 italic text-[11px]">Kayıt yok</div>'}
+          </div>
+        </div>
 
-        html = `
-          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/60 space-y-2">
-            <div><span class="text-slate-400">Ad Soyad:</span> <b class="text-slate-200">${currentUser.name}</b></div>
-            <div><span class="text-slate-400">E-Posta:</span> <span class="text-slate-200">${currentUser.email}</span></div>
-            <div><span class="text-slate-400">Sorumlu Mühendis:</span> <b class="text-indigo-400">${engName}</b></div>
+        <!-- MÜHENDİSLER -->
+        <div class="space-y-2">
+          <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
+            <i class="fa-solid fa-user-gear text-emerald-400"></i> Mühendisler (${engineers.length})
           </div>
-          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/60 space-y-2">
-            <div><span class="text-slate-400">Staj Başlangıç:</span> <span class="text-slate-200">${currentUser.intern_start_date || 'Belirtilmedi'}</span></div>
-            <div><span class="text-slate-400">Staj Bitiş:</span> <span class="text-slate-200">${currentUser.intern_end_date || 'Belirtilmedi'}</span></div>
-            <div class="pt-1 text-emerald-400 font-semibold">Kalan İş Günü: ${remainingDays !== null ? remainingDays + ' gün' : '-'}</div>
+          <div class="space-y-1">
+            ${engineers.map(e => `
+              <div class="bg-slate-900/60 p-2 rounded border border-slate-700/40">
+                <div class="font-semibold text-slate-200">${e.name}</div>
+                <div class="text-[10px] text-slate-400">${e.email}</div>
+              </div>
+            `).join('') || '<div class="text-slate-500 italic text-[11px]">Kayıt yok</div>'}
           </div>
-        `;
-      } else {
-        html = `
-          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/60 space-y-2">
-            <div><span class="text-slate-400">Kullanıcı:</span> <b class="text-slate-200">${currentUser.name}</b></div>
-            <div><span class="text-slate-400">Unvan:</span> <b class="text-indigo-400">${currentUser.role === 'LEADER' ? 'Ekip Lideri (Tam Yetkili)' : 'Sorumlu Mühendis'}</b></div>
-            <div><span class="text-slate-400">E-Posta:</span> <span class="text-slate-200">${currentUser.email}</span></div>
+        </div>
+
+        <!-- STAJYERLER -->
+        <div class="space-y-2">
+          <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
+            <i class="fa-solid fa-graduation-cap text-amber-400"></i> Stajyerler (${interns.length})
           </div>
-        `;
-      }
-      sidebar.innerHTML = html;
+          <div class="space-y-1">
+            ${interns.map(i => {
+              const eng = engineers.find(e => e.id == i.engineer_id || e.id == i.engineerId);
+              return `
+                <div class="bg-slate-900/60 p-2 rounded border border-slate-700/40">
+                  <div class="font-semibold text-slate-200">${i.name}</div>
+                  <div class="text-[10px] text-slate-400">${i.email}</div>
+                  ${eng ? `<div class="text-[10px] text-indigo-400 mt-0.5">Mühendis: ${eng.name}</div>` : ''}
+                </div>
+              `;
+            }).join('') || '<div class="text-slate-500 italic text-[11px]">Kayıt yok</div>'}
+          </div>
+        </div>
+      `;
+
+      container.innerHTML = html;
     }
 
     async function loadUsers() {
@@ -603,11 +711,11 @@
       });
     }
 
+    // STAJYER İŞ YÜKÜ LİSTESİ - RENK VEYA GÖREV YOĞUNLUĞUNA GÖRE EN AZ OLANDAN EN ÇOK OLANA SİRALAMA
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
       
-      // EKİP LİDERİ HEPSİNİ GÖRÜR, MÜHENDİS YALNIZCA KENDİ STAJYERLERİNİ GÖRÜR
       let interns = usersList.filter(u => u.role === 'INTERN');
       if (currentUser.role === 'ENGINEER') {
         interns = interns.filter(u => u.engineer_id == currentUser.id || u.engineerId == currentUser.id);
@@ -620,33 +728,57 @@
 
       const todayStr = new Date().toISOString().split('T')[0];
 
-      interns.forEach(intern => {
-        const activeInternTasks = tasksList.filter(t => t.assigned_to === intern.id && t.status !== 'COMPLETED' && t.end_date >= todayStr);
+      // Stajyerlerin iş yükünü hesaplayıp metada saklama
+      const processedInterns = interns.map(intern => {
+        // YALNIZCA AKTİF GÖREVLER
+        const activeTasks = tasksList.filter(t => t.assigned_to === intern.id && t.status !== 'COMPLETED' && t.end_date >= todayStr);
         
-        const remainingInternDays = calculateRemainingWorkDays(intern.intern_end_date);
-        const internDaysText = remainingInternDays !== null 
-          ? ` | <b>Staj Bitişine: ${remainingInternDays} İş Günü</b>` 
-          : ' | <span class="text-amber-400">Tarih Girilmedi</span>';
+        let totalWorkDays = 0;
+        activeTasks.forEach(t => {
+          totalWorkDays += calculateWorkDays(todayStr, t.end_date);
+        });
+
+        // Görev Yoğunluğu Puanı: Görev sayısı * 10 + toplam iş günü
+        const loadScore = (activeTasks.length * 10) + totalWorkDays;
 
         let colorClass = 'border-emerald-500/40 bg-emerald-500/5 text-emerald-400';
         let badgeColor = 'bg-emerald-500';
         let statusText = 'Müsait / Yeni Görev Verilebilir';
 
-        if (activeInternTasks.length > 0) {
-          const maxDays = Math.max(...activeInternTasks.map(t => calculateWorkDays(todayStr, t.end_date)));
-          
-          if (maxDays >= 6) {
+        if (activeTasks.length > 0) {
+          if (loadScore >= 30) {
             colorClass = 'border-rose-500/40 bg-rose-500/5 text-rose-400';
             badgeColor = 'bg-rose-500';
-            statusText = `Yoğun (${maxDays} İş Günü Var)`;
-          } else if (maxDays >= 3) {
+            statusText = `Yoğun (${activeTasks.length} Görev / ${totalWorkDays} İş Günü)`;
+          } else if (loadScore >= 15) {
             colorClass = 'border-amber-500/40 bg-amber-500/5 text-amber-400';
             badgeColor = 'bg-amber-500';
-            statusText = `Orta Yük (${maxDays} İş Günü Var)`;
+            statusText = `Orta Yoğunluk (${activeTasks.length} Görev / ${totalWorkDays} İş Günü)`;
           } else {
-            statusText = `Tamamlanmak Üzere (${maxDays} İş Günü)`;
+            statusText = `Az Yoğun (${activeTasks.length} Görev / ${totalWorkDays} İş Günü)`;
           }
         }
+
+        return {
+          intern,
+          activeTasksCount: activeTasks.length,
+          totalWorkDays,
+          loadScore,
+          colorClass,
+          badgeColor,
+          statusText
+        };
+      });
+
+      // EN AZ GÖREV YOĞUNLUĞU OLANDAN EN ÇOK OLANA DOĞRU SIRALAMA
+      processedInterns.sort((a, b) => a.loadScore - b.loadScore);
+
+      processedInterns.forEach(item => {
+        const { intern, colorClass, badgeColor, statusText } = item;
+        const remainingInternDays = calculateRemainingWorkDays(intern.intern_end_date);
+        const internDaysText = remainingInternDays !== null 
+          ? ` | <b>Staj Bitişine: ${remainingInternDays} Gün</b>` 
+          : ' | <span class="text-amber-400">Tarih Yok</span>';
 
         const card = document.createElement('div');
         card.className = `p-3 rounded-lg border flex items-center justify-between gap-2 ${colorClass}`;
@@ -777,7 +909,6 @@
             <span class="px-2 py-0.5 bg-slate-800 border border-slate-700 text-indigo-400 text-xs rounded-md font-semibold">${task.category}</span>
           </div>
 
-          <!-- GÖREV AÇIKLAMASI (TANİMİN ALTİNDA) -->
           <div class="text-xs text-slate-300 bg-slate-800/60 p-2 rounded border border-slate-700/50 mb-3">
             <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
           </div>
@@ -861,7 +992,6 @@
       const internTasks = tasksList.filter(t => t.assigned_to === intern.id);
       const remainingWorkDays = calculateRemainingWorkDays(intern.intern_end_date);
       
-      // SORUMLU MÜHENDİSLER İÇİN TARİH GÜNCELLEME YETKİSİ KAPALI
       const canEditDates = currentUser && (currentUser.id === intern.id || currentUser.role === 'LEADER');
 
       let html = `
