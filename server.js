@@ -1,6 +1,6 @@
-import express from 'express';
-import cors from 'cors';
-import { createClient } from '@libsql/client';
+const express = require('express');
+const cors = require('cors');
+const { createClient } = require('@libsql/client');
 
 const app = express();
 app.use(cors());
