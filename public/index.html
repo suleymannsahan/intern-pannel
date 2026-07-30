@@ -8,7 +8,7 @@
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
   <style>
     input[type="date"]::-webkit-calendar-picker-indicator {
-      filter: invert(1);
+      filter: invert(0.8);
       cursor: pointer;
     }
     /* Özel kaydırma çubuğu */
@@ -17,99 +17,98 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: #090d16;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
-      border-radius: 4px;
+      background: #1e293b;
+      border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
-      background: #475569;
+      background: #334155;
     }
   </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen font-sans selection:bg-indigo-500 selection:text-white">
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen font-sans selection:bg-cyan-500 selection:text-slate-950">
 
   <!-- GİRİŞ & KAYIT EKRANI -->
-  <div id="authContainer" class="flex items-center justify-center min-h-screen p-4 bg-gradient-to-br from-slate-950 via-slate-900 to-indigo-950/40">
-    <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-8 w-full max-w-md shadow-2xl backdrop-blur-md">
+  <div id="authContainer" class="flex items-center justify-center min-h-screen p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-900 via-[#0b0f19] to-black">
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-8 w-full max-w-md shadow-2xl backdrop-blur-xl">
       <div class="text-center mb-8 flex flex-col items-center">
-        <img src="Y_logo.png" alt="Logo" class="h-12 w-auto mb-3 drop-shadow">
-        <h1 class="text-2xl font-bold text-slate-100">Görevlendirme ve Takip Sistemi</h1>
-        <!---<p class="text-slate-400 text-xs mt-1">Görevlendirme ve Takip Sistemi</p>--->
+        <img src="Y_logo.png" alt="Logo" class="h-12 w-auto mb-3 drop-shadow-[0_0_15px_rgba(6,182,212,0.25)]">
+        <h1 class="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-slate-100 via-slate-200 to-cyan-400">Görevlendirme ve Takip Sistemi</h1>
       </div>
 
-      <div class="flex bg-slate-950/80 p-1 rounded-xl mb-6 border border-slate-800">
-        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-md">Giriş Yap</button>
+      <div class="flex bg-slate-950/70 p-1 rounded-xl mb-6 border border-slate-800/80">
+        <button id="tabLogin" onclick="switchAuthTab('login')" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-lg shadow-cyan-600/25">Giriş Yap</button>
         <button id="tabRegister" onclick="switchAuthTab('register')" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all">Kayıt Ol</button>
       </div>
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">E-Posta</label>
-          <input type="email" id="loginEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-all">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">E-Posta</label>
+          <input type="email" id="loginEmail" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all text-slate-100 placeholder-slate-600">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Şifre</label>
-          <input type="password" id="loginPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 transition-all">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Şifre</label>
+          <input type="password" id="loginPassword" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all text-slate-100">
         </div>
         <div class="text-right">
-          <button type="button" onclick="openResetModal()" class="text-xs text-teal-400 hover:underline">Şifremi Unuttum?</button>
+          <button type="button" onclick="openResetModal()" class="text-xs text-cyan-400 hover:text-cyan-300 transition-colors">Şifremi Unuttum?</button>
         </div>
-        <button type="submit" class="w-full bg-cyan-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-lg transition-all text-sm shadow-lg shadow-indigo-600/20">Oturum Aç</button>
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Oturum Aç</button>
       </form>
 
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Ad Soyad</label>
-          <input type="text" id="regName" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Ad Soyad</label>
+          <input type="text" id="regName" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">E-Posta</label>
-          <input type="email" id="regEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">E-Posta</label>
+          <input type="email" id="regEmail" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Şifre</label>
-          <input type="password" id="regPassword" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Şifre</label>
+          <input type="password" id="regPassword" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all">
         </div>
         <div>
-          <label class="block text-xs font-semibold text-slate-300 mb-1">Rol Seçimi</label>
-          <select id="regRole" onchange="handleRoleChange()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-semibold text-slate-300 mb-1.5">Rol Seçimi</label>
+          <select id="regRole" onchange="handleRoleChange()" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
             <option value="INTERN">Stajyer</option>
             <option value="ENGINEER">Mühendis</option>
             <option value="LEADER">Ekip Lideri</option>
           </select>
         </div>
 
-        <div id="internRegisterFields" class="space-y-3 p-3 bg-slate-950/60 rounded-xl border border-slate-800">
+        <div id="internRegisterFields" class="space-y-3 p-3.5 bg-slate-950/50 rounded-xl border border-slate-800/80">
           <div>
-            <label class="block text-xs font-semibold text-slate-300 mb-1">Sorumlu Mühendis Seçin</label>
-            <select id="regEngineer" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
+            <label class="block text-xs font-semibold text-slate-300 mb-1.5">Sorumlu Mühendis Seçin</label>
+            <select id="regEngineer" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
               <option value="">-- Mühendis Seçiniz --</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1">Staj Başlangıç</label>
-              <input type="date" id="regStartDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Staj Başlangıç</label>
+              <input type="date" id="regStartDate" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
             </div>
             <div>
-              <label class="block text-xs font-semibold text-slate-300 mb-1">Staj Bitiş</label>
-              <input type="date" id="regEndDate" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
+              <label class="block text-xs font-semibold text-slate-300 mb-1.5">Staj Bitiş</label>
+              <input type="date" id="regEndDate" class="w-full bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
             </div>
           </div>
         </div>
 
-        <div id="leaderVerificationFields" class="hidden space-y-2 p-3 bg-indigo-950/30 rounded-xl border border-indigo-800/40">
-          <label class="block text-xs font-semibold text-indigo-300">Ekip Lideri Doğrulama Kodu</label>
+        <div id="leaderVerificationFields" class="hidden space-y-2 p-3.5 bg-cyan-950/20 rounded-xl border border-cyan-800/40">
+          <label class="block text-xs font-semibold text-cyan-300">Ekip Lideri Doğrulama Kodu</label>
           <div class="flex gap-2">
             <input type="text" id="regVerificationCode" placeholder="Kodu Girin" class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500">
-            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-cyan-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-semibold transition-all">Kod Gönder</button>
+            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition-all shadow-md">Kod Gönder</button>
           </div>
           <p class="text-[10px] text-slate-400">Mail adresinize gönderilen doğrulama kodunu giriniz.</p>
         </div>
 
-        <button type="submit" class="w-full bg-cyan-600 hover:bg-indigo-500 text-white font-semibold py-2.5 rounded-lg transition-all text-sm shadow-lg shadow-indigo-600/20">Hesap Oluştur</button>
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Hesap Oluştur</button>
       </form>
     </div>
   </div>
@@ -117,32 +116,32 @@
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
     <!-- HEADER (ÜST MENÜ) -->
-    <header class="bg-slate-900/90 border-b border-slate-800/80 px-6 py-3.5 flex justify-between items-center z-10 backdrop-blur-md sticky top-0">
+    <header class="bg-slate-900/80 border-b border-slate-800/80 px-6 py-3.5 flex justify-between items-center z-10 backdrop-blur-xl sticky top-0">
       <div class="flex items-center gap-3">
-        <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white p-2 rounded-lg bg-slate-800/60 border border-slate-700/60 transition-all hover:bg-slate-700">
+        <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white p-2 rounded-xl bg-slate-800/40 border border-slate-700/50 transition-all hover:bg-slate-800">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
         <!-- LOGO VE BAŞLIK -->
-        <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain">
+        <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
         <span class="font-bold text-base sm:text-lg tracking-tight text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
       <div class="flex items-center gap-4">
         <div class="text-right">
-          <div id="userInfoName" class="font-semibold text-sm text-slate-200"></div>
-          <div id="userInfoRole" class="text-[11px] font-medium text-teal-400"></div>
+          <div id="userInfoName" class="font-semibold text-sm text-slate-100"></div>
+          <div id="userInfoRole" class="text-[11px] font-medium text-cyan-400"></div>
         </div>
-        <button onclick="openEditProfileModal()" class="bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-300 border border-cyan-500/30 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">
+        <button onclick="openEditProfileModal()" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
           <i class="fa-solid fa-user-pen me-1"></i> Profili Düzenle
         </button>
-        <button onclick="handleLogout()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all">Çıkış</button>
+        <button onclick="handleLogout()" class="bg-slate-800/80 hover:bg-slate-800 text-slate-300 border border-slate-700/60 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">Çıkış</button>
       </div>
     </header>
 
     <div class="flex-1 flex relative overflow-hidden">
       <!-- SOL TARAF: AÇILIR / KAPANIR YAN MENÜ -->
-      <aside id="leftSidebar" class="w-80 bg-slate-900 border-r border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0">
+      <aside id="leftSidebar" class="w-80 bg-slate-900/50 border-r border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-          <h3 class="font-bold text-xs uppercase tracking-wider text-teal-400 flex items-center gap-2">
+          <h3 class="font-bold text-xs uppercase tracking-wider text-cyan-400 flex items-center gap-2">
             <i class="fa-solid fa-users-gear"></i> Ekip Rehberi
           </h3>
           <button onclick="toggleSidebar()" class="text-slate-400 hover:text-white md:hidden">
@@ -154,7 +153,7 @@
 
       <!-- SAĞ TARAF: ANA İÇERİK -->
       <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto">
-        <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4 text-amber-300">
+        <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-300 backdrop-blur-md">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
           <div class="flex-1">
             <h4 class="font-bold text-sm">Günlük Bilgilendirme Notu Girilmedi!</h4>
@@ -164,34 +163,34 @@
 
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
-          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-sm">
+          <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <div class="flex justify-between items-center mb-3">
-              <h3 class="font-bold text-sm text-slate-200 flex items-center gap-2">
-                <i class="fa-solid fa-users text-teal-400"></i> Stajyer Durum ve İş Yükü
+              <h3 class="font-bold text-sm text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-users text-cyan-400"></i> Stajyer Durum ve İş Yükü
               </h3>
               <span class="text-[11px] text-slate-400"><i class="fa-solid fa-arrow-down-short-wide me-1"></i>Görev yoğunluğuna göre sıralı</span>
             </div>
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
 
-          <div class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-sm">
-            <h3 class="font-bold text-sm mb-4 text-teal-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama</h3>
+          <div class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <h3 class="font-bold text-sm mb-4 text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama</h3>
             <form onsubmit="handleCreateTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold mb-1 text-slate-300">Görev Tanımı</label>
-                <input type="text" id="taskTitle" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500">
+                <label class="block text-xs font-semibold mb-1.5 text-slate-300">Görev Tanımı</label>
+                <input type="text" id="taskTitle" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1 text-slate-300">Stajyer Seç</label>
-                <select id="taskAssignee" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500"></select>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-300">Stajyer Seç</label>
+                <select id="taskAssignee" required class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
               </div>
               <div class="md:col-span-2">
-                <label class="block text-xs font-semibold mb-1 text-slate-300">Görev Açıklaması</label>
-                <textarea id="taskDescription" rows="2" placeholder="Görev detaylarını ve yönergeleri giriniz..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-300">Görev Açıklaması</label>
+                <textarea id="taskDescription" rows="2" placeholder="Görev detaylarını ve yönergeleri giriniz..." class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1 text-slate-300">Alan / Departman</label>
-                <select id="taskCategory" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500">
+                <label class="block text-xs font-semibold mb-1.5 text-slate-300">Alan / Departman</label>
+                <select id="taskCategory" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
                   <option value="Yazılım">Yazılım</option>
                   <option value="Donanım">Donanım</option>
                   <option value="Ağ & Sistem">Ağ & Sistem</option>
@@ -199,25 +198,25 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1 text-slate-300">Bitiş Tarihi</label>
-                <input type="date" id="taskEndDate" required onchange="updateCalculatedWorkDays()" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm focus:border-cyan-500">
+                <label class="block text-xs font-semibold mb-1.5 text-slate-300">Bitiş Tarihi</label>
+                <input type="date" id="taskEndDate" required onchange="updateCalculatedWorkDays()" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
               </div>
-              <div class="md:col-span-2 flex justify-between items-center bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-                <span class="text-xs text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-teal-400 text-sm">0 gün</strong></span>
-                <button type="submit" class="bg-cyan-600 hover:bg-indigo-500 text-white font-semibold px-5 py-2 rounded-lg text-sm transition-all shadow-md shadow-indigo-600/20">Görevi Ata</button>
+              <div class="md:col-span-2 flex justify-between items-center bg-slate-950/60 p-3.5 rounded-xl border border-slate-800">
+                <span class="text-xs text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-cyan-400 text-sm">0 gün</strong></span>
+                <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
               </div>
             </form>
           </div>
         </section>
 
         <!-- AKTİF GÖREVLER -->
-        <section class="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-sm">
-          <h3 class="font-bold text-sm mb-4 text-slate-200 flex items-center gap-2"><i class="fa-solid fa-spinner text-teal-400"></i>Aktif Görevler</h3>
+        <section class="bg-slate-900/40 border border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+          <h3 class="font-bold text-sm mb-4 text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-400 animate-spin"></i>Aktif Görevler</h3>
           <div id="taskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
         <!-- GEÇMİŞ GÖREVLER -->
-        <section class="bg-slate-900/40 border border-slate-800/60 rounded-xl p-5">
+        <section class="bg-slate-900/20 border border-slate-800/60 rounded-2xl p-5">
           <h3 class="font-bold text-sm mb-4 text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h3>
           <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
@@ -227,29 +226,29 @@
 
   <!-- MODALLAR -->
   <!-- KULLANICI BİLGİLERİNİ DÜZENLEME MODALI -->
-  <div id="editProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+  <div id="editProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
-      <h3 class="font-bold text-lg text-teal-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
+      <h3 class="font-bold text-lg text-cyan-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
       <form onsubmit="handleSaveProfile(event)" class="space-y-3">
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Ad Soyad</label>
-          <input type="text" id="editProfileName" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="text" id="editProfileName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">E-Posta</label>
-          <input type="email" id="editProfileEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="email" id="editProfileEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
-          <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div class="flex justify-between items-center pt-3 border-t border-slate-800">
-          <button type="button" onclick="handleDeleteOwnAccount()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs rounded-lg font-semibold transition-all">
+          <button type="button" onclick="handleDeleteOwnAccount()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs rounded-xl font-semibold transition-all">
             <i class="fa-solid fa-trash-can me-1"></i> Hesabımı Sil
           </button>
           <div class="flex gap-2">
-            <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-lg">İptal</button>
-            <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Güncelle</button>
+            <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl text-slate-300 hover:bg-slate-700">İptal</button>
+            <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold shadow-md shadow-cyan-600/20">Güncelle</button>
           </div>
         </div>
       </form>
@@ -257,8 +256,8 @@
   </div>
 
   <!-- STAJYER DETAY MODALI -->
-  <div id="internProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+  <div id="internProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-2xl rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <button onclick="closeInternProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
         <i class="fa-solid fa-xmark text-xl"></i>
       </button>
@@ -266,86 +265,86 @@
     </div>
   </div>
 
-  <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm">
+  <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
       <h3 class="font-bold text-lg mb-2">Şifre Sıfırlama</h3>
       <p class="text-xs text-slate-400 mb-4">E-posta adresinizi girerek yeni şifrenizi belirleyin.</p>
       <form onsubmit="handleResetPassword(event)" class="space-y-3">
-        <input type="email" id="resetEmail" placeholder="E-Posta" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
-        <input type="password" id="resetNewPass" placeholder="Yeni Şifre" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+        <input type="email" id="resetEmail" placeholder="E-Posta" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
+        <input type="password" id="resetNewPass" placeholder="Yeni Şifre" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeResetModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-lg">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Güncelle</button>
+          <button type="button" onclick="closeResetModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Güncelle</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div id="logModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md">
+  <div id="logModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
       <h3 class="font-bold text-lg mb-1">Günlük Not / Bilgilendirme Ekle</h3>
-      <p id="logModalTaskTitle" class="text-xs text-teal-400 mb-4"></p>
+      <p id="logModalTaskTitle" class="text-xs text-cyan-400 mb-4"></p>
       <form onsubmit="handleSaveDailyLog(event)" class="space-y-3">
         <input type="hidden" id="logTaskId">
-        <textarea id="logNoteText" rows="4" placeholder="Bugün bu görev için neler yaptınız? İlerleme durumu nedir?" required class="w-full bg-slate-950 border border-slate-800 rounded-lg p-3 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+        <textarea id="logNoteText" rows="4" placeholder="Bugün bu görev için neler yaptınız? İlerleme durumu nedir?" required class="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-sm focus:outline-none focus:border-cyan-500"></textarea>
         <div class="flex justify-end gap-2">
-          <button type="button" onclick="closeLogModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-lg">Kapat</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Kaydet ve Gönder</button>
+          <button type="button" onclick="closeLogModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">Kapat</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Kaydet ve Gönder</button>
         </div>
       </form>
     </div>
   </div>
 
   <!-- EKİP LİDERİ KULLANICI DÜZENLEME MODALI -->
-  <div id="manageUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4">
-      <h3 class="font-bold text-lg text-teal-400"><i class="fa-solid fa-user-gear me-2"></i>Kullanıcı Hesabını Düzenle</h3>
+  <div id="manageUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+      <h3 class="font-bold text-lg text-cyan-400"><i class="fa-solid fa-user-gear me-2"></i>Kullanıcı Hesabını Düzenle</h3>
       <form onsubmit="handleSaveManagedUser(event)" class="space-y-3">
         <input type="hidden" id="manageUserId">
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Ad Soyad</label>
-          <input type="text" id="manageUserName" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="text" id="manageUserName" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">E-Posta</label>
-          <input type="email" id="manageUserEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="email" id="manageUserEmail" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Rol</label>
-          <select id="manageUserRole" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <select id="manageUserRole" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
             <option value="INTERN">Stajyer</option>
             <option value="ENGINEER">Mühendis</option>
             <option value="LEADER">Ekip Lideri</option>
           </select>
         </div>
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-800">
-          <button type="button" onclick="closeManageUserModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-lg">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Kaydet</button>
+          <button type="button" onclick="closeManageUserModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Kaydet</button>
         </div>
       </form>
     </div>
   </div>
 
-  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4">
-      <h3 class="font-bold text-lg text-teal-400"><i class="fa-solid fa-pen-to-square me-2"></i>Görevi / Atananı Düzenle</h3>
+  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+      <h3 class="font-bold text-lg text-cyan-400"><i class="fa-solid fa-pen-to-square me-2"></i>Görevi / Atananı Düzenle</h3>
       <form onsubmit="handleSaveEditedTask(event)" class="space-y-3">
         <input type="hidden" id="editTaskId">
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Görev Tanımı</label>
-          <input type="text" id="editTaskTitle" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="text" id="editTaskTitle" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Açıklama</label>
-          <textarea id="editTaskDescription" rows="3" placeholder="Görev detaylarını buraya yazabilirsiniz..." class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:border-cyan-500 text-slate-200"></textarea>
+          <textarea id="editTaskDescription" rows="3" placeholder="Görev detaylarını buraya yazabilirsiniz..." class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm resize-none focus:outline-none focus:border-cyan-500 text-slate-200"></textarea>
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Atanan Stajyer</label>
-          <select id="editTaskAssignee" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm"></select>
+          <select id="editTaskAssignee" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm"></select>
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Alan / Departman</label>
-          <select id="editTaskCategory" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <select id="editTaskCategory" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
             <option value="Yazılım">Yazılım</option>
             <option value="Donanım">Donanım</option>
             <option value="Ağ & Sistem">Ağ & Sistem</option>
@@ -354,11 +353,11 @@
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-300">Bitiş Tarihi</label>
-          <input type="date" id="editTaskEndDate" required class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-sm">
+          <input type="date" id="editTaskEndDate" required class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 text-sm">
         </div>
         <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-lg">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Değişiklikleri Kaydet</button>
+          <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-slate-800 text-xs rounded-xl">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Değişiklikleri Kaydet</button>
         </div>
       </form>
     </div>
@@ -539,12 +538,12 @@
       if (tab === 'login') {
         document.getElementById('loginForm').classList.remove('hidden');
         document.getElementById('registerForm').classList.add('hidden');
-        document.getElementById('tabLogin').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-md';
+        document.getElementById('tabLogin').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-lg shadow-cyan-600/25';
         document.getElementById('tabRegister').className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all';
       } else {
         document.getElementById('loginForm').classList.add('hidden');
         document.getElementById('registerForm').classList.remove('hidden');
-        document.getElementById('tabRegister').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-md';
+        document.getElementById('tabRegister').className = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-cyan-600 text-white transition-all shadow-lg shadow-cyan-600/25';
         document.getElementById('tabLogin').className = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-400 hover:text-white transition-all';
         handleRoleChange();
       }
@@ -710,7 +709,6 @@
       }
     }
 
-    // YENİLİK 1: SOL MENÜDEKİ STAJYERLER ARTIK TIKLANABİLİR VE DETAY MODALI AÇAR
     function renderSidebarDirectory() {
       const container = document.getElementById('sidebarDirectory');
       
@@ -723,9 +721,9 @@
       const renderUserItem = (u) => {
         const isInternRole = u.role === 'INTERN';
         return `
-          <div class="bg-slate-950/70 p-2.5 rounded-lg border border-slate-800/80 flex justify-between items-center gap-2 hover:border-slate-700 transition-all">
+          <div class="bg-slate-950/60 p-2.5 rounded-xl border border-slate-800 flex justify-between items-center gap-2 hover:border-slate-700 transition-all">
             <div class="${isInternRole ? 'cursor-pointer flex-1' : 'flex-1'}" ${isInternRole ? `onclick="openInternProfileModal('${u.id}')"` : ''}>
-              <div class="font-semibold text-slate-200 ${isInternRole ? 'hover:text-teal-400 hover:underline' : ''}">${u.name}</div>
+              <div class="font-semibold text-slate-200 ${isInternRole ? 'hover:text-cyan-400 hover:underline' : ''}">${u.name}</div>
               <div class="text-[10px] text-slate-400">${u.email}</div>
             </div>
             ${isLeader ? `
@@ -745,7 +743,7 @@
       let html = `
         <div class="space-y-2">
           <div class="font-bold text-slate-400 text-xs uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-1.5">
-            <i class="fa-solid fa-user-tie text-teal-400"></i> Ekip Liderleri (${leaders.length})
+            <i class="fa-solid fa-user-tie text-cyan-400"></i> Ekip Liderleri (${leaders.length})
           </div>
           <div class="space-y-1.5">
             ${leaders.map(l => renderUserItem(l)).join('') || '<div class="text-slate-500 italic text-[11px]">Kayıt yok</div>'}
@@ -863,17 +861,17 @@
 
         const loadScore = (activeTasks.length * 10) + totalWorkDays;
 
-        let colorClass = 'border-emerald-500/30 bg-emerald-500/5 text-emerald-400';
+        let colorClass = 'border-emerald-500/30 bg-emerald-500/10 text-emerald-400';
         let badgeColor = 'bg-emerald-500';
         let statusText = 'Müsait / Yeni Görev Verilebilir';
 
         if (activeTasks.length > 0) {
           if (loadScore >= 30) {
-            colorClass = 'border-rose-500/30 bg-rose-500/5 text-rose-400';
+            colorClass = 'border-rose-500/30 bg-rose-500/10 text-rose-400';
             badgeColor = 'bg-rose-500';
             statusText = `Yoğun (${activeTasks.length} Görev / ${totalWorkDays} İş Günü)`;
           } else if (loadScore >= 15) {
-            colorClass = 'border-amber-500/30 bg-amber-500/5 text-amber-400';
+            colorClass = 'border-amber-500/30 bg-amber-500/10 text-amber-400';
             badgeColor = 'bg-amber-500';
             statusText = `Orta Yoğunluk (${activeTasks.length} Görev / ${totalWorkDays} İş Günü)`;
           } else {
@@ -902,7 +900,7 @@
           : ' | <span class="text-amber-400">Tarih Yok</span>';
 
         const card = document.createElement('div');
-        card.className = `p-3 rounded-lg border flex items-center justify-between gap-2 ${colorClass} transition-all hover:scale-[1.01]`;
+        card.className = `p-3.5 rounded-xl border flex items-center justify-between gap-2 ${colorClass} transition-all hover:scale-[1.01] shadow-sm`;
         card.innerHTML = `
           <div class="flex-1 cursor-pointer" onclick="openInternProfileModal(${intern.id})">
             <div class="font-bold text-sm text-slate-200 hover:underline">${intern.name}</div>
@@ -910,7 +908,7 @@
           </div>
           <div class="flex items-center gap-2">
             <span class="w-2.5 h-2.5 rounded-full ${badgeColor}"></span>
-            <button onclick="openInternProfileModal(${intern.id})" title="Detaylı Profil" class="text-xs text-teal-400 hover:text-indigo-300 p-1.5">
+            <button onclick="openInternProfileModal(${intern.id})" title="Detaylı Profil" class="text-xs text-cyan-400 hover:text-cyan-300 p-1.5">
               <i class="fa-solid fa-user-gear"></i>
             </button>
             <button onclick="deleteIntern('${intern.id}', '${intern.name}')" title="Stajyeri Sil" class="text-xs text-rose-400 hover:text-rose-300 p-1.5">
@@ -981,11 +979,11 @@
 
       const card = document.createElement('div');
       card.className = isPast 
-        ? "bg-slate-950/40 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3 opacity-75"
-        : "bg-slate-950 border border-slate-800 rounded-xl p-4 flex flex-col justify-between gap-3 shadow-md hover:border-slate-700 transition-all";
+        ? "bg-slate-950/40 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between gap-3 opacity-75"
+        : "bg-slate-950/80 border border-slate-800/80 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-lg hover:border-slate-700 transition-all backdrop-blur-sm";
       
       let logsHtml = taskLogs.map(l => `
-        <div class="bg-slate-900/80 p-2 rounded text-xs border border-slate-800 mt-1">
+        <div class="bg-slate-900/90 p-2.5 rounded-xl text-xs border border-slate-800 mt-1">
           <div class="text-slate-400 font-semibold mb-0.5">${l.log_date}</div>
           <div class="text-slate-200">${l.note}</div>
         </div>
@@ -995,10 +993,10 @@
       if (isManager) {
         actionButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-800/80">
-            <button onclick="openEditTaskModal(${task.id})" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold py-1.5 rounded-lg transition-all">
+            <button onclick="openEditTaskModal(${task.id})" class="flex-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-semibold py-1.5 rounded-xl transition-all">
               <i class="fa-solid fa-pen me-1"></i> Düzenle
             </button>
-            <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-lg transition-all">
+            <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all">
               <i class="fa-solid fa-trash me-1"></i> Sil
             </button>
           </div>
@@ -1009,10 +1007,10 @@
       if (currentUser.role === 'INTERN' && !isPast) {
         internButtons = `
           <div class="flex gap-2 mt-2">
-            <button onclick="openLogModal('${task.id}', '${task.title}')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-lg transition-all">
+            <button onclick="openLogModal('${task.id}', '${task.title}')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-700 text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
               <i class="fa-solid fa-pen me-1"></i> Not / İlerleme Ekle
             </button>
-            <button onclick="completeTask(${task.id})" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold px-3 py-2 rounded-lg transition-all">
+            <button onclick="completeTask(${task.id})" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all">
               <i class="fa-solid fa-check me-1"></i> Görevi Bitir
             </button>
           </div>
@@ -1025,12 +1023,12 @@
 
       card.innerHTML = `
         <div>
-          <div class="flex justify-between items-start gap-2 mb-1">
-            <h4 class="font-bold text-base ${isPast ? 'text-slate-400 line-through' : 'text-indigo-300'}">${task.title}</h4>
-            <span class="px-2 py-0.5 bg-slate-900 border border-slate-800 text-teal-400 text-xs rounded-md font-semibold">${task.category}</span>
+          <div class="flex justify-between items-start gap-2 mb-2">
+            <h4 class="font-bold text-base ${isPast ? 'text-slate-400 line-through' : 'text-cyan-300'}">${task.title}</h4>
+            <span class="px-2.5 py-1 bg-cyan-500/10 border border-cyan-500/20 text-cyan-300 text-xs rounded-lg font-semibold">${task.category}</span>
           </div>
 
-          <div class="text-xs text-slate-300 bg-slate-900/60 p-2 rounded border border-slate-800/80 mb-3">
+          <div class="text-xs text-slate-300 bg-slate-900/60 p-2.5 rounded-xl border border-slate-800/80 mb-3">
             <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
           </div>
 
@@ -1117,32 +1115,32 @@
 
       let html = `
         <div class="flex items-center gap-3 mb-6 border-b border-slate-800 pb-4">
-          <div class="w-12 h-12 rounded-full bg-cyan-600/20 text-teal-400 flex items-center justify-center text-xl font-bold border border-cyan-500/30">
+          <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-400 flex items-center justify-center text-xl font-bold border border-cyan-500/30">
             ${intern.name.charAt(0)}
           </div>
           <div>
             <h3 class="text-xl font-bold text-slate-100">${intern.name}</h3>
-            <p class="text-xs text-slate-400">${intern.email} • <span class="text-teal-400 font-semibold">Stajyer</span></p>
+            <p class="text-xs text-slate-400">${intern.email} • <span class="text-cyan-400 font-semibold">Stajyer</span></p>
           </div>
         </div>
 
-        <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-lg mb-6">
+        <div class="bg-slate-950/60 border border-slate-800 p-4 rounded-xl mb-6">
           <h4 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-            <i class="fa-regular fa-calendar-days text-teal-400"></i> Staj Takvimi & Süreç Bilgisi
+            <i class="fa-regular fa-calendar-days text-cyan-400"></i> Staj Takvimi & Süreç Bilgisi
           </h4>
           
           <form id="internDatesForm" onsubmit="saveInternDates(event, ${intern.id})" class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
             <div>
               <label class="block text-xs text-slate-400 mb-1">Staj Başlangıç Tarihi</label>
-              <input type="date" id="modalStartDate" value="${intern.intern_start_date || ''}" ${!canEditDates ? 'disabled' : ''} required class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-slate-200">
+              <input type="date" id="modalStartDate" value="${intern.intern_start_date || ''}" ${!canEditDates ? 'disabled' : ''} required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200">
             </div>
             <div>
               <label class="block text-xs text-slate-400 mb-1">Staj Bitiş Tarihi</label>
-              <input type="date" id="modalEndDate" value="${intern.intern_end_date || ''}" ${!canEditDates ? 'disabled' : ''} required class="w-full bg-slate-900 border border-slate-800 rounded p-2 text-xs text-slate-200">
+              <input type="date" id="modalEndDate" value="${intern.intern_end_date || ''}" ${!canEditDates ? 'disabled' : ''} required class="w-full bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-slate-200">
             </div>
             ${canEditDates ? `
               <div class="sm:col-span-2 text-right">
-                <button type="submit" class="bg-cyan-600 hover:bg-indigo-500 text-white text-xs px-4 py-2 rounded font-medium transition-all shadow-md shadow-indigo-600/20">
+                <button type="submit" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-lg font-medium transition-all shadow-md shadow-cyan-600/20">
                   Tarihleri Güncelle
                 </button>
               </div>
@@ -1159,13 +1157,13 @@
 
         <div>
           <h4 class="text-sm font-semibold text-slate-200 mb-3 flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-teal-400"></i> Atanan Tüm Görevler (${internTasks.length})
+            <i class="fa-solid fa-list-check text-cyan-400"></i> Atanan Tüm Görevler (${internTasks.length})
           </h4>
           <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
       `;
 
       if (internTasks.length === 0) {
-        html += `<div class="text-xs text-slate-500 italic p-3 bg-slate-950/40 rounded border border-slate-800/80">Bu stajyere henüz görev atanmamış.</div>`;
+        html += `<div class="text-xs text-slate-500 italic p-3 bg-slate-950/40 rounded-xl border border-slate-800/80">Bu stajyere henüz görev atanmamış.</div>`;
       } else {
         internTasks.forEach(task => {
           let statusBadgeText = `${task.work_days} İş Günü (Devam Ediyor)`;
@@ -1193,12 +1191,12 @@
           }
 
           html += `
-            <div class="p-3 bg-slate-950/40 border border-slate-800 rounded-lg flex justify-between items-center text-xs">
+            <div class="p-3 bg-slate-950/40 border border-slate-800 rounded-xl flex justify-between items-center text-xs">
               <div>
                 <div class="font-bold text-slate-200">${task.title}</div>
                 <div class="text-slate-400 opacity-75">Kategori: ${task.category} | Bitiş Tarihi: ${task.end_date}</div>
               </div>
-              <span class="px-2.5 py-1 rounded-md text-[11px] ${badgeClass}">${statusBadgeText}</span>
+              <span class="px-2.5 py-1 rounded-lg text-[11px] ${badgeClass}">${statusBadgeText}</span>
             </div>
           `;
         });
@@ -1412,7 +1410,7 @@
           await loadTasks();
           renderInternStatusList();
         } else {
-          alert(data.error || 'Güncelleme başarısız.');
+          alert(data.error || 'Güncelleme başarısız me.');
         }
       } catch (err) {
         console.error('Hata:', err);
