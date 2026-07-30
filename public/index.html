@@ -440,35 +440,51 @@
 
     // GERÇEK MAİL GÖNDERME FONKSİYONU
     async function sendLeaderVerificationCode() {
-      const email = document.getElementById('regEmail').value;
-      if (!email) {
-        alert("Lütfen önce e-posta adresinizi giriniz.");
+      const sendBtn = document.getElementById('sendLeaderCodeBtn'); // Butonunuzun ID'si
+      const emailInput = document.getElementById('leaderEmailInput'); // E-posta input ID'si
+
+      if (!emailInput || !emailInput.value) {
+        alert("Lütfen geçerli bir e-posta adresi girin.");
         return;
       }
 
-      const btn = document.getElementById('btnSendCode');
-      btn.disabled = true;
-      btn.innerText = "Gönderiliyor...";
+      // Butonu pasif yap ve yükleniyor durumuna getir
+      sendBtn.disabled = true;
+      const originalText = sendBtn.innerText;
+      sendBtn.innerText = "Gönderiliyor...";
 
       try {
-        const res = await fetch(`${API_BASE_URL}/api/send-verification-code`, {
+        // 10 saniyelik zaman aşımı (Timeout) kontrolü
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+        const response = await fetch('/api/send-verification-code', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email })
+          body: JSON.stringify({ email: emailInput.value }),
+          signal: controller.signal
         });
 
-        const data = await res.json();
-        if (res.ok) {
-          alert(`${email} adresine doğrulama kodunuz başarıyla gönderildi! Lütfen gelen kutunuzu (ve gereksiz/spam klasörünü) kontrol ediniz.`);
-        } else {
-          alert("E-posta gönderim hatası: " + data.error);
+        clearTimeout(timeoutId);
+
+        const data = await response.json();
+
+        if (!response.ok) {
+          throw new Error(data.error || 'Kod gönderilemedi.');
         }
-      } catch (err) {
-        console.error("Mail gönderme hatası:", err);
-        alert("E-posta gönderilirken sunucu hatası oluştu.");
+
+        alert('Doğrulama kodu e-postanıza gönderildi!');
+      } catch (error) {
+        console.error('Doğrulama kodu gönderme hatası:', error);
+        if (error.name === 'AbortError') {
+          alert('Sunucu yanıt vermedi, istek zaman aşımına uğradı.');
+        } else {
+          alert('Hata: ' + error.message);
+        }
       } finally {
-        btn.disabled = false;
-        btn.innerText = "Kod Gönder";
+        // İşlem bitince veya hataya düşünde butonu tekrar aktif et
+        sendBtn.disabled = false;
+        sendBtn.innerText = originalText;
       }
     }
 

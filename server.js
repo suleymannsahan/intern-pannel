@@ -361,40 +361,42 @@ app.delete('/api/users/profile', async (req, res) => {
 
 // Doğrulama Kodu Gönderme (Gerçek SMTP Entegrasyonu)
 app.post('/api/send-verification-code', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
+  }
+
   try {
-    const { email } = req.body;
-    if (!email) return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
-
-    // Render ortam değişkenlerinin tanımlı olup olmadığını kontrol et
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.error('EMAIL_USER veya EMAIL_PASS ortam değişkenleri Render panelinde eksik!');
-      return res.status(500).json({ error: 'Sunucu mail konfigürasyonu eksik.' });
-    }
-
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     const transporter = nodemailer.createTransport({
       host: 'smtp.gmail.com',
       port: 465,
-      secure: true, // Port 465 için true
+      secure: true,
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
-      }
+      },
+      // Bağlantının sonsuza kadar asılı kalmasını engelleyen zaman aşımı süreleri:
+      connectionTimeout: 5000, // 5 saniye içinde bağlanamazsa kapat
+      greetingTimeout: 5000,
+      socketTimeout: 5000
     });
 
-    const mailOptions = {
-      from: `"Stajyer Portal" <${process.env.EMAIL_USER}>`,
+    await transporter.sendMail({
+      from: `"Ekip Portalı" <${process.env.EMAIL_USER}>`,
       to: email,
       subject: 'Ekip Lideri Doğrulama Kodu',
-      text: `Giriş yapabilmek için doğrulama kodunuz: ${verificationCode}`
-    };
+      text: `Doğrulama kodunuz: ${verificationCode}`
+    });
 
-    await transporter.sendMail(mailOptions);
-    res.json({ message: 'Doğrulama kodu başarıyla gönderildi.' });
+    // Kodu doğrulamak üzere veritabanına veya oturuma kaydetmeyi unutmayın
+    return res.status(200).json({ message: 'Kod başarıyla gönderildi.' });
+
   } catch (error) {
     console.error('Mail Gönderme Hatası:', error);
-    res.status(500).json({ error: 'Mail gönderilemedi: ' + error.message });
+    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
   }
 });
 
