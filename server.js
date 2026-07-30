@@ -3,15 +3,14 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const Brevo = require('@getbrevo/brevo'); // Brevo kütüphanesi entegre edildi
+const Brevo = require('@getbrevo/brevo'); // Brevo kütüphanesi
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Brevo API İstemcisini Yapılandırma
+// Brevo API İstemcisini Yapılandırma (v2+ Uyumlu)
 const apiInstance = new Brevo.TransactionalEmailsApi();
-const apiKey = apiInstance.authentications['apiKey'];
-apiKey.apiKey = process.env.BREVO_API_KEY;
+apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -376,13 +375,11 @@ app.post('/api/send-verification-code', async (req, res) => {
     // Brevo E-Posta Nesnesi Yapılandırması
     const sendSmtpEmail = new Brevo.SendSmtpEmail();
     
-    // GÖNDEREN: Brevo hesabınızı açarken kullandığınız doğrulanan e-posta adresiniz
     sendSmtpEmail.sender = { 
       name: "Ekip Portali", 
       email: "semresahann@gmail.com" 
     };
     
-    // ALICI: İstediğiniz herhangi bir e-posta adresi
     sendSmtpEmail.to = [{ email: email }];
     sendSmtpEmail.subject = "Ekip Lideri Doğrulama Kodu";
     sendSmtpEmail.htmlContent = `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`;
