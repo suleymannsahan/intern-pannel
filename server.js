@@ -1,141 +1,154 @@
 const express = require('express');
-const cors = require('cors');
 const { createClient } = require('@libsql/client');
+const cors = require('cors');
+const bcrypt = require('bcryptjs');
+const path = require('path');
 
 const app = express();
+const PORT = process.env.PORT || 5000;
+
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(__dirname, 'public')));
 
-// Turso Veritabanı Bağlantısı
+// Turso Bulut Veritabanı Bağlantısı
 const db = createClient({
-  url: process.env.TURSO_DATABASE_URL || "file:local.db",
+  url: process.env.TURSO_DATABASE_URL,
   authToken: process.env.TURSO_AUTH_TOKEN
 });
 
-// Veritabanı Tablolarını Başlatma
+// Veritabanı Tablolarını Oluşturma
 async function initDb() {
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS users (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT NOT NULL,
-      email TEXT UNIQUE NOT NULL,
-      password TEXT NOT NULL,
-      role TEXT NOT NULL
-    )
-  `);
+  try {
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        password TEXT NOT NULL,
+        role TEXT NOT NULL,
+        intern_start_date TEXT,
+        intern_end_date TEXT
+      )
+    `);
 
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS daily_logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      intern_id INTEGER NOT NULL,
-      intern_name TEXT NOT NULL,
-      date TEXT NOT NULL,
-      hours REAL NOT NULL,
-      content TEXT NOT NULL,
-      status TEXT DEFAULT 'PENDING',
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY(intern_id) REFERENCES users(id)
-    )
-  `);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        title TEXT NOT NULL,
+        assigned_to INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        work_days INTEGER NOT NULL,
+        created_by TEXT NOT NULL,
+        status TEXT DEFAULT 'IN_PROGRESS',
+        FOREIGN KEY(assigned_to) REFERENCES users(id)
+      )
+    `);
 
-  // GÜNCELLENDİ: 'description' alanı tabloya eklendi
-  await db.execute(`
-    CREATE TABLE IF NOT EXISTS tasks (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      title TEXT NOT NULL,
-      description TEXT,
-      assigned_to INTEGER NOT NULL,
-      category TEXT NOT NULL,
-      end_date TEXT NOT NULL,
-      work_days INTEGER NOT NULL,
-      created_by TEXT NOT NULL,
-      status TEXT DEFAULT 'IN_PROGRESS',
-      FOREIGN KEY(assigned_to) REFERENCES users(id)
-    )
-  `);
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS daily_logs (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER NOT NULL,
+        intern_id INTEGER NOT NULL,
+        log_date TEXT NOT NULL,
+        note TEXT NOT NULL,
+        FOREIGN KEY(task_id) REFERENCES tasks(id),
+        FOREIGN KEY(intern_id) REFERENCES users(id)
+      )
+    `);
 
-  console.log("Veritabanı tabloları hazır.");
+    console.log('Turso bulut veritabanı tabloları hazır.');
+  } catch (err) {
+    console.error('Veritabanı başlatma hatası:', err.message);
+  }
 }
 
-initDb().catch(console.error);
+initDb();
 
-// ------------------- KULLANICI ENDPOINT'LERİ -------------------
+// --- API ENDPOINT'LERİ ---
 
-// Kayıt Olma
+// Kayıt Ol
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
-    
-    // E-posta benzersizlik kontrolü
-    const checkEmail = await db.execute({
-      sql: `SELECT id FROM users WHERE email = ?`,
-      args: [email]
-    });
-
-    if (checkEmail.rows.length > 0) {
-      return res.status(400).json({ error: 'Bu e-posta adresi zaten kullanımda!' });
+    const { name, email, password, role, startDate, endDate } = req.body;
+    if (!name || !email || !password || !role) {
+      return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
+    if (role === 'INTERN' && (!startDate || !endDate)) {
+      return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+
     const result = await db.execute({
-      sql: `INSERT INTO users (name, email, password, role) VALUES (?, ?, ?, ?)`,
-      args: [name, email, password, role]
+      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [name, email, hashedPassword, role, role === 'INTERN' ? startDate : null, role === 'INTERN' ? endDate : null]
     });
-    
-    res.json({ id: Number(result.lastInsertRowid), name, email, role });
+
+    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: Number(result.lastInsertRowid) });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
+    }
+    res.status(500).json({ error: 'Veritabanı hatası: ' + error.message });
   }
 });
 
-// Giriş Yapma
+// Giriş Yap
 app.post('/api/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const result = await db.execute({
-      sql: `SELECT * FROM users WHERE email = ? AND password = ?`,
-      args: [email, password]
+      sql: `SELECT * FROM users WHERE email = ?`,
+      args: [email]
     });
-    if (result.rows.length === 0) {
-      return res.status(401).json({ error: 'E-posta veya şifre hatalı!' });
-    }
+
     const user = result.rows[0];
+    if (!user) return res.status(400).json({ error: 'Kullanıcı bulunamadı.' });
+
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) return res.status(400).json({ error: 'Hatalı şifre!' });
+
     res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
   }
 });
 
-// Tüm Kullanıcıları Getirme
-app.get('/api/users', async (req, res) => {
+// Şifre Sıfırlama
+app.post('/api/reset-password', async (req, res) => {
   try {
-    const result = await db.execute('SELECT id, name, email, role FROM users');
-    res.json(result.rows);
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
+    const { email, newPassword } = req.body;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-// Profil Güncelleme
-app.put('/api/users/profile', async (req, res) => {
-  try {
-    const { userId, name, email, newPassword } = req.body;
-
-    if (!userId) return res.status(400).json({ error: 'Kullanıcı ID eksik!' });
-
-    // E-posta çakışması kontrolü
-    const emailCheck = await db.execute({
-      sql: `SELECT id FROM users WHERE email = ? AND id != ?`,
-      args: [email, userId]
+    const result = await db.execute({
+      sql: `UPDATE users SET password = ? WHERE email = ?`,
+      args: [hashedPassword, email]
     });
 
-    if (emailCheck.rows.length > 0) {
-      return res.status(400).json({ error: 'Bu e-posta başka bir kullanıcı tarafından kullanılıyor!' });
+    if (result.rowsAffected === 0) return res.status(400).json({ error: 'Kullanıcı bulunamadı.' });
+    res.json({ message: 'Şifre güncellendi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+  }
+});
+
+// Kullanıcı Kendi Profil Bilgilerini Güncelleme
+app.put('/api/users/profile', async (req, res) => {
+  try {
+    const { userId, name, email, password } = req.body;
+
+    if (!userId || !name || !email) {
+      return res.status(400).json({ error: 'Zorunlu alanlar eksik!' });
     }
 
-    if (newPassword && newPassword.trim() !== "") {
+    if (password && password.trim() !== '') {
+      const hashedPassword = await bcrypt.hash(password, 10);
       await db.execute({
         sql: `UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?`,
-        args: [name, email, newPassword, userId]
+        args: [name, email, hashedPassword, userId]
       });
     } else {
       await db.execute({
@@ -144,171 +157,71 @@ app.put('/api/users/profile', async (req, res) => {
       });
     }
 
-    // Stajyer adını daily_logs tablosunda da güncelle
-    await db.execute({
-      sql: `UPDATE daily_logs SET intern_name = ? WHERE intern_id = ?`,
-      args: [name, userId]
-    });
-
     res.json({ message: 'Profil başarıyla güncellendi.' });
   } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor!' });
+    }
     res.status(500).json({ error: 'Profil güncellenirken hata oluştu: ' + error.message });
   }
 });
 
-// YENİ EKLENDİ: Kullanıcının Kendi Hesabını Silmesi
-app.delete('/api/users/profile', async (req, res) => {
+// Kullanıcı Listesi
+app.get('/api/users', async (req, res) => {
   try {
-    const { userId } = req.body;
-
-    if (!userId) {
-      return res.status(400).json({ error: 'Kullanıcı ID eksik!' });
-    }
-
-    // Kullanıcıya ait ilişkili günlük kayıtları ve görevleri sil, ardından kullanıcıyı sil
-    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
-    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
-    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
-
-    if (result.rowsAffected === 0) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-    }
-
-    res.json({ message: 'Hesap ve ilişkili veriler başarıyla silindi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Hesap silinirken hata oluştu: ' + error.message });
-  }
-});
-
-// Yönetici Tarafından Kullanıcı Silme
-app.delete('/api/users/:id', async (req, res) => {
-  try {
-    const userId = req.params.id;
-    const { userRole } = req.body;
-
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
-      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
-    }
-
-    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
-    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
-    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
-
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
-
-    res.json({ message: 'Kullanıcı ve ilişkili verileri başarıyla silindi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Kullanıcı silinemedi: ' + error.message });
-  }
-});
-
-// YENİ EKLENDİ: Ekip Lideri Doğrulama Kodu Gönderme (Mock Endpoint)
-app.post('/api/send-verification-code', async (req, res) => {
-  try {
-    const { email } = req.body;
-    if (!email) {
-      return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
-    }
-    
-    // Gerçek e-posta entegrasyonu (Nodemailer vb.) yapılana kadar konsola çıktı basılır.
-    console.log(`[DOĞRULAMA KODU İSTEĞİ] Gönderilen E-Posta: ${email}`);
-    
-    res.json({ message: 'Doğrulama kodu e-posta adresinize gönderildi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
-  }
-});
-
-// ------------------- GÜNLÜK (DAILY LOG) ENDPOINT'LERİ -------------------
-
-// Günlük Kayıtları Getirme
-app.get('/api/logs', async (req, res) => {
-  try {
-    const { internId } = req.query;
-    let sql = 'SELECT * FROM daily_logs ORDER BY date DESC';
-    let args = [];
-    
-    if (internId) {
-      sql = 'SELECT * FROM daily_logs WHERE intern_id = ? ORDER BY date DESC';
-      args = [internId];
-    }
-    
-    const result = await db.execute({ sql, args });
+    const result = await db.execute(`SELECT id, name, email, role, intern_start_date, intern_end_date FROM users`);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
 
-// Yeni Günlük Ekleme
-app.post('/api/logs', async (req, res) => {
+// Staj Tarihlerini Güncelleme
+app.put('/api/users/:id/intern-dates', async (req, res) => {
   try {
-    const { internId, internName, date, hours, content } = req.body;
-    const result = await db.execute({
-      sql: `INSERT INTO daily_logs (intern_id, intern_name, date, hours, content, status) VALUES (?, ?, ?, ?, ?, 'PENDING')`,
-      args: [internId, internName, date, hours, content]
+    const userId = req.params.id;
+    const { startDate, endDate } = req.body;
+
+    if (!startDate || !endDate) {
+      return res.status(400).json({ error: 'Başlangıç ve bitiş tarihleri gereklidir.' });
+    }
+
+    await db.execute({
+      sql: `UPDATE users SET intern_start_date = ?, intern_end_date = ? WHERE id = ?`,
+      args: [startDate, endDate, userId]
     });
+
+    res.json({ message: 'Staj tarihleri başarıyla güncellendi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Tarihler kaydedilemedi: ' + error.message });
+  }
+});
+
+// Görev Oluşturma
+app.post('/api/tasks', async (req, res) => {
+  try {
+    const { title, assignedTo, category, endDate, workDays, createdBy } = req.body;
+    const result = await db.execute({
+      sql: `INSERT INTO tasks (title, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
+      args: [title, assignedTo, category, endDate, workDays, createdBy]
+    });
+
     res.json({ id: Number(result.lastInsertRowid) });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 });
-
-// Günlük Durumu Güncelleme (Onayla / Reddet)
-app.put('/api/logs/:id/status', async (req, res) => {
-  try {
-    const { status, userRole } = req.body;
-    const logId = req.params.id;
-
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
-      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
-    }
-
-    const result = await db.execute({
-      sql: `UPDATE daily_logs SET status = ? WHERE id = ?`,
-      args: [status, logId]
-    });
-
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Log bulunamadı.' });
-
-    res.json({ message: 'Durum güncellendi.' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// Günlük Silme
-app.delete('/api/logs/:id', async (req, res) => {
-  try {
-    const logId = req.params.id;
-    const { userId, userRole } = req.body;
-
-    const checkLog = await db.execute({ sql: `SELECT intern_id FROM daily_logs WHERE id = ?`, args: [logId] });
-    if (checkLog.rows.length === 0) return res.status(404).json({ error: 'Kayıt bulunamadı.' });
-
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER' && checkLog.rows[0].intern_id !== userId) {
-      return res.status(403).json({ error: 'Bu kaydı silme yetkiniz yok!' });
-    }
-
-    await db.execute({ sql: `DELETE FROM daily_logs WHERE id = ?`, args: [logId] });
-    res.json({ message: 'Kayıt silindi.' });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ------------------- GÖREV (TASK) ENDPOINT'LERİ -------------------
 
 // Görevleri Getirme
 app.get('/api/tasks', async (req, res) => {
   try {
-    const { assignedTo } = req.query;
-    let sql = 'SELECT * FROM tasks ORDER BY id DESC';
+    const { userId, role } = req.query;
+    let sql = `SELECT tasks.*, users.name as assignee_name FROM tasks JOIN users ON tasks.assigned_to = users.id`;
     let args = [];
 
-    if (assignedTo) {
-      sql = 'SELECT * FROM tasks WHERE assigned_to = ? ORDER BY id DESC';
-      args = [assignedTo];
+    if (role === 'INTERN') {
+      sql += ` WHERE tasks.assigned_to = ?`;
+      args.push(userId);
     }
 
     const result = await db.execute({ sql, args });
@@ -318,13 +231,29 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-// GÜNCELLENDİ: Görev Oluşturma ('description' alanı eklendi)
-app.post('/api/tasks', async (req, res) => {
+// Görevi Tamamlama Endpoint'i
+app.put('/api/tasks/:id/complete', async (req, res) => {
   try {
-    const { title, description, assignedTo, category, endDate, workDays, createdBy } = req.body;
+    const taskId = req.params.id;
     const result = await db.execute({
-      sql: `INSERT INTO tasks (title, description, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
-      args: [title, description || '', assignedTo, category, endDate, workDays, createdBy]
+      sql: `UPDATE tasks SET status = 'COMPLETED' WHERE id = ?`,
+      args: [taskId]
+    });
+
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
+    res.json({ message: 'Görev başarıyla tamamlandı olarak işaretlendi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Görev durumu güncellenemedi: ' + error.message });
+  }
+});
+
+// Günlük Not Ekleme
+app.post('/api/daily-logs', async (req, res) => {
+  try {
+    const { taskId, internId, logDate, note } = req.body;
+    const result = await db.execute({
+      sql: `INSERT INTO daily_logs (task_id, intern_id, log_date, note) VALUES (?, ?, ?, ?)`,
+      args: [taskId, internId, logDate, note]
     });
 
     res.json({ id: Number(result.lastInsertRowid) });
@@ -333,43 +262,11 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// GÜNCELLENDİ: Görev Güncelleme ('description' alanı eklendi)
-app.put('/api/tasks/:id', async (req, res) => {
+// Günlük Notları Getirme
+app.get('/api/daily-logs', async (req, res) => {
   try {
-    const taskId = req.params.id;
-    const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
-
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
-      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
-    }
-
-    const result = await db.execute({
-      sql: `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
-      args: [title, description || '', assignedTo, category, endDate, workDays, taskId]
-    });
-
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
-
-    res.json({ message: 'Görev başarıyla güncellendi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Görev güncellenemedi: ' + error.message });
-  }
-});
-
-// Görev Durumu Güncelleme (Tamamlandı/Devam Ediyor)
-app.put('/api/tasks/:id/status', async (req, res) => {
-  try {
-    const taskId = req.params.id;
-    const { status } = req.body;
-
-    const result = await db.execute({
-      sql: `UPDATE tasks SET status = ? WHERE id = ?`,
-      args: [status, taskId]
-    });
-
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
-
-    res.json({ message: 'Görev durumu güncellendi.' });
+    const result = await db.execute(`SELECT * FROM daily_logs`);
+    res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -379,23 +276,101 @@ app.put('/api/tasks/:id/status', async (req, res) => {
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { userRole } = req.body;
+    const userRole = req.headers['user-role'];
 
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
+    await db.execute({ sql: `DELETE FROM daily_logs WHERE task_id = ?`, args: [taskId] });
     const result = await db.execute({ sql: `DELETE FROM tasks WHERE id = ?`, args: [taskId] });
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
 
-    res.json({ message: 'Görev silindi.' });
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
+    res.json({ message: 'Görev başarıyla silindi.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Görev silinirken hata oluştu: ' + error.message });
   }
 });
 
-// Sunucuyu Başlatma
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Sunucu ${PORT} portunda dinleniyor...`);
+// Stajyer Silme
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const userRole = (req.headers['user-role'] || '').toUpperCase();
+
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+
+    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
+    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ? AND role = 'INTERN'`, args: [userId] });
+
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Silinecek stajyer bulunamadı.' });
+    res.json({ message: 'Stajyer ve ilişkili tüm verileri başarıyla silindi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Stajyer silinirken hata oluştu: ' + error.message });
+  }
+});
+
+// Görev Güncelleme
+app.put('/api/tasks/:id', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { title, assignedTo, category, endDate, workDays, userRole } = req.body;
+
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+
+    const result = await db.execute({
+      sql: `UPDATE tasks SET title = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
+      args: [title, assignedTo, category, endDate, workDays, taskId]
+    });
+
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
+    res.json({ message: 'Görev başarıyla güncellendi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Görev güncellenemedi: ' + error.message });
+  }
+});
+
+// Kullanıcının Kendi Hesabını Silmesi
+app.delete('/api/users/profile', async (req, res) => {
+  try {
+    const { userId } = req.body;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'Kullanıcı ID eksik!' });
+    }
+
+    // İlişkili logları, görevleri ve kullanıcıyı sil
+    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
+    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
+
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    res.json({ message: 'Hesap ve ilişkili veriler başarıyla silindi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Hesap silinirken hata oluştu: ' + error.message });
+  }
+});
+
+// Doğrulama Kodu Gönderme (Geçici / Mock Endpoint)
+app.post('/api/send-verification-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
+    
+    // Gerçek e-posta servisi kurulduğunda buraya Nodemailer / Resend entegre edilebilir.
+    console.log(`Doğrulama kodu istenen e-posta: ${email}`);
+    res.json({ message: 'Doğrulama kodu e-posta adresinize gönderildi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+  }
+});
+
+// Sunucuyu Çalıştır
+app.listen(PORT, '0.0.0.0', () => {
+  console.log(`Sunucu aktif! Port: ${PORT}`);
 });
