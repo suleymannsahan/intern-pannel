@@ -3,10 +3,13 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend'); // Nodemailer yerine Resend kütüphanesi eklendi
 
 const app = express();
 const PORT = process.env.PORT || 5000;
+
+// Resend istemcisini başlatma
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -33,7 +36,6 @@ async function initDb() {
       )
     `);
 
-    // initDb içindeki tasks tablosu
     await db.execute(`
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -347,7 +349,6 @@ app.delete('/api/users/profile', async (req, res) => {
       return res.status(400).json({ error: 'Kullanıcı ID eksik!' });
     }
 
-    // İlişkili logları, görevleri ve kullanıcıyı sil
     await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
     await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
     const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
@@ -359,7 +360,7 @@ app.delete('/api/users/profile', async (req, res) => {
   }
 });
 
-// Doğrulama Kodu Gönderme (Gerçek SMTP Entegrasyonu)
+// Doğrulama Kodu Gönderme (Resend HTTP API Entegrasyonu)
 app.post('/api/send-verification-code', async (req, res) => {
   const { email } = req.body;
 
@@ -370,30 +371,15 @@ app.post('/api/send-verification-code', async (req, res) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    const transporter = nodemailer.createTransport({
-      host: 'smtp.gmail.com',
-      port: 587,
-      secure: false,
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS
-      },
-      family: 4,
-      // Bağlantının sonsuza kadar asılı kalmasını engelleyen zaman aşımı süreleri:
-      connectionTimeout: 10000, // 5 saniye içinde bağlanamazsa kapat
-      greetingTimeout: 10000,
-      socketTimeout: 10000
-    });
-
-    await transporter.sendMail({
-      from: `"Ekip Portalı" <${process.env.EMAIL_USER}>`,
-      to: email,
+    // Resend HTTP API İsteği (Port 443 HTTPS üzerinden iletilir)
+    const data = await resend.emails.send({
+      from: 'Ekip Portali <onboarding@resend.dev>', // Ücretsiz planda hazır test adresi
+      to: [email],
       subject: 'Ekip Lideri Doğrulama Kodu',
-      text: `Doğrulama kodunuz: ${verificationCode}`
+      html: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
     });
 
-    // Kodu doğrulamak üzere veritabanına veya oturuma kaydetmeyi unutmayın
-    return res.status(200).json({ message: 'Kod başarıyla gönderildi.' });
+    return res.status(200).json({ message: 'Kod başarıyla gönderildi.', data });
 
   } catch (error) {
     console.error('Mail Gönderme Hatası:', error);
