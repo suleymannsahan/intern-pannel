@@ -88,7 +88,7 @@
           <label class="block text-xs font-semibold text-indigo-300">Ekip Lideri Doğrulama Kodu</label>
           <div class="flex gap-2">
             <input type="text" id="regVerificationCode" placeholder="Kodu Girin" class="flex-1 bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-indigo-500">
-            <button type="button" onclick="sendLeaderVerificationCode()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-semibold transition-all">Kod Gönder</button>
+            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-semibold transition-all">Kod Gönder</button>
           </div>
           <p class="text-[10px] text-slate-400">Mail adresinize gönderilen doğrulama kodunu giriniz.</p>
         </div>
@@ -102,7 +102,6 @@
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col">
     <header class="bg-slate-800 border-b border-slate-700 px-6 py-4 flex justify-between items-center z-10">
       <div class="flex items-center gap-3">
-        <!-- SOL PENCERE AÇ/KAPA BUTONU -->
         <button onclick="toggleSidebar()" class="text-slate-300 hover:text-white p-2 rounded-lg bg-slate-700/50 border border-slate-600 transition-all">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
@@ -131,16 +130,11 @@
             <i class="fa-solid fa-xmark text-lg"></i>
           </button>
         </div>
-        
-        <div id="sidebarDirectory" class="space-y-4 text-xs">
-          <!-- Mühendisler, Ekip Liderleri ve Stajyerler Dinamik Yüklenecek -->
-        </div>
+        <div id="sidebarDirectory" class="space-y-4 text-xs"></div>
       </aside>
 
       <!-- SAĞ TARAF: ANA İÇERİK -->
       <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto">
-        
-        <!-- UYARI BANNERI -->
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-4 flex items-center gap-4 text-amber-300">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
           <div class="flex-1">
@@ -206,13 +200,12 @@
           <h3 class="font-bold text-sm mb-4 text-slate-400"><i class="fa-solid fa-clock-rotate-left me-2"></i>Geçmiş / Tamamlanan Görevler</h3>
           <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
-
       </main>
     </div>
   </div>
 
   <!-- MODALLAR -->
-  <!-- KULLANICI BİLGİLERİNİ DÜZENLEME MODALI -->
+  <!-- KULLANICI BİLGİLERİNİ DÜZENLEME & HESAP SİLME MODALI -->
   <div id="editProfileModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50">
     <div class="bg-slate-800 border border-slate-700 rounded-2xl p-6 w-full max-w-md space-y-4">
       <h3 class="font-bold text-lg text-indigo-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
@@ -229,9 +222,14 @@
           <label class="block text-xs font-semibold mb-1 text-slate-300">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm">
         </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-700 text-xs rounded-lg">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Güncelle</button>
+        <div class="flex justify-between items-center pt-3 border-t border-slate-700">
+          <button type="button" onclick="handleDeleteOwnAccount()" class="px-3 py-1.5 bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 text-xs rounded-lg font-semibold transition-all">
+            <i class="fa-solid fa-trash-can me-1"></i> Hesabımı Sil
+          </button>
+          <div class="flex gap-2">
+            <button type="button" onclick="closeEditProfileModal()" class="px-4 py-2 bg-slate-700 text-xs rounded-lg">İptal</button>
+            <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-xs rounded-lg text-white font-semibold">Güncelle</button>
+          </div>
         </div>
       </form>
     </div>
@@ -314,7 +312,6 @@
     </div>
   </div>
 
-  <!-- JAVASCRIPT -->
   <script>
     const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com'; 
 
@@ -322,7 +319,6 @@
     let usersList = [];
     let tasksList = [];
     let dailyLogsList = [];
-    let generatedVerificationCode = null;
 
     window.onload = async function() {
       await loadUsers();
@@ -378,6 +374,32 @@
       }
     }
 
+    // KULLANICININ KENDİ HESABINI SİLMESİ
+    async function handleDeleteOwnAccount() {
+      if (!confirm("Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz ve size atanmış tüm veriler temizlenecektir!")) {
+        return;
+      }
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id })
+        });
+
+        if (res.ok) {
+          alert("Hesabınız başarıyla silindi.");
+          closeEditProfileModal();
+          handleLogout();
+        } else {
+          const data = await res.json();
+          alert("Silme Hatası: " + data.error);
+        }
+      } catch (err) {
+        console.error("Hesap silme hatası:", err);
+      }
+    }
+
     function handleRoleChange() {
       const role = document.getElementById('regRole').value;
       const internFields = document.getElementById('internRegisterFields');
@@ -416,14 +438,38 @@
       });
     }
 
-    function sendLeaderVerificationCode() {
+    // GERÇEK MAİL GÖNDERME FONKSİYONU
+    async function sendLeaderVerificationCode() {
       const email = document.getElementById('regEmail').value;
       if (!email) {
         alert("Lütfen önce e-posta adresinizi giriniz.");
         return;
       }
-      generatedVerificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-      alert(`[SİMÜLASYON]: ${email} adresine gönderilen doğrulama kodunuz: ${generatedVerificationCode}`);
+
+      const btn = document.getElementById('btnSendCode');
+      btn.disabled = true;
+      btn.innerText = "Gönderiliyor...";
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/send-verification-code`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert(`${email} adresine doğrulama kodunuz başarıyla gönderildi! Lütfen gelen kutunuzu (ve gereksiz/spam klasörünü) kontrol ediniz.`);
+        } else {
+          alert("E-posta gönderim hatası: " + data.error);
+        }
+      } catch (err) {
+        console.error("Mail gönderme hatası:", err);
+        alert("E-posta gönderilirken sunucu hatası oluştu.");
+      } finally {
+        btn.disabled = false;
+        btn.innerText = "Kod Gönder";
+      }
     }
 
     function switchAuthTab(tab) {
@@ -516,6 +562,7 @@
       const startDate = document.getElementById('regStartDate').value;
       const endDate = document.getElementById('regEndDate').value;
       const engineerId = document.getElementById('regEngineer').value;
+      const verificationCode = document.getElementById('regVerificationCode').value;
 
       const existingUser = usersList.find(u => u.email.toLowerCase() === email.toLowerCase());
       if (existingUser) {
@@ -523,18 +570,10 @@
         return;
       }
 
-      if (role === 'LEADER') {
-        const inputCode = document.getElementById('regVerificationCode').value;
-        if (!generatedVerificationCode || inputCode !== generatedVerificationCode) {
-          alert("Girdiğiniz doğrulama kodu geçersiz veya eşleşmiyor!");
-          return;
-        }
-      }
-
       const res = await fetch(`${API_BASE_URL}/api/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId })
+        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId, verificationCode })
       });
 
       const data = await res.json();
@@ -603,7 +642,6 @@
       }
     }
 
-    // SOL MENÜYÜ ALAN ALAN AYIRARAK RENDER ETME
     function renderSidebarDirectory() {
       const container = document.getElementById('sidebarDirectory');
       
@@ -612,7 +650,6 @@
       const interns = usersList.filter(u => u.role === 'INTERN');
 
       let html = `
-        <!-- EKİP LİDERLERİ -->
         <div class="space-y-2">
           <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
             <i class="fa-solid fa-user-tie text-indigo-400"></i> Ekip Liderleri (${leaders.length})
@@ -627,7 +664,6 @@
           </div>
         </div>
 
-        <!-- MÜHENDİSLER -->
         <div class="space-y-2">
           <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
             <i class="fa-solid fa-user-gear text-emerald-400"></i> Mühendisler (${engineers.length})
@@ -642,7 +678,6 @@
           </div>
         </div>
 
-        <!-- STAJYERLER -->
         <div class="space-y-2">
           <div class="font-bold text-slate-300 text-xs flex items-center gap-1.5 border-b border-slate-700/60 pb-1">
             <i class="fa-solid fa-graduation-cap text-amber-400"></i> Stajyerler (${interns.length})
@@ -711,14 +746,21 @@
       });
     }
 
-    // STAJYER İŞ YÜKÜ LİSTESİ - RENK VEYA GÖREV YOĞUNLUĞUNA GÖRE EN AZ OLANDAN EN ÇOK OLANA SİRALAMA
+    // GÜNCELLENMİŞ VE DÜZELTİLMİŞ STAJYER İŞ YÜKÜ LİSTESİ RENDERİ
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
       
+      // Tüm stajyerleri filtrele
       let interns = usersList.filter(u => u.role === 'INTERN');
+
+      // Eğer sorumlu mühendis ise: Kendi stajyerleri + herhangi bir mühendise atanmamış stajyerleri göster
       if (currentUser.role === 'ENGINEER') {
-        interns = interns.filter(u => u.engineer_id == currentUser.id || u.engineerId == currentUser.id);
+        interns = interns.filter(u => 
+          u.engineer_id == currentUser.id || 
+          u.engineerId == currentUser.id || 
+          !u.engineer_id
+        );
       }
 
       if (interns.length === 0) {
@@ -728,9 +770,7 @@
 
       const todayStr = new Date().toISOString().split('T')[0];
 
-      // Stajyerlerin iş yükünü hesaplayıp metada saklama
       const processedInterns = interns.map(intern => {
-        // YALNIZCA AKTİF GÖREVLER
         const activeTasks = tasksList.filter(t => t.assigned_to === intern.id && t.status !== 'COMPLETED' && t.end_date >= todayStr);
         
         let totalWorkDays = 0;
@@ -738,7 +778,6 @@
           totalWorkDays += calculateWorkDays(todayStr, t.end_date);
         });
 
-        // Görev Yoğunluğu Puanı: Görev sayısı * 10 + toplam iş günü
         const loadScore = (activeTasks.length * 10) + totalWorkDays;
 
         let colorClass = 'border-emerald-500/40 bg-emerald-500/5 text-emerald-400';
@@ -770,7 +809,7 @@
         };
       });
 
-      // EN AZ GÖREV YOĞUNLUĞU OLANDAN EN ÇOK OLANA DOĞRU SIRALAMA
+      // İş yüküne göre küçükten büyüğe sırala
       processedInterns.sort((a, b) => a.loadScore - b.loadScore);
 
       processedInterns.forEach(item => {
