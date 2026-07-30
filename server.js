@@ -3,6 +3,7 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const nodemailer = require('nodemailer');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -32,10 +33,12 @@ async function initDb() {
       )
     `);
 
+    // initDb içindeki tasks tablosu
     await db.execute(`
       CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         title TEXT NOT NULL,
+        description TEXT,
         assigned_to INTEGER NOT NULL,
         category TEXT NOT NULL,
         end_date TEXT NOT NULL,
@@ -197,13 +200,13 @@ app.put('/api/users/:id/intern-dates', async (req, res) => {
   }
 });
 
-// Görev Oluşturma
+// Görev Oluşturma Endpoint'i
 app.post('/api/tasks', async (req, res) => {
   try {
-    const { title, assignedTo, category, endDate, workDays, createdBy } = req.body;
+    const { title, description, assignedTo, category, endDate, workDays, createdBy } = req.body;
     const result = await db.execute({
-      sql: `INSERT INTO tasks (title, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
-      args: [title, assignedTo, category, endDate, workDays, createdBy]
+      sql: `INSERT INTO tasks (title, description, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
+      args: [title, description || '', assignedTo, category, endDate, workDays, createdBy]
     });
 
     res.json({ id: Number(result.lastInsertRowid) });
@@ -313,19 +316,19 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Görev Güncelleme
+// Görev Güncelleme Endpoint'i
 app.put('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { title, assignedTo, category, endDate, workDays, userRole } = req.body;
+    const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
 
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
     const result = await db.execute({
-      sql: `UPDATE tasks SET title = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
-      args: [title, assignedTo, category, endDate, workDays, taskId]
+      sql: `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
+      args: [title, description || '', assignedTo, category, endDate, workDays, taskId]
     });
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
@@ -356,17 +359,42 @@ app.delete('/api/users/profile', async (req, res) => {
   }
 });
 
-// Doğrulama Kodu Gönderme (Geçici / Mock Endpoint)
+// Doğrulama Kodu Gönderme (Gerçek SMTP Entegrasyonu)
 app.post('/api/send-verification-code', async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
-    
-    // Gerçek e-posta servisi kurulduğunda buraya Nodemailer / Resend entegre edilebilir.
-    console.log(`Doğrulama kodu istenen e-posta: ${email}`);
-    res.json({ message: 'Doğrulama kodu e-posta adresinize gönderildi.' });
+
+    // Render ortam değişkenlerinin tanımlı olup olmadığını kontrol et
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.error('EMAIL_USER veya EMAIL_PASS ortam değişkenleri Render panelinde eksik!');
+      return res.status(500).json({ error: 'Sunucu mail konfigürasyonu eksik.' });
+    }
+
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    const transporter = nodemailer.createTransport({
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // Port 465 için true
+      auth: {
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
+      }
+    });
+
+    const mailOptions = {
+      from: `"Stajyer Portal" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Ekip Lideri Doğrulama Kodu',
+      text: `Giriş yapabilmek için doğrulama kodunuz: ${verificationCode}`
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ message: 'Doğrulama kodu başarıyla gönderildi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+    console.error('Mail Gönderme Hatası:', error);
+    res.status(500).json({ error: 'Mail gönderilemedi: ' + error.message });
   }
 });
 
