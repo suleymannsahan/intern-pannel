@@ -378,6 +378,7 @@ app.post('/api/send-verification-code', async (req, res) => {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS
       },
+      family: 4,
       // Bağlantının sonsuza kadar asılı kalmasını engelleyen zaman aşımı süreleri:
       connectionTimeout: 5000, // 5 saniye içinde bağlanamazsa kapat
       greetingTimeout: 5000,
