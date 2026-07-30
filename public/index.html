@@ -456,23 +456,66 @@
       const leaderFields = document.getElementById('leaderVerificationFields');
       const startDateInput = document.getElementById('regStartDate');
       const endDateInput = document.getElementById('regEndDate');
+      const verificationCodeInput = document.getElementById('regVerificationCode');
 
       if (role === 'INTERN') {
         internFields.classList.remove('hidden');
         leaderFields.classList.add('hidden');
         startDateInput.required = true;
         endDateInput.required = true;
+        verificationCodeInput.required = false;
         populateEngineerDropdown();
       } else if (role === 'LEADER') {
         internFields.classList.add('hidden');
         leaderFields.classList.remove('hidden');
         startDateInput.required = false;
         endDateInput.required = false;
+        verificationCodeInput.required = true; // Ekip lideri için doğrulama kodu zorunlu yapıldı
       } else {
         internFields.classList.add('hidden');
         leaderFields.classList.add('hidden');
         startDateInput.required = false;
         endDateInput.required = false;
+        verificationCodeInput.required = false;
+      }
+    }
+
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById('regName').value;
+      const email = document.getElementById('regEmail').value;
+      const password = document.getElementById('regPassword').value;
+      const role = document.getElementById('regRole').value;
+      const startDate = document.getElementById('regStartDate').value;
+      const endDate = document.getElementById('regEndDate').value;
+      const engineerId = document.getElementById('regEngineer').value;
+      const verificationCode = document.getElementById('regVerificationCode').value;
+
+      // Ekip Lideri kontrolü: Kod girilmemişse kaydı engelle
+      if (role === 'LEADER' && !verificationCode.trim()) {
+        alert("Ekip lideri olarak kayıt olabilmek için lütfen e-postanıza gelen doğrulama kodunu giriniz.");
+        return;
+      }
+
+      const existingUser = usersList.find(u => u.email.toLowerCase() === email.toLowerCase());
+      if (existingUser) {
+        alert("Bu e-posta adresi zaten kullanımda! Lütfen farklı bir e-posta giriniz.");
+        return;
+      }
+
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId, verificationCode })
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        alert("Hesabınız oluşturuldu! Giriş yapabilirsiniz.");
+        await loadUsers();
+        switchAuthTab('login');
+      } else {
+        alert(data.error);
       }
     }
 
