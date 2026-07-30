@@ -380,9 +380,9 @@ app.post('/api/send-verification-code', async (req, res) => {
       },
       family: 4,
       // Bağlantının sonsuza kadar asılı kalmasını engelleyen zaman aşımı süreleri:
-      connectionTimeout: 5000, // 5 saniye içinde bağlanamazsa kapat
-      greetingTimeout: 5000,
-      socketTimeout: 5000
+      connectionTimeout: 10000, // 5 saniye içinde bağlanamazsa kapat
+      greetingTimeout: 10000,
+      socketTimeout: 10000
     });
 
     await transporter.sendMail({
