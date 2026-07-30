@@ -3,14 +3,15 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const Brevo = require('@getbrevo/brevo'); // Brevo kütüphanesi
+// Brevo Kütüphanesi ve Gerekli Sınıfların İçeri Aktarılması
+const { TransactionalEmailsApi, TransactionalEmailsApiApiKeys, SendSmtpEmail } = require('@getbrevo/brevo');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Brevo API İstemcisini Yapılandırma (v2+ Uyumlu)
-const apiInstance = new Brevo.TransactionalEmailsApi();
-apiInstance.setApiKey(Brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
+// Brevo API İstemcisini Yapılandırma
+const apiInstance = new TransactionalEmailsApi();
+apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -373,7 +374,7 @@ app.post('/api/send-verification-code', async (req, res) => {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
     // Brevo E-Posta Nesnesi Yapılandırması
-    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    const sendSmtpEmail = new SendSmtpEmail();
     
     sendSmtpEmail.sender = { 
       name: "Ekip Portali", 
