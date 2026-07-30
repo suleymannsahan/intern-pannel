@@ -305,7 +305,7 @@ app.delete('/api/users/:id', async (req, res) => {
 
     await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
     await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
-    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ? AND role = 'INTERN'`, args: [userId] });
+    const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Silinecek kullanıcı bulunamadı.' });
     res.json({ message: 'Kullanıcı ve ilişkili tüm verileri başarıyla silindi.' });
