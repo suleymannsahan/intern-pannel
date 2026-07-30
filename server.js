@@ -28,7 +28,9 @@ async function initDb() {
         password TEXT NOT NULL,
         role TEXT NOT NULL,
         intern_start_date TEXT,
-        intern_end_date TEXT
+        intern_end_date TEXT,
+        engineer_id INTEGER,
+        FOREIGN KEY(engineer_id) REFERENCES users(id)
       )
     `);
 
@@ -59,6 +61,14 @@ async function initDb() {
       )
     `);
 
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS verification_codes (
+        email TEXT PRIMARY KEY,
+        code TEXT NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -72,7 +82,8 @@ initDb();
 // Kayıt Ol
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, role, startDate, endDate } = req.body;
+    const { name, email, password, role, startDate, endDate, engineerId, verificationCode } = req.body;
+    
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
@@ -81,12 +92,41 @@ app.post('/api/register', async (req, res) => {
       return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
     }
 
+    // Ekip lideri doğrulama kontrolü
+    if (role === 'LEADER') {
+      if (!verificationCode) {
+        return res.status(400).json({ error: 'Ekip Lideri kaydı için doğrulama kodu zorunludur!' });
+      }
+
+      const checkCode = await db.execute({
+        sql: `SELECT * FROM verification_codes WHERE email = ? AND code = ?`,
+        args: [email, verificationCode]
+      });
+
+      if (checkCode.rows.length === 0) {
+        return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş doğrulama kodu!' });
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.execute({
-      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [name, email, hashedPassword, role, role === 'INTERN' ? startDate : null, role === 'INTERN' ? endDate : null]
+      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date, engineer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        name, 
+        email, 
+        hashedPassword, 
+        role, 
+        role === 'INTERN' ? startDate : null, 
+        role === 'INTERN' ? endDate : null,
+        role === 'INTERN' ? (engineerId || null) : null
+      ]
     });
+
+    // Kullanılan doğrulama kodunu temizle
+    if (role === 'LEADER') {
+      await db.execute({ sql: `DELETE FROM verification_codes WHERE email = ?`, args: [email] });
+    }
 
     res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: Number(result.lastInsertRowid) });
   } catch (error) {
@@ -112,9 +152,61 @@ app.post('/api/login', async (req, res) => {
     const isValid = await bcrypt.compare(password, user.password);
     if (!isValid) return res.status(400).json({ error: 'Hatalı şifre!' });
 
-    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
+    res.json({ 
+      id: user.id, 
+      name: user.name, 
+      email: user.email, 
+      role: user.role,
+      engineerId: user.engineer_id 
+    });
   } catch (error) {
     res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+  }
+});
+
+// Doğrulama Kodu Gönderme Endpoint'i (Brevo Entegrasyonu)
+app.post('/api/send-verification-code', async (req, res) => {
+  const { email } = req.body;
+
+  if (!email) {
+    return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
+  }
+
+  try {
+    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+    // Veritabanına kodu kaydet veya güncelle
+    await db.execute({
+      sql: `INSERT INTO verification_codes (email, code) VALUES (?, ?) ON CONFLICT(email) DO UPDATE SET code = excluded.code`,
+      args: [email, verificationCode]
+    });
+
+    // Brevo API Çağrısı
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { name: "Ekip Portali", email: "semresahann@gmail.com" },
+        to: [{ email: email }],
+        subject: "Ekip Lideri Doğrulama Kodu",
+        htmlContent: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
+      })
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Brevo API isteği başarısız oldu.');
+    }
+
+    return res.status(200).json({ message: 'Kod başarıyla gönderildi.', data });
+  } catch (error) {
+    console.error('Brevo Mail Gönderme Hatası:', error);
+    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
   }
 });
 
@@ -136,7 +228,7 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
-// Kullanıcı Kendi Profil Bilgilerini Güncelleme
+// Profil Güncelleme
 app.put('/api/users/profile', async (req, res) => {
   try {
     const { userId, name, email, password } = req.body;
@@ -161,7 +253,7 @@ app.put('/api/users/profile', async (req, res) => {
     res.json({ message: 'Profil başarıyla güncellendi.' });
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor!' });
+      return res.status(400).json({ error: 'Bu e-posta başka bir kullanıcıya ait!' });
     }
     res.status(500).json({ error: 'Profil güncellenirken hata oluştu: ' + error.message });
   }
@@ -170,7 +262,7 @@ app.put('/api/users/profile', async (req, res) => {
 // Kullanıcı Listesi
 app.get('/api/users', async (req, res) => {
   try {
-    const result = await db.execute(`SELECT id, name, email, role, intern_start_date, intern_end_date FROM users`);
+    const result = await db.execute(`SELECT id, name, email, role, intern_start_date, intern_end_date, engineer_id FROM users`);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -198,7 +290,7 @@ app.put('/api/users/:id/intern-dates', async (req, res) => {
   }
 });
 
-// Görev Oluşturma Endpoint'i
+// Görev Oluşturma
 app.post('/api/tasks', async (req, res) => {
   try {
     const { title, description, assignedTo, category, endDate, workDays, createdBy } = req.body;
@@ -232,7 +324,7 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-// Görevi Tamamlama Endpoint'i
+// Görevi Tamamlama
 app.put('/api/tasks/:id/complete', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -314,7 +406,7 @@ app.delete('/api/users/:id', async (req, res) => {
   }
 });
 
-// Görev Güncelleme Endpoint'i
+// Görev Güncelleme
 app.put('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -353,50 +445,6 @@ app.delete('/api/users/profile', async (req, res) => {
     res.json({ message: 'Hesap ve ilişkili veriler başarıyla silindi.' });
   } catch (error) {
     res.status(500).json({ error: 'Hesap silinirken hata oluştu: ' + error.message });
-  }
-});
-
-// Doğrulama Kodu Gönderme Endpoint'i (Brevo Doğrudan REST API Entegrasyonu)
-app.post('/api/send-verification-code', async (req, res) => {
-  const { email } = req.body;
-
-  if (!email) {
-    return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
-  }
-
-  try {
-    const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Node.js 18+ dahili fetch API kullanımı
-    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
-      method: 'POST',
-      headers: {
-        'accept': 'application/json',
-        'api-key': process.env.BREVO_API_KEY,
-        'content-type': 'application/json'
-      },
-      body: JSON.stringify({
-        sender: { 
-          name: "Ekip Portali", 
-          email: "semresahann@gmail.com" 
-        },
-        to: [{ email: email }],
-        subject: "Ekip Lideri Doğrulama Kodu",
-        htmlContent: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
-      })
-    });
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.message || 'Brevo API isteği başarısız oldu.');
-    }
-
-    return res.status(200).json({ message: 'Kod başarıyla gönderildi.', data });
-
-  } catch (error) {
-    console.error('Brevo Mail Gönderme Hatası:', error);
-    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
   }
 });
 
