@@ -3,15 +3,9 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-// Brevo Kütüphanesi ve Gerekli Sınıfların İçeri Aktarılması
-const { TransactionalEmailsApi, TransactionalEmailsApiApiKeys, SendSmtpEmail } = require('@getbrevo/brevo');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-
-// Brevo API İstemcisini Yapılandırma
-const apiInstance = new TransactionalEmailsApi();
-apiInstance.setApiKey(TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
 app.use(cors());
 app.use(express.json());
@@ -362,7 +356,7 @@ app.delete('/api/users/profile', async (req, res) => {
   }
 });
 
-// Doğrulama Kodu Gönderme Endpoint'i (Brevo HTTP API Entegrasyonu)
+// Doğrulama Kodu Gönderme Endpoint'i (Brevo Doğrudan REST API Entegrasyonu)
 app.post('/api/send-verification-code', async (req, res) => {
   const { email } = req.body;
 
@@ -373,26 +367,36 @@ app.post('/api/send-verification-code', async (req, res) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Brevo E-Posta Nesnesi Yapılandırması
-    const sendSmtpEmail = new SendSmtpEmail();
-    
-    sendSmtpEmail.sender = { 
-      name: "Ekip Portali", 
-      email: "semresahann@gmail.com" 
-    };
-    
-    sendSmtpEmail.to = [{ email: email }];
-    sendSmtpEmail.subject = "Ekip Lideri Doğrulama Kodu";
-    sendSmtpEmail.htmlContent = `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`;
+    // Node.js 18+ dahili fetch API kullanımı
+    const response = await fetch('https://api.brevo.com/v3/smtp/email', {
+      method: 'POST',
+      headers: {
+        'accept': 'application/json',
+        'api-key': process.env.BREVO_API_KEY,
+        'content-type': 'application/json'
+      },
+      body: JSON.stringify({
+        sender: { 
+          name: "Ekip Portali", 
+          email: "semresahann@gmail.com" 
+        },
+        to: [{ email: email }],
+        subject: "Ekip Lideri Doğrulama Kodu",
+        htmlContent: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
+      })
+    });
 
-    // HTTPS API üzerinden mail gönderimi
-    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || 'Brevo API isteği başarısız oldu.');
+    }
 
     return res.status(200).json({ message: 'Kod başarıyla gönderildi.', data });
 
   } catch (error) {
     console.error('Brevo Mail Gönderme Hatası:', error);
-    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + (error.message || error) });
+    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
   }
 });
 
