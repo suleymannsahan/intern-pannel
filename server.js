@@ -3,13 +3,15 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
-const { Resend } = require('resend'); // Nodemailer yerine Resend kütüphanesi eklendi
+const Brevo = require('@getbrevo/brevo'); // Brevo kütüphanesi entegre edildi
 
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Resend istemcisini başlatma
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Brevo API İstemcisini Yapılandırma
+const apiInstance = new Brevo.TransactionalEmailsApi();
+const apiKey = apiInstance.authentications['apiKey'];
+apiKey.apiKey = process.env.BREVO_API_KEY;
 
 app.use(cors());
 app.use(express.json());
@@ -360,7 +362,7 @@ app.delete('/api/users/profile', async (req, res) => {
   }
 });
 
-// Doğrulama Kodu Gönderme (Resend HTTP API Entegrasyonu)
+// Doğrulama Kodu Gönderme Endpoint'i (Brevo HTTP API Entegrasyonu)
 app.post('/api/send-verification-code', async (req, res) => {
   const { email } = req.body;
 
@@ -371,19 +373,28 @@ app.post('/api/send-verification-code', async (req, res) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Resend HTTP API İsteği (Port 443 HTTPS üzerinden iletilir)
-    const data = await resend.emails.send({
-      from: 'Ekip Portali <onboarding@resend.dev>', // Ücretsiz planda hazır test adresi
-      to: [email],
-      subject: 'Ekip Lideri Doğrulama Kodu',
-      html: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
-    });
+    // Brevo E-Posta Nesnesi Yapılandırması
+    const sendSmtpEmail = new Brevo.SendSmtpEmail();
+    
+    // GÖNDEREN: Brevo hesabınızı açarken kullandığınız doğrulanan e-posta adresiniz
+    sendSmtpEmail.sender = { 
+      name: "Ekip Portali", 
+      email: "semresahann@gmail.com" 
+    };
+    
+    // ALICI: İstediğiniz herhangi bir e-posta adresi
+    sendSmtpEmail.to = [{ email: email }];
+    sendSmtpEmail.subject = "Ekip Lideri Doğrulama Kodu";
+    sendSmtpEmail.htmlContent = `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`;
+
+    // HTTPS API üzerinden mail gönderimi
+    const data = await apiInstance.sendTransacEmail(sendSmtpEmail);
 
     return res.status(200).json({ message: 'Kod başarıyla gönderildi.', data });
 
   } catch (error) {
-    console.error('Mail Gönderme Hatası:', error);
-    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
+    console.error('Brevo Mail Gönderme Hatası:', error);
+    return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + (error.message || error) });
   }
 });
 
