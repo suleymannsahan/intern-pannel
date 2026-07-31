@@ -227,7 +227,7 @@ app.post('/api/tasks', async (req, res) => {
     // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
-        const companyLogoUrl = "https://i.ibb.co/YTZmFXhz/beyes-logo.png"; 
+        const companyLogoUrl = "https://i.ibb.co/xtFPW7KP/Y-logo.png"; 
         const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; 
 
         await fetch('https://api.brevo.com/v3/smtp/email', {
@@ -260,7 +260,7 @@ app.post('/api/tasks', async (req, res) => {
                         
                         <!-- ÜST HEADER / LOGO ALANI -->
                         <tr>
-                          <td align="center" style="background-color: #1e293b; padding: 25px 20px; border-bottom: 4px solid #dc2626;">
+                          <td align="center" style="background-color: #1e293b; padding: 35px 50px; border-bottom: 4px solid #dc2626;">
                             <img src="${companyLogoUrl}" alt="Logo" style="height: 45px; width: auto; display: block; margin: 0 auto 10px auto; outline: none; border: none; text-decoration: none;" />
                             <h1 style="color: #ffffff; font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.5px;">GÖREV & TAKİP PANELİ</h1>
                           </td>
