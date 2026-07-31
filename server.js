@@ -224,9 +224,12 @@ app.post('/api/tasks', async (req, res) => {
 
     const intern = userResult.rows[0];
 
-    // 3. Stajyer bulunduysa bildirim maili gönder
+    // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
+        const companyLogoUrl = "https://www.google.com/search?sxsrf=APpeQnuzu7M_JP6upYSBRFG8CrFYj0QHYA:1785479771213&udm=2&q=beyes#sv=CAMSXhoyKhBlLTVvcE9VQXpiVV83Ml9NMg41b3BPVUF6YlVfNzJfTToOcXFycFptN29FZVE5d00gBCokCg53RXhPS09qMmduSGw0TRIQZS01b3BPVUF6YlVfNzJfTRgAMAEYByC_09DvA0oIEAEYASABKAE/Y_logo.png"; // Şirket logonuzun web linki
+        const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; // Panele giriş linkiniz
+
         await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
           headers: {
@@ -236,29 +239,119 @@ app.post('/api/tasks', async (req, res) => {
           },
           body: JSON.stringify({
             sender: { 
-              name: "Görev Takip Sistemi", 
+              name: "Görev & Takip Sistemi", 
               email: "semresahann@gmail.com" 
             },
             to: [{ email: intern.email, name: intern.name }],
             subject: `Yeni Görev Atandı: ${title}`,
+            // HAZIRLADIĞIMIZ TASARIM BURAYA GELECEK:
             htmlContent: `
-              <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
-                <h2>Merhaba ${intern.name},</h2>
-                <p><strong>${createdBy}</strong> tarafından size yeni bir görev atandı.</p>
-                <hr style="border: 0; border-top: 1px solid #ccc;" />
-                <p><strong>Görev Başlığı:</strong> ${title}</p>
-                <p><strong>Kategori:</strong> ${category}</p>
-                <p><strong>Açıklama:</strong> ${description || 'Açıklama belirtilmedi.'}</p>
-                <p><strong>Son Teslim Tarihi:</strong> ${endDate} (${workDays} iş günü)</p>
-                <hr style="border: 0; border-top: 1px solid #ccc;" />
-                <p>Detayları incelemek ve günlük notlarınızı girmek için panele giriş yapabilirsiniz.</p>
-              </div>
+              <!DOCTYPE html>
+              <html lang="tr">
+              <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Yeni Görev Atandı</title>
+              </head>
+              <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
+                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f6f9; padding: 40px 10px;">
+                  <tr>
+                    <td align="center">
+                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);">
+                        
+                        <!-- ÜST HEADER / LOGO ALANI -->
+                        <tr>
+                          <td align="center" style="background-color: #1e293b; padding: 30px 20px; border-bottom: 4px solid #dc2626;">
+                            <img src="${companyLogoUrl}" alt="Logo" style="max-height: 48px; width: auto; display: block; margin-bottom: 12px;" />
+                            <h1 style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; letter-spacing: 0.5px;">GÖREV & TAKİP PANELI</h1>
+                          </td>
+                        </tr>
+
+                        <!-- BİLGİLENDİRME BAŞLIĞI -->
+                        <tr>
+                          <td style="padding: 30px 30px 15px 30px;">
+                            <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin: 0 0 8px 0;">Merhaba ${intern.name},</h2>
+                            <p style="color: #475569; font-size: 15px; margin: 0; line-height: 1.5;">
+                              <strong style="color: #0f172a;">${createdBy}</strong> tarafından hesabınıza yeni bir görev tanımlandı.
+                            </p>
+                          </td>
+                        </tr>
+
+                        <!-- GÖREV DETAY KARTLARI -->
+                        <tr>
+                          <td style="padding: 0 30px 20px 30px;">
+                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
+                              
+                              <tr>
+                                <td style="padding-bottom: 12px;">
+                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Görev Başlığı</span>
+                                  <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 2px;">${title}</div>
+                                </td>
+                              </tr>
+
+                              <tr>
+                                <td style="padding-bottom: 12px;">
+                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Kategori</span>
+                                  <div style="margin-top: 4px;">
+                                    <span style="display: inline-block; background-color: #fee2e2; color: #dc2626; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 6px;">
+                                      ${category}
+                                    </span>
+                                  </div>
+                                </td>
+                              </tr>
+
+                              <tr>
+                                <td style="padding-bottom: 12px;">
+                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Açıklama</span>
+                                  <div style="font-size: 14px; color: #334155; margin-top: 2px; line-height: 1.5;">
+                                    ${description || 'Açıklama belirtilmedi.'}
+                                  </div>
+                                </td>
+                              </tr>
+
+                              <tr>
+                                <td>
+                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Son Teslim Tarihi</span>
+                                  <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 2px;">
+                                    📅 ${endDate} <span style="font-size: 12px; font-weight: normal; color: #64748b;">(${workDays} iş günü)</span>
+                                  </div>
+                                </td>
+                              </tr>
+
+                            </table>
+                          </td>
+                        </tr>
+
+                        <!-- EYLEM BUTONU (CTA) -->
+                        <tr>
+                          <td align="center" style="padding: 0 30px 30px 30px;">
+                            <a href="${appDashboardUrl}" target="_blank" style="display: inline-block; background-color: #dc2626; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
+                              Görev Detayına Git & Panele Giriş Yap
+                            </a>
+                          </td>
+                        </tr>
+
+                        <!-- FOOTER -->
+                        <tr>
+                          <td style="background-color: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
+                            <p style="color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.4;">
+                              Bu e-posta Görev & Takip Sistemi tarafından otomatik olarak gönderilmiştir.<br>
+                              Lütfen bu e-postaya doğrudan yanıt vermeyiniz.
+                            </p>
+                          </td>
+                        </tr>
+
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+              </html>
             `
           })
         });
       } catch (mailErr) {
         console.error('Görev maili gönderilirken hata oluştu:', mailErr);
-        // Mail hatası oluşsa bile görevin oluşturulmasını engellemiyoruz
       }
     }
 
