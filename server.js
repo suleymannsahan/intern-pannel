@@ -227,7 +227,7 @@ app.post('/api/tasks', async (req, res) => {
     // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
-        const companyLogoUrl = "https://www.google.com/search?sxsrf=APpeQnuzu7M_JP6upYSBRFG8CrFYj0QHYA:1785479771213&udm=2&q=beyes#sv=CAMSXhoyKhBlLTVvcE9VQXpiVV83Ml9NMg41b3BPVUF6YlVfNzJfTToOcXFycFptN29FZVE5d00gBCokCg53RXhPS09qMmduSGw0TRIQZS01b3BPVUF6YlVfNzJfTRgAMAEYByC_09DvA0oIEAEYASABKAE/Y_logo.png"; // Şirket logonuzun web linki
+        const companyLogoUrl = "https://ibb.co/B5ndbCHd/Y_logo.png"; // Şirket logonuzun web linki
         const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; // Panele giriş linkiniz
 
         await fetch('https://api.brevo.com/v3/smtp/email', {
