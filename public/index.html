@@ -663,12 +663,35 @@
     }
 
     function switchAuthTab(tab) {
+      const loginForm = document.getElementById('loginForm');
+      const registerForm = document.getElementById('registerForm');
+      const tabLogin = document.getElementById('tabLogin');
+      const tabRegister = document.getElementById('tabRegister');
+
+      // Mavi aktif sekme sınıfları
+      const activeClasses = ['bg-cyan-600', 'text-white', 'shadow-lg', 'shadow-cyan-600/25'];
+      // Pasif sekme sınıfları
+      const inactiveClasses = ['text-slate-500', 'dark:text-slate-400', 'hover:text-slate-900', 'dark:hover:text-white'];
+
       if (tab === 'login') {
-        document.getElementById('loginForm').classList.remove('hidden');
-        document.getElementById('registerForm').classList.add('hidden');
+        loginForm.classList.remove('hidden');
+        registerForm.classList.add('hidden');
+
+        tabLogin.classList.add(...activeClasses);
+        tabLogin.classList.remove(...inactiveClasses);
+
+        tabRegister.classList.remove(...activeClasses);
+        tabRegister.classList.add(...inactiveClasses);
       } else {
-        document.getElementById('loginForm').classList.add('hidden');
-        document.getElementById('registerForm').classList.remove('hidden');
+        loginForm.classList.add('hidden');
+        registerForm.classList.remove('hidden');
+
+        tabRegister.classList.add(...activeClasses);
+        tabRegister.classList.remove(...inactiveClasses);
+
+        tabLogin.classList.remove(...activeClasses);
+        tabLogin.classList.add(...inactiveClasses);
+
         handleRoleChange();
       }
     }
@@ -1017,19 +1040,20 @@
       if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
 
       let managerReviewButtons = '';
-      if (isManager && task.status === 'COMPLETED') {
+      // Lider veya Mühendis ise ve görev stajyer tarafından tamamlandıysa veya revize sürecindeyse aksiyon butonlarını göster
+      if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             ${task.status === 'COMPLETED' ? `
-              <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md">
-                <i class="fa-solid fa-check me-1"></i> Onayla
+              <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                <i class="fa-solid fa-check"></i> Onayla
               </button>
-              <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md">
-                <i class="fa-solid fa-rotate-left me-1"></i> Revize Et
+              <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                <i class="fa-solid fa-rotate-left"></i> Revize Et
               </button>
             ` : ''}
-            <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all">
-              <i class="fa-solid fa-trash-can me-1"></i> Sil
+            <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
+              <i class="fa-solid fa-trash-can"></i> Sil
             </button>
           </div>
         `;
@@ -1039,7 +1063,7 @@
       if (currentUser.role === 'INTERN' && task.status !== 'APPROVED') {
         internButtons = `
           <div class="flex gap-2 mt-2">
-            <button onclick="openLogModal('${task.id}', '${task.title}')" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
+            <button onclick="openLogModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
               <i class="fa-solid fa-pen me-1"></i> Not / İlerleme Ekle
             </button>
             ${task.status !== 'COMPLETED' ? `
@@ -1118,8 +1142,17 @@
         if (response.ok) {
           alert(action === 'APPROVE' ? 'Görev onaylandı!' : 'Revize isteği iletildi.');
           await loadTasks();
+          if (currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER') {
+            renderInternStatusList();
+          }
+        } else {
+          const errData = await response.json();
+          alert('İşlem başarısız: ' + (errData.error || 'Bilinmeyen hata'));
         }
-      } catch (err) { console.error('Hata:', err); }
+      } catch (err) { 
+        console.error('Hata:', err); 
+        alert('Sunucu ile iletişim kurulurken bir hata oluştu.');
+      }
     }
 
     function openLogModal(taskId, taskTitle) {
