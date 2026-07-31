@@ -380,14 +380,14 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
 
                     <!-- Main Content -->
                     <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 20px;">
-                      Merhaba <strong style="color: #0f172a;">${creator.name}</strong>,
+                      Merhaba <strong style="color: #38bdf8;">${creator.name}</strong>,
                     </p>
                     <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 24px;">
                       <strong style="color: #0284c7;">${task.intern_name}</strong> isimli stajyer kendisine atanan görevi tamamlandı olarak işaretledi. Detaylar aşağıda yer almaktadır:
                     </p>
 
                     <!-- Details Card (Koyu Bilgi Alanı) -->
-                    <div style="background-color: #0f172a; border-radius: 12px; border: 1px solid #1e293b; padding: 20px; margin-bottom: 28px;">
+                    <div style="background-color: #1e293b; border-radius: 12px; border: 1px solid #1e293b; padding: 20px; margin-bottom: 28px;">
                       <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
                         <tr>
                           <td style="padding: 6px 0; color: #94a3b8; width: 120px;">Görev Başlığı:</td>
