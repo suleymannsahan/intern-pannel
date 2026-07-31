@@ -379,43 +379,6 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
   }
 });
 
-// Görev İnceleme (Onaylama / Revize Etme) Endpoint'i
-app.put('/api/tasks/:id/review', async (req, res) => {
-  try {
-    const taskId = req.params.id;
-    const { action, comment, userRole } = req.body;
-
-    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
-      return res.status(403).json({ error: 'Bu işlem için yetkiniz yoktur.' });
-    }
-
-    const newStatus = action === 'APPROVE' ? 'APPROVED' : 'REVISION_REQUESTED';
-
-    await db.execute({
-      sql: `UPDATE tasks SET status = ?, review_comment = ? WHERE id = ?`,
-      args: [newStatus, comment || null, taskId]
-    });
-
-    res.json({ message: `Görev ${action === 'APPROVE' ? 'onaylandı' : 'revizeye gönderildi'}.` });
-  } catch (error) {
-    res.status(500).json({ error: 'İşlem sırasında hata oluştu: ' + error.message });
-  }
-});
-
-// Stajyerin Görevi Tamamlandı Olarak İşaretlemesi Endpoint'i
-app.put('/api/tasks/:id/complete', async (req, res) => {
-  try {
-    const taskId = req.params.id;
-    await db.execute({
-      sql: `UPDATE tasks SET status = 'COMPLETED' WHERE id = ?`,
-      args: [taskId]
-    });
-    res.json({ message: 'Görev tamamlandı olarak işaretlendi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Hata oluştu: ' + error.message });
-  }
-});
-
 // Geliştirme 2: Yeni Görev Oluşturma & Brevo ile Stajyere Mail Bildirimi
 app.post('/api/tasks', async (req, res) => {
   try {
