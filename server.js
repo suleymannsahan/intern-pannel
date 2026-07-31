@@ -140,10 +140,10 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
-// Kullanıcı Kendi Profil Bilgilerini Güncelleme
+// Kullanıcı Kendi Profil Bilgilerini Güncelleme (Tüm Kayıt Alanları Dahil)
 app.put('/api/users/profile', async (req, res) => {
   try {
-    const { userId, name, email, password } = req.body;
+    const { userId, name, email, password, startDate, endDate, engineerId } = req.body;
 
     if (!userId || !name || !email) {
       return res.status(400).json({ error: 'Zorunlu alanlar eksik!' });
@@ -152,13 +152,13 @@ app.put('/api/users/profile', async (req, res) => {
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ? , password = ? WHERE id = ?`,
-        args: [name, email, hashedPassword, userId]
+        sql: `UPDATE users SET name = ?, email = ?, password = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?`,
+        args: [name, email, hashedPassword, startDate || null, endDate || null, userId]
       });
     } else {
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ? WHERE id = ?`,
-        args: [name, email, userId]
+        sql: `UPDATE users SET name = ?, email = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?`,
+        args: [name, email, startDate || null, endDate || null, userId]
       });
     }
 

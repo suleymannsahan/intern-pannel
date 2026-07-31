@@ -11,9 +11,7 @@
     }
   </script>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-  <!-- Chart.js Grafikleri İçin -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- jsPDF Staj Raporu İndirme İçin -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
     input[type="date"]::-webkit-calendar-picker-indicator {
@@ -123,7 +121,7 @@
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
     <!-- HEADER -->
-    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex justify-between items-center z-10 backdrop-blur-xl sticky top-0 shadow-md">
+    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex justify-between items-center z-20 backdrop-blur-xl sticky top-0 shadow-md">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all">
           <i class="fa-solid fa-bars text-lg"></i>
@@ -131,19 +129,30 @@
         <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
         <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
-      <div class="flex items-center gap-4">
-        <!-- Geliştirme 6: Karanlık / Aydınlık Mod Butonu -->
-        <button onclick="toggleDarkMode()" title="Temayı Değiştir" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-amber-500 dark:text-cyan-400 hover:scale-105 transition-all">
-          <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+
+      <!-- SAĞ ÜST AYARLAR SİMGESİ & DROPDOWN MENÜ -->
+      <div class="relative">
+        <button onclick="toggleSettingsDropdown()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none">
+          <i class="fa-solid fa-gear text-lg"></i>
         </button>
-        <div class="text-right">
-          <div id="userInfoName" class="font-semibold text-sm text-slate-900 dark:text-slate-100"></div>
-          <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
+
+        <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl">
+          <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 mb-1">
+            <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
+            <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
+          </div>
+          <button onclick="openEditProfileModal(); toggleSettingsDropdown();" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+            <i class="fa-solid fa-user-pen text-cyan-500"></i> Profili Düzenle
+          </button>
+          <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
+            <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
+            <span id="themeText" class="text-[10px] text-slate-400">Karanlık</span>
+          </button>
+          <div class="border-t border-slate-200 dark:border-slate-800 my-1"></div>
+          <button onclick="handleLogout()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5 transition-all">
+            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+          </button>
         </div>
-        <button onclick="openEditProfileModal()" class="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-600 dark:text-cyan-300 border border-cyan-500/30 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">
-          <i class="fa-solid fa-user-pen me-1"></i> Profil
-        </button>
-        <button onclick="handleLogout()" class="bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-300 dark:border-slate-700 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all">Çıkış</button>
       </div>
     </header>
 
@@ -172,11 +181,11 @@
           </div>
         </div>
 
-        <!-- Geliştirme 5: Canlı Arama ve Dinamik Filtreleme Paneli -->
+        <!-- Canlı Arama ve Dinamik Filtreleme Paneli -->
         <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-md backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div class="flex-1 min-w-[200px] relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev veya stajyer adı ara..." class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya stajyer adı ara..." class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
           </div>
           <div class="flex gap-2 flex-wrap">
             <select id="filterCategory" onchange="applyTaskFilters()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
@@ -189,9 +198,9 @@
 
             <select id="filterStatus" onchange="applyTaskFilters()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
               <option value="">Tüm Durumlar</option>
-              <option value="IN_PROGRESS">Devam Ediyor (IN_PROGRESS)</option>
-              <option value="COMPLETED">Tamamlandı (COMPLETED)</option>
-              <option value="APPROVED">Onaylandı (APPROVED)</option>
+              <option value="IN_PROGRESS">Devam Ediyor</option>
+              <option value="COMPLETED">Tamamlandı</option>
+              <option value="APPROVED">Onaylandı</option>
               <option value="REVISION_REQUESTED">Revize İstendi</option>
             </select>
           </div>
@@ -204,7 +213,7 @@
               <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
                 <i class="fa-solid fa-users text-cyan-500"></i> Stajyer Durum ve İş Yükü
               </h3>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-down-short-wide me-1"></i>Görev yoğunluğuna göre</span>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
             </div>
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
@@ -262,7 +271,7 @@
 
   <!-- MODALLAR -->
 
-  <!-- Geliştirme 2: Revize Yorum Modalı -->
+  <!-- Revize Yorum Modalı -->
   <div id="revisionModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
       <h3 class="font-bold text-lg mb-2 text-rose-500"><i class="fa-solid fa-rotate-left me-2"></i>Görevi Revize Et</h3>
@@ -278,9 +287,9 @@
     </div>
   </div>
 
-  <!-- PROFiL DÜZENLEME MODAL -->
+  <!-- PROFİL DÜZENLEME MODALI (Kayıtta Girilen Tüm Bilgileri Değiştirebilme Yetkisi) -->
   <div id="editProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
       <form onsubmit="handleSaveProfile(event)" class="space-y-3">
         <div>
@@ -292,9 +301,30 @@
           <input type="email" id="editProfileEmail" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Yeni Şifre</label>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
+
+        <!-- Stajyer Kayıt Detayları (Eğer Kullanıcı Stajyer ise Görünür) -->
+        <div id="editProfileInternFields" class="hidden space-y-3 p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
+          <div>
+            <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Sorumlu Mühendis</label>
+            <select id="editProfileEngineer" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
+              <option value="">-- Mühendis Seçiniz --</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Staj Başlangıç</label>
+              <input type="date" id="editProfileStartDate" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Staj Bitiş</label>
+              <input type="date" id="editProfileEndDate" class="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs">
+            </div>
+          </div>
+        </div>
+
         <div class="flex justify-between items-center pt-3 border-t border-slate-200 dark:border-slate-800">
           <button type="button" onclick="handleDeleteOwnAccount()" class="px-3 py-1.5 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs rounded-xl font-semibold transition-all">
             <i class="fa-solid fa-trash-can me-1"></i> Hesabımı Sil
@@ -308,7 +338,7 @@
     </div>
   </div>
 
-  <!-- Geliştirme 3 & 4: STAJYER DETAY, İLERLEME GRAFİKLERİ VE PDF EXPORT MODALI -->
+  <!-- STAJYER DETAY MODALI -->
   <div id="internProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 w-full max-w-3xl rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <button onclick="closeInternProfileModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-900 dark:hover:text-white">
@@ -317,7 +347,6 @@
 
       <div id="internModalHeader" class="flex justify-between items-center mb-6 border-b border-slate-200 dark:border-slate-800 pb-4"></div>
 
-      <!-- GRAFİK ALANI (Chart.js) -->
       <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
         <div class="bg-slate-100 dark:bg-slate-950/60 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
           <h5 class="text-xs font-bold text-center text-slate-500 dark:text-slate-400 mb-2">Görev Tamamlama Oranı</h5>
@@ -395,44 +424,6 @@
     </div>
   </div>
 
-  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
-      <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-pen-to-square me-2"></i>Görevi Düzenle</h3>
-      <form onsubmit="handleSaveEditedTask(event)" class="space-y-3">
-        <input type="hidden" id="editTaskId">
-        <div>
-          <label class="block text-xs font-semibold mb-1">Görev Tanımı</label>
-          <input type="text" id="editTaskTitle" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Açıklama</label>
-          <textarea id="editTaskDescription" rows="3" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm resize-none"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Atanan Stajyer</label>
-          <select id="editTaskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Alan / Departman</label>
-          <select id="editTaskCategory" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-            <option value="Yazılım">Yazılım</option>
-            <option value="Donanım">Donanım</option>
-            <option value="Ağ & Sistem">Ağ & Sistem</option>
-            <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Bitiş Tarihi</label>
-          <input type="date" id="editTaskEndDate" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-        </div>
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Değişiklikleri Kaydet</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <script>
     const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com'; 
 
@@ -450,16 +441,31 @@
       handleRoleChange();
     };
 
-    // Geliştirme 6: Karanlık Mod Mantığı
+    // Sağ üst Ayarlar Dropdown Menü Aç/Kapat
+    function toggleSettingsDropdown() {
+      const dropdown = document.getElementById('settingsDropdown');
+      dropdown.classList.toggle('hidden');
+    }
+
+    // Dışarı tıklandığında ayarlar menüsünü kapat
+    document.addEventListener('click', function(e) {
+      const dropdown = document.getElementById('settingsDropdown');
+      const button = e.target.closest('button[onclick="toggleSettingsDropdown()"]');
+      if (!button && dropdown && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+
+    // Karanlık Mod Mantığı
     function toggleDarkMode() {
       const html = document.documentElement;
-      const icon = document.getElementById('themeIcon');
+      const themeText = document.getElementById('themeText');
       if (html.classList.contains('dark')) {
         html.classList.remove('dark');
-        icon.className = 'fa-solid fa-sun text-lg';
+        if (themeText) themeText.innerText = 'Aydınlık';
       } else {
         html.classList.add('dark');
-        icon.className = 'fa-solid fa-moon text-lg';
+        if (themeText) themeText.innerText = 'Karanlık';
       }
     }
 
@@ -468,12 +474,37 @@
       sidebar.classList.toggle('-ml-80');
     }
 
+    // Kullanıcının Kayıtta Girdiği Tüm Bilgileri Düzenlemesi
     function openEditProfileModal() {
       if (!currentUser) return;
-      document.getElementById('editProfileName').value = currentUser.name;
-      document.getElementById('editProfileEmail').value = currentUser.email;
+      document.getElementById('editProfileName').value = currentUser.name || '';
+      document.getElementById('editProfileEmail').value = currentUser.email || '';
       document.getElementById('editProfilePassword').value = '';
+
+      const internFields = document.getElementById('editProfileInternFields');
+      if (currentUser.role === 'INTERN') {
+        internFields.classList.remove('hidden');
+        populateEditProfileEngineers();
+        document.getElementById('editProfileStartDate').value = currentUser.intern_start_date || '';
+        document.getElementById('editProfileEndDate').value = currentUser.intern_end_date || '';
+        document.getElementById('editProfileEngineer').value = currentUser.engineer_id || '';
+      } else {
+        internFields.classList.add('hidden');
+      }
+
       document.getElementById('editProfileModal').classList.remove('hidden');
+    }
+
+    function populateEditProfileEngineers() {
+      const select = document.getElementById('editProfileEngineer');
+      select.innerHTML = '<option value="">-- Mühendis Seçiniz --</option>';
+      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+      engineers.forEach(eng => {
+        const opt = document.createElement('option');
+        opt.value = eng.id;
+        opt.innerText = eng.name;
+        select.appendChild(opt);
+      });
     }
 
     function closeEditProfileModal() {
@@ -486,11 +517,18 @@
       const email = document.getElementById('editProfileEmail').value;
       const password = document.getElementById('editProfilePassword').value;
 
+      let startDate = null, endDate = null, engineerId = null;
+      if (currentUser.role === 'INTERN') {
+        startDate = document.getElementById('editProfileStartDate').value;
+        endDate = document.getElementById('editProfileEndDate').value;
+        engineerId = document.getElementById('editProfileEngineer').value;
+      }
+
       try {
         const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id, name, email, password })
+          body: JSON.stringify({ userId: currentUser.id, name, email, password, startDate, endDate, engineerId })
         });
 
         const data = await res.json();
@@ -498,6 +536,11 @@
           alert("Profil bilgileriniz başarıyla güncellendi!");
           currentUser.name = name;
           currentUser.email = email;
+          if (currentUser.role === 'INTERN') {
+            currentUser.intern_start_date = startDate;
+            currentUser.intern_end_date = endDate;
+            currentUser.engineer_id = engineerId;
+          }
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
           closeEditProfileModal();
           showDashboard();
@@ -840,20 +883,54 @@
       });
     }
 
+    // STAJYER DURUM VE İŞ YÜKÜ: Renklendirme ve Yoğunluğa Göre Sıralama (En Az Yoğundan En Çok Yoğuna)
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
       let interns = usersList.filter(u => u.role === 'INTERN');
-      const todayStr = new Date().toISOString().split('T')[0];
 
-      interns.forEach(intern => {
+      // Her stajyer için aktif görev sayısını hesapla
+      const internData = interns.map(intern => {
         const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'APPROVED');
+        return { intern, activeCount: activeTasks.length };
+      });
+
+      // En az yoğundan en çok yoğuna sırala (Artan sıra)
+      internData.sort((a, b) => a.activeCount - b.activeCount);
+
+      internData.forEach(({ intern, activeCount }) => {
+        // Yoğunluğa ve Kalan Staj Süresine Göre Renk Paleti Belirleme
+        let cardStyle = "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
+        let badgeStyle = "bg-emerald-500 text-white";
+        let statusText = "Müsait / Düşük Yoğunluk";
+
+        if (activeCount >= 1 && activeCount <= 2) {
+          cardStyle = "bg-amber-500/10 border-amber-500/30 text-amber-600 dark:text-amber-400";
+          badgeStyle = "bg-amber-500 text-white";
+          statusText = "Orta Yoğunluk";
+        } else if (activeCount >= 3) {
+          cardStyle = "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400";
+          badgeStyle = "bg-rose-500 text-white";
+          statusText = "Yüksek Yoğunluk";
+        }
+
+        // Kalan Staj Süresi Hesaplama
+        let remainingDaysText = "";
+        if (intern.intern_end_date) {
+          const remDays = calculateRemainingWorkDays(intern.intern_end_date);
+          remainingDaysText = remDays !== null ? `<div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5"><i class="fa-solid fa-clock me-1"></i>Kalan Staj: <b>${remDays} iş günü</b></div>` : '';
+        }
+
         const card = document.createElement('div');
-        card.className = `p-3.5 rounded-xl border flex items-center justify-between border-slate-300 dark:border-slate-800 bg-white/50 dark:bg-slate-900/50 shadow-sm`;
+        card.className = `p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all hover:scale-[1.01] ${cardStyle}`;
         card.innerHTML = `
           <div class="flex-1 cursor-pointer" onclick="openInternProfileModal(${intern.id})">
-            <div class="font-bold text-sm text-slate-900 dark:text-slate-100 hover:underline">${intern.name}</div>
-            <div class="text-xs text-slate-500 dark:text-slate-400">Aktif Görev: ${activeTasks.length}</div>
+            <div class="font-bold text-sm text-slate-900 dark:text-slate-100 hover:underline flex items-center gap-1.5">
+              ${intern.name}
+              <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${badgeStyle}">${activeCount} Görev</span>
+            </div>
+            <div class="text-xs opacity-90 mt-0.5">${statusText}</div>
+            ${remainingDaysText}
           </div>
         `;
         listEl.appendChild(card);
@@ -885,7 +962,6 @@
       }
     }
 
-    // Geliştirme 5: Canlı Filtreleme Mantığı
     function applyTaskFilters() {
       renderTaskList();
     }
@@ -902,7 +978,9 @@
       const filterStat = document.getElementById('filterStatus')?.value || '';
 
       const filtered = tasksList.filter(t => {
-        const matchesSearch = t.title.toLowerCase().includes(searchVal) || (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal));
+        const matchesSearch = t.title.toLowerCase().includes(searchVal) || 
+                              (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
+                              (t.created_by && t.created_by.toLowerCase().includes(searchVal));
         const matchesCategory = filterCat === '' || t.category === filterCat;
         const matchesStatus = filterStat === '' || t.status === filterStat;
         return matchesSearch && matchesCategory && matchesStatus;
@@ -932,13 +1010,11 @@
         </div>
       `).join('');
 
-      // Status Badge Belirleme
       let statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
       if (task.status === 'COMPLETED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Stajyer Tamamladı (Onay Bekliyor)</span>`;
       if (task.status === 'APPROVED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
       if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
 
-      // Geliştirme 2: Onay & Revize Butonları (Yöneticiler İçin)
       let managerReviewButtons = '';
       if (isManager && task.status === 'COMPLETED') {
         managerReviewButtons = `
@@ -981,8 +1057,10 @@
             ${task.review_comment ? `<div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu: ${task.review_comment}</div>` : ''}
           </div>
 
+          <!-- GÖREVİ VEREN KİŞİ VE ATANAN KİŞİ BİLGİSİ -->
           <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-            <div><i class="fa-regular fa-user me-1"></i> Atanan: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
+            <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
+            <div><i class="fa-regular fa-user me-1"></i> Atanan Stajyer: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
             <div><i class="fa-regular fa-calendar me-1"></i> Son Teslim: <b>${task.end_date}</b></div>
           </div>
 
@@ -1005,7 +1083,7 @@
       try {
         const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/complete`, { method: 'PUT' });
         if (response.ok) {
-          alert('Görev başarıyla tamamlandı olarak işaretlendi ve ekip liderine e-posta bildirimi gönderildi!');
+          alert('Görev başarıyla tamamlandı olarak işaretlendi ve bildirim gönderildi!');
           await loadTasks();
         }
       } catch (err) { console.error('Hata:', err); }
@@ -1046,16 +1124,21 @@
       document.getElementById('logModal').classList.remove('hidden');
     }
 
-    // Geliştirme 3 & 4: Stajyer Profili, Chart.js İstatistikleri ve PDF İndirme Mekanizması
     function openInternProfileModal(internId) {
       const intern = usersList.find(u => u.id == internId);
       if (!intern) return;
 
-      const internTasks = tasksList.filter(t => t.assigned_to == intern.id);
-      const internLogs = dailyLogsList.filter(l => l.intern_id == intern.id);
+      const isAuthorized = 
+        ['ENGINEER', 'TEAM_LEAD', 'ADMIN', 'MANAGER', 'LEADER'].includes(currentUser.role) || 
+        (currentUser.role === 'INTERN' && currentUser.id == intern.id);
 
-      // Üst Başlık ve PDF İndirme Butonu //
-      // openInternProfileModal fonksiyonunun içindeki başlık kısmı:
+      const pdfButtonHTML = isAuthorized ? `
+        <button onclick="exportInternPDF('${intern.id}')" 
+                class="mr-6 sm:mr-8 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
+          <i class="fa-solid fa-file-pdf text-sm"></i> Staj Sonu PDF Raporu İndir
+        </button>
+      ` : '';
+
       document.getElementById('internModalHeader').innerHTML = `
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center text-xl font-bold border border-cyan-500/30">
@@ -1066,19 +1149,17 @@
             <p class="text-xs text-slate-500 dark:text-slate-400">${intern.email} • <span class="text-cyan-500 font-semibold">Stajyer Paneli</span></p>
           </div>
         </div>
-        <!-- mr-6 ve mr-8 sınıfları ile buton sağ kenardan sola doğru kaydırıldı -->
-        <button onclick="exportInternPDF('${intern.id}')" class="mr-6 sm:mr-8 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
-          <i class="fa-solid fa-file-pdf text-sm"></i> Staj Sonu PDF Raporu İndir
-        </button>
+        ${pdfButtonHTML}
       `;
 
-      // İstatistik Hesaplama
+      const internTasks = tasksList.filter(t => t.assigned_to == intern.id);
+      const internLogs = dailyLogsList.filter(l => l.intern_id == intern.id);
+
       const completedCount = internTasks.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED').length;
       const inProgressCount = internTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'REVISION_REQUESTED').length;
 
       document.getElementById('logFrequencyText').innerText = internLogs.length;
 
-      // Chart.js Grafiği Çizimi
       const ctx = document.getElementById('taskStatusChart').getContext('2d');
       if (taskChartInstance) taskChartInstance.destroy();
 
@@ -1098,7 +1179,6 @@
         }
       });
 
-      // Görev Listesi Render
       let html = `<h4 class="text-sm font-semibold text-slate-900 dark:text-slate-200 mb-3"><i class="fa-solid fa-list-check text-cyan-500 me-2"></i>Görev Geçmişi</h4><div class="space-y-2">`;
       if (internTasks.length === 0) {
         html += `<div class="text-xs text-slate-500 italic">Görev yok.</div>`;
@@ -1108,7 +1188,7 @@
             <div class="p-3 bg-slate-100 dark:bg-slate-950/40 border border-slate-200 dark:border-slate-800 rounded-xl flex justify-between items-center text-xs">
               <div>
                 <div class="font-bold text-slate-800 dark:text-slate-200">${task.title}</div>
-                <div class="text-slate-500 text-[11px]">${task.category} - Son Teslim: ${task.end_date}</div>
+                <div class="text-slate-500 text-[11px]">${task.category} - Veren: ${task.created_by || 'Sistem'} - Son Teslim: ${task.end_date}</div>
               </div>
               <span class="px-2 py-1 rounded-md text-[10px] font-bold ${task.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${task.status}</span>
             </div>
@@ -1125,8 +1205,6 @@
       document.getElementById('internProfileModal').classList.add('hidden');
     }
 
-    // Geliştirme 4: jsPDF İle Staj Sonu PDF Raporu Oluşturucu
-    // Türkçe karakterleri jsPDF standart fontlarının desteklediği biçime dönüştüren yardımcı fonksiyon
     function fixTurkishChars(text) {
       if (!text) return '';
       return text
@@ -1139,6 +1217,14 @@
     }
 
     function exportInternPDF(internId) {
+      const isEngineerOrLead = ['ENGINEER', 'TEAM_LEAD', 'ADMIN', 'MANAGER', 'LEADER'].includes(currentUser.role);
+      const isSelf = currentUser.role === 'INTERN' && currentUser.id == internId;
+
+      if (!isEngineerOrLead && !isSelf) {
+        alert("Bu staj raporunu indirmek için yetkiniz bulunmamaktadır.");
+        return;
+      }
+
       const intern = usersList.find(u => u.id == internId);
       if (!intern) return;
 
@@ -1148,42 +1234,35 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // --- ÜST BANNER & BAŞLIK ---
-      doc.setFillColor(15, 23, 42); // Koyu Lacivert (slate-900)
+      doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, 210, 38, 'F');
 
-      doc.setTextColor(6, 182, 212); // Cyan Rengi
+      doc.setTextColor(6, 182, 212);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(15);
       doc.text(fixTurkishChars("STAJ DEĞERLENDİRME VE İLERLEME RAPORU"), 14, 20);
 
-      doc.setTextColor(203, 213, 225); // Açık gri
+      doc.setTextColor(203, 213, 225);
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 28);
 
-      // --- ŞİRKET LOGOSU EKLEME ---
-      // Paylaştığınız logo imajını doğrudan yükleyip sağ üst köşeye hizalıyoruz
       const logoImg = new Image();
-      logoImg.src = 'Y_logo_2.png'; // Logoyu yüklediğiniz dosya yolu (veya base64 string)
+      logoImg.src = 'Y_logo_2.png';
 
       logoImg.onload = function () {
-        // x: 175, y: 5, genislik: 20, yukseklik: 28 (oran korunacak sekilde ayarlandi)
         doc.addImage(logoImg, 'PNG', 175, 5, 20, 28);
         generatePDFContent(doc, intern, internTasks, internLogs);
       };
 
-      // Eğer görsel yükleme hatası olursa veya local yolda problem yaşanırsa PDF yine de üretilsin:
       logoImg.onerror = function () {
         generatePDFContent(doc, intern, internTasks, internLogs);
       };
     }
 
-    // PDF'in geri kalan içerik yapısı
     function generatePDFContent(doc, intern, internTasks, internLogs) {
       let yPos = 50;
 
-      // --- STAJYER BİLGİ KARTI ---
       doc.setFillColor(248, 250, 252);
       doc.setDrawColor(226, 232, 240);
       doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
@@ -1201,7 +1280,6 @@
 
       yPos += 42;
 
-      // --- GÖREV ÖZETİ SEKSİYONU ---
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42);
@@ -1229,8 +1307,7 @@
 
           doc.setFont("helvetica", "normal");
           doc.setTextColor(100, 116, 139);
-          const categoryText = fixTurkishChars(`[Kategori: ${t.category}]`);
-          doc.text(categoryText, 120, yPos);
+          doc.text(fixTurkishChars(`[Kategori: ${t.category} | Veren: ${t.created_by || 'Sistem'}]`), 110, yPos);
 
           let statusLabel = t.status;
           if (t.status === 'COMPLETED') statusLabel = 'TAMAMLANDI';
@@ -1261,7 +1338,6 @@
       yPos += 6;
       if (yPos > 250) { doc.addPage(); yPos = 20; }
 
-      // --- GÜNLÜK ÇALIŞMA LOGLARI SEKSİYONU ---
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42);
@@ -1295,7 +1371,6 @@
         });
       }
 
-      // SAYFA NUMARALARI
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
@@ -1416,4 +1491,4 @@
     }
   </script>
 </body>
-</html>
+</html> 
