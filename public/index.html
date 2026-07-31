@@ -130,30 +130,33 @@
         <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
 
-      <!-- SAĞ ÜST AYARLAR SİMGESİ & DROPDOWN MENÜ -->
-      <div class="relative">
-        <button onclick="toggleSettingsDropdown()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none">
-          <i class="fa-solid fa-gear text-lg"></i>
-        </button>
+      <!-- SAĞ ÜST KULLANICI BİLGİSİ & AYARLAR SİMGESİ -->
+      <div class="flex items-center gap-3">
+        <!-- Kullanıcı İsim ve Rol Bilgisi (Sol Tarafta) -->
+        <div class="text-right">
+          <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
+          <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
+        </div>
 
-        <div class="px-10 py-2 border-b border-slate-200 dark:border-slate-800 mb-1">
-            <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
-            <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
+        <!-- Ayarlar Simgesi & Dropdown (Sağ Tarafta) -->
+        <div class="relative">
+          <button onclick="toggleSettingsDropdown()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none">
+            <i class="fa-solid fa-gear text-lg"></i>
+          </button>
+
+          <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl">
+            <button onclick="openEditProfileModal(); toggleSettingsDropdown();" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+              <i class="fa-solid fa-user-pen text-cyan-500"></i> Profili Düzenle
+            </button>
+            <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
+              <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
+              <span id="themeText" class="text-[10px] text-slate-400">Karanlık</span>
+            </button>
+            <div class="border-t border-slate-200 dark:border-slate-800 my-1"></div>
+            <button onclick="handleLogout()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5 transition-all">
+              <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
+            </button>
           </div>
-
-        <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-64 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl">
-          <div class="px-3 py-2 border-b border-slate-200 dark:border-slate-800 mb-1"></div>
-          <button onclick="openEditProfileModal(); toggleSettingsDropdown();" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
-            <i class="fa-solid fa-user-pen text-cyan-500"></i> Profili Düzenle
-          </button>
-          <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
-            <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
-            <span id="themeText" class="text-[10px] text-slate-400">Karanlık</span>
-          </button>
-          <div class="border-t border-slate-200 dark:border-slate-800 my-1"></div>
-          <button onclick="handleLogout()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5 transition-all">
-            <i class="fa-solid fa-right-from-bracket"></i> Çıkış Yap
-          </button>
         </div>
       </div>
     </header>
@@ -289,7 +292,7 @@
     </div>
   </div>
 
-  <!-- PROFİL DÜZENLEME MODALI (Kayıtta Girilen Tüm Bilgileri Değiştirebilme Yetkisi) -->
+  <!-- PROFİL DÜZENLEME MODALI -->
   <div id="editProfileModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
@@ -307,7 +310,7 @@
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
 
-        <!-- Stajyer Kayıt Detayları (Eğer Kullanıcı Stajyer ise Görünür) -->
+        <!-- Stajyer Kayıt Detayları -->
         <div id="editProfileInternFields" class="hidden space-y-3 p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Sorumlu Mühendis</label>
@@ -885,23 +888,20 @@
       });
     }
 
-    // STAJYER DURUM VE İŞ YÜKÜ: Renklendirme ve Yoğunluğa Göre Sıralama (En Az Yoğundan En Çok Yoğuna)
+    // STAJYER DURUM VE İŞ YÜKÜ
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
       let interns = usersList.filter(u => u.role === 'INTERN');
 
-      // Her stajyer için aktif görev sayısını hesapla
       const internData = interns.map(intern => {
         const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'APPROVED');
         return { intern, activeCount: activeTasks.length };
       });
 
-      // En az yoğundan en çok yoğuna sırala (Artan sıra)
       internData.sort((a, b) => a.activeCount - b.activeCount);
 
       internData.forEach(({ intern, activeCount }) => {
-        // Yoğunluğa ve Kalan Staj Süresine Göre Renk Paleti Belirleme
         let cardStyle = "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
         let badgeStyle = "bg-emerald-500 text-white";
         let statusText = "Müsait / Düşük Yoğunluk";
@@ -916,7 +916,6 @@
           statusText = "Yüksek Yoğunluk";
         }
 
-        // Kalan Staj Süresi Hesaplama
         let remainingDaysText = "";
         if (intern.intern_end_date) {
           const remDays = calculateRemainingWorkDays(intern.intern_end_date);
@@ -1059,7 +1058,6 @@
             ${task.review_comment ? `<div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu: ${task.review_comment}</div>` : ''}
           </div>
 
-          <!-- GÖREVİ VEREN KİŞİ VE ATANAN KİŞİ BİLGİSİ -->
           <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
             <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
             <div><i class="fa-regular fa-user me-1"></i> Atanan Stajyer: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
@@ -1493,4 +1491,4 @@
     }
   </script>
 </body>
-</html> 
+</html>
