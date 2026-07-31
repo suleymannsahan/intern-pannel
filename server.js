@@ -411,7 +411,7 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
                     <!-- Action Button -->
                     <div style="text-align: center; margin-bottom: 12px;">
                       <a href="${appDashboardUrl}" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);">
-                        Paneli İncele ve Onayla
+                        Görevi İncele ve Onayla
                       </a>
                     </div>
 
