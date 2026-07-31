@@ -1150,23 +1150,42 @@
 
       // --- ÜST BANNER & BAŞLIK ---
       doc.setFillColor(15, 23, 42); // Koyu Lacivert (slate-900)
-      doc.rect(0, 0, 210, 35, 'F');
+      doc.rect(0, 0, 210, 38, 'F');
 
       doc.setTextColor(6, 182, 212); // Cyan Rengi
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(16);
+      doc.setFontSize(15);
       doc.text(fixTurkishChars("STAJ DEĞERLENDİRME VE İLERLEME RAPORU"), 14, 20);
 
       doc.setTextColor(203, 213, 225); // Açık gri
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
-      doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 27);
+      doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 28);
 
-      let yPos = 48;
+      // --- ŞİRKET LOGOSU EKLEME ---
+      // Paylaştığınız logo imajını doğrudan yükleyip sağ üst köşeye hizalıyoruz
+      const logoImg = new Image();
+      logoImg.src = 'Y_logo_2.png'; // Logoyu yüklediğiniz dosya yolu (veya base64 string)
+
+      logoImg.onload = function () {
+        // x: 175, y: 5, genislik: 20, yukseklik: 28 (oran korunacak sekilde ayarlandi)
+        doc.addImage(logoImg, 'PNG', 175, 5, 20, 28);
+        generatePDFContent(doc, intern, internTasks, internLogs);
+      };
+
+      // Eğer görsel yükleme hatası olursa veya local yolda problem yaşanırsa PDF yine de üretilsin:
+      logoImg.onerror = function () {
+        generatePDFContent(doc, intern, internTasks, internLogs);
+      };
+    }
+
+    // PDF'in geri kalan içerik yapısı
+    function generatePDFContent(doc, intern, internTasks, internLogs) {
+      let yPos = 50;
 
       // --- STAJYER BİLGİ KARTI ---
-      doc.setFillColor(248, 250, 252); // Çok açık gri arka plan
-      doc.setDrawColor(226, 232, 240); // İnce çerçeve
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
       doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
 
       doc.setTextColor(15, 23, 42);
@@ -1204,12 +1223,10 @@
         internTasks.forEach((t, i) => {
           if (yPos > 260) { doc.addPage(); yPos = 20; }
           
-          // Görev Maddesi
           doc.setFont("helvetica", "bold");
           doc.setTextColor(30, 41, 59);
           doc.text(fixTurkishChars(`${i + 1}. ${t.title}`), 16, yPos);
 
-          // Kategori & Durum Rozeti
           doc.setFont("helvetica", "normal");
           doc.setTextColor(100, 116, 139);
           const categoryText = fixTurkishChars(`[Kategori: ${t.category}]`);
@@ -1222,13 +1239,12 @@
           if (t.status === 'REVISION_REQUESTED') statusLabel = 'REVİZE İSTENİYOR';
 
           doc.setFont("helvetica", "bold");
-          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129); // Yeşil
-          else doc.setTextColor(245, 158, 11); // Turuncu
+          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129);
+          else doc.setTextColor(245, 158, 11);
 
           doc.text(fixTurkishChars(statusLabel), 165, yPos);
           yPos += 6;
 
-          // Açıklama varsa ekle
           if (t.description) {
             doc.setFont("helvetica", "italic");
             doc.setFontSize(8.5);
@@ -1279,7 +1295,7 @@
         });
       }
 
-      // SAYFA NUMARALARI VE ALT BİLGİ
+      // SAYFA NUMARALARI
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
