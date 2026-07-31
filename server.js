@@ -227,8 +227,10 @@ app.post('/api/tasks', async (req, res) => {
     // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
-        const companyLogoUrl = "https://ibb.co/B5ndbCHd/"; // Şirket logonuzun web linki
-        const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; // Panele giriş linkiniz
+        // NOT: Bağlantının sonu mutlaka .png / .jpg ile bitmelidir. 
+        // ImgBB'den sağ tıklayıp "Resim Adresini Kopyala" seçeneğiyle aldığınız linki buraya yerleştirin:
+        const companyLogoUrl = "https://i.ibb.co/xtFPW7KP/Y-logo.png"; 
+        const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; 
 
         await fetch('https://api.brevo.com/v3/smtp/email', {
           method: 'POST',
@@ -244,7 +246,6 @@ app.post('/api/tasks', async (req, res) => {
             },
             to: [{ email: intern.email, name: intern.name }],
             subject: `Yeni Görev Atandı: ${title}`,
-            // HAZIRLADIĞIMIZ TASARIM BURAYA GELECEK:
             htmlContent: `
               <!DOCTYPE html>
               <html lang="tr">
@@ -261,9 +262,9 @@ app.post('/api/tasks', async (req, res) => {
                         
                         <!-- ÜST HEADER / LOGO ALANI -->
                         <tr>
-                          <td align="center" style="background-color: #1e293b; padding: 30px 20px; border-bottom: 4px solid #dc2626;">
-                            <img src="${companyLogoUrl}" alt="Logo" style="max-height: 48px; width: auto; display: block; margin-bottom: 12px;" />
-                            <h1 style="color: #ffffff; font-size: 20px; font-weight: 600; margin: 0; letter-spacing: 0.5px;">GÖREV & TAKİP PANELI</h1>
+                          <td align="center" style="background-color: #1e293b; padding: 25px 20px; border-bottom: 4px solid #dc2626;">
+                            <img src="${companyLogoUrl}" alt="Logo" style="height: 45px; width: auto; display: block; margin: 0 auto 10px auto; outline: none; border: none; text-decoration: none;" />
+                            <h1 style="color: #ffffff; font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.5px;">GÖREV & TAKİP PANELİ</h1>
                           </td>
                         </tr>
 
@@ -511,7 +512,6 @@ app.put('/api/users/:id', async (req, res) => {
     const { name, email, role, startDate, endDate } = req.body;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    // Sadece LEADER ve ENGINEER yetkisine sahip kullanıcılar düzenleyebilir
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
@@ -541,7 +541,7 @@ app.put('/api/users/:id', async (req, res) => {
   }
 });
 
-// Doğrulama Kodu Gönderme Endpoint'i (Brevo Doğrudan REST API Entegrasyonu)
+// Doğrulama Kodu Gönderme Endpoint'i
 app.post('/api/send-verification-code', async (req, res) => {
   const { email } = req.body;
 
@@ -552,7 +552,6 @@ app.post('/api/send-verification-code', async (req, res) => {
   try {
     const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-    // Node.js 18+ dahili fetch API kullanımı
     const response = await fetch('https://api.brevo.com/v3/smtp/email', {
       method: 'POST',
       headers: {
