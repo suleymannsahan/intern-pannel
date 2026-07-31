@@ -203,10 +203,10 @@
 
             <select id="filterStatus" onchange="applyTaskFilters()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
               <option value="">Tüm Durumlar</option>
-              <option value="Devam Ediyor">Devam Ediyor</option>
-              <option value="Tamamlandı">Tamamlandı</option>
-              <option value="Onaylandı">Onaylandı</option>
-              <option value="Revize İstendi">Revize İstendi</option>
+              <option value="IN_PROGRESS">Devam Ediyor</option>
+              <option value="COMPLETED">Tamamlandı</option>
+              <option value="APPROVED">Onaylandı</option>
+              <option value="REVISION_REQUESTED">Revize İstendi</option>
             </select>
           </div>
         </div>
@@ -265,7 +265,7 @@
           <div id="taskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
-        <!--- GEÇMİŞ GÖREVLER --->
+        <!-- GEÇMİŞ GÖREVLER -->
         <section class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5">
           <h3 class="font-bold text-sm mb-4 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h3>
           <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
@@ -863,7 +863,7 @@
 
     function checkDailyLogWarning() {
       const todayStr = new Date().toISOString().split('T')[0];
-      const activeTasks = tasksList.filter(t => t.assigned_to === currentUser.id && t.status !== 'Onaylandı' && t.end_date >= todayStr);
+      const activeTasks = tasksList.filter(t => t.assigned_to === currentUser.id && t.status !== 'APPROVED' && t.end_date >= todayStr);
       if (activeTasks.length === 0) {
         document.getElementById('dailyWarningBanner').classList.add('hidden');
         return;
@@ -895,7 +895,7 @@
       let interns = usersList.filter(u => u.role === 'INTERN');
 
       const internData = interns.map(intern => {
-        const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'Onaylandı');
+        const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'APPROVED');
         return { intern, activeCount: activeTasks.length };
       });
 
@@ -987,8 +987,8 @@
         return matchesSearch && matchesCategory && matchesStatus;
       });
 
-      const activeTasks = filtered.filter(t => t.status !== 'Onaylandı' && t.status !== 'Tamamlandı');
-      const pastTasks = filtered.filter(t => t.status === 'Onaylandı' || t.status === 'Tamamlandı');
+      const activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
+      const pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
 
       const isManager = currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER';
 
@@ -1012,12 +1012,12 @@
       `).join('');
 
       let statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
-      if (task.status === 'Tamamlandı') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Stajyer Tamamladı (Onay Bekliyor)</span>`;
-      if (task.status === 'Onaylandı') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
-      if (task.status === 'Revize İstendi') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
+      if (task.status === 'COMPLETED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Stajyer Tamamladı (Onay Bekliyor)</span>`;
+      if (task.status === 'APPROVED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
+      if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
 
       let managerReviewButtons = '';
-      if (isManager && task.status === 'Tamamlandı') {
+      if (isManager && task.status === 'COMPLETED') {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
             <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md">
@@ -1031,13 +1031,13 @@
       }
 
       let internButtons = '';
-      if (currentUser.role === 'INTERN' && task.status !== 'Onaylandı') {
+      if (currentUser.role === 'INTERN' && task.status !== 'APPROVED') {
         internButtons = `
           <div class="flex gap-2 mt-2">
             <button onclick="openLogModal('${task.id}', '${task.title}')" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
               <i class="fa-solid fa-pen me-1"></i> Not / İlerleme Ekle
             </button>
-            ${task.status !== 'Tamamlandı' ? `
+            ${task.status !== 'COMPLETED' ? `
               <button onclick="completeTask(${task.id})" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all">
                 <i class="fa-solid fa-check me-1"></i> Görevi Tamamla
               </button>
@@ -1079,7 +1079,7 @@
     }
 
     async function completeTask(taskId) {
-      if (!confirm('Görevi Tamamlandı olarak işaretlemek istediğinize emin misiniz?')) return;
+      if (!confirm('Görevi COMPLETED olarak işaretlemek istediğinize emin misiniz?')) return;
       try {
         const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/complete`, { method: 'PUT' });
         if (response.ok) {
@@ -1155,8 +1155,8 @@
       const internTasks = tasksList.filter(t => t.assigned_to == intern.id);
       const internLogs = dailyLogsList.filter(l => l.intern_id == intern.id);
 
-      const completedCount = internTasks.filter(t => t.status === 'Onaylandı' || t.status === 'Tamamlandı').length;
-      const inProgressCount = internTasks.filter(t => t.status === 'Devam Ediyor' || t.status === 'Revize İstendi').length;
+      const completedCount = internTasks.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED').length;
+      const inProgressCount = internTasks.filter(t => t.status === 'IN_PROGRESS' || t.status === 'REVISION_REQUESTED').length;
 
       document.getElementById('logFrequencyText').innerText = internLogs.length;
 
@@ -1190,7 +1190,7 @@
                 <div class="font-bold text-slate-800 dark:text-slate-200">${task.title}</div>
                 <div class="text-slate-500 text-[11px]">${task.category} - Veren: ${task.created_by || 'Sistem'} - Son Teslim: ${task.end_date}</div>
               </div>
-              <span class="px-2 py-1 rounded-md text-[10px] font-bold ${task.status === 'Onaylandı' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${task.status}</span>
+              <span class="px-2 py-1 rounded-md text-[10px] font-bold ${task.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${task.status}</span>
             </div>
           `;
         });
@@ -1310,13 +1310,13 @@
           doc.text(fixTurkishChars(`[Kategori: ${t.category} | Veren: ${t.created_by || 'Sistem'}]`), 110, yPos);
 
           let statusLabel = t.status;
-          if (t.status === 'Tamamlandı') statusLabel = 'TAMAMLANDI';
-          if (t.status === 'Onaylandı') statusLabel = 'ONAYLANDI';
-          if (t.status === 'Devam Ediyor') statusLabel = 'DEVAM EDİYOR';
-          if (t.status === 'Revize İstendi') statusLabel = 'REVİZE İSTENİYOR';
+          if (t.status === 'COMPLETED') statusLabel = 'TAMAMLANDI';
+          if (t.status === 'APPROVED') statusLabel = 'ONAYLANDI';
+          if (t.status === 'IN_PROGRESS') statusLabel = 'DEVAM EDİYOR';
+          if (t.status === 'REVISION_REQUESTED') statusLabel = 'REVİZE İSTENİYOR';
 
           doc.setFont("helvetica", "bold");
-          if (t.status === 'Onaylandı' || t.status === 'Tamamlandı') doc.setTextColor(16, 185, 129);
+          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129);
           else doc.setTextColor(245, 158, 11);
 
           doc.text(fixTurkishChars(statusLabel), 165, yPos);
