@@ -311,8 +311,8 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
               to: [{ email: creator.email, name: creator.name }],
               subject: `Görev Tamamlandı: ${task.title}`,
               htmlContent: `
-                <div style="background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; color: #0f172a;">
-                  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+                <div style="background-color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; color: #0f172a;">
+                  <div style="max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
                     
                     <!-- Header & Logo -->
                     <div style="text-align: center; margin-bottom: 28px;">
