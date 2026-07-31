@@ -379,6 +379,39 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
   }
 });
 
+// Görev Onaylama / Revize Etme Endpoint'i (Eksik Olan Rota)
+app.put('/api/tasks/:id/review', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { action, comment, userRole } = req.body;
+
+    // Yetki Kontrolü
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz bulunmamaktadır.' });
+    }
+
+    let newStatus = 'APPROVED';
+    if (action === 'REVISION' || action === 'REVISION_REQUESTED') {
+      newStatus = 'REVISION_REQUESTED';
+    }
+
+    // Görev durumunu ve revize notunu veritabanında güncelle
+    const result = await db.execute({
+      sql: `UPDATE tasks SET status = ?, review_comment = ? WHERE id = ?`,
+      args: [newStatus, comment || '', taskId]
+    });
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Görev bulunamadı.' });
+    }
+
+    res.json({ message: action === 'APPROVE' ? 'Görev onaylandı.' : 'Revize talebi iletildi.' });
+  } catch (error) {
+    console.error('Görev inceleme hatası:', error);
+    res.status(500).json({ error: 'Görev durumu güncellenirken hata oluştu: ' + error.message });
+  }
+});
+
 // Geliştirme 2: Yeni Görev Oluşturma & Brevo ile Stajyere Mail Bildirimi
 app.post('/api/tasks', async (req, res) => {
   try {
