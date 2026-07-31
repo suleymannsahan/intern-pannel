@@ -43,16 +43,13 @@ async function initDb() {
         work_days INTEGER NOT NULL,
         created_by TEXT NOT NULL,
         status TEXT DEFAULT 'IN_PROGRESS',
+        review_comment TEXT,
         FOREIGN KEY(assigned_to) REFERENCES users(id)
       )
     `);
 
-    // Eğer tablo önceden 'description' olmadan oluşturulduysa sütunu ekler
-    try {
-      await db.execute(`ALTER TABLE tasks ADD COLUMN description TEXT`);
-    } catch (e) {
-      // Sütun zaten varsa hata verir, bunu yok sayabiliriz
-    }
+    try { await db.execute(`ALTER TABLE tasks ADD COLUMN description TEXT`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE tasks ADD COLUMN review_comment TEXT`); } catch (e) {}
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS daily_logs (
@@ -155,7 +152,7 @@ app.put('/api/users/profile', async (req, res) => {
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ?, password = ? WHERE id = ?`,
+        sql: `UPDATE users SET name = ?, email = ? , password = ? WHERE id = ?`,
         args: [name, email, hashedPassword, userId]
       });
     } else {
@@ -205,18 +202,16 @@ app.put('/api/users/:id/intern-dates', async (req, res) => {
   }
 });
 
-// Görev Oluşturma ve Stajyere E-Posta Bildirimi Endpoint'i
+// Görev Oluşturma
 app.post('/api/tasks', async (req, res) => {
   try {
     const { title, description, assignedTo, category, endDate, workDays, createdBy } = req.body;
 
-    // 1. Görevi veritabanına ekle
     const result = await db.execute({
       sql: `INSERT INTO tasks (title, description, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
       args: [title, description || '', assignedTo, category, endDate, workDays, createdBy]
     });
 
-    // 2. Atanan stajyerin e-posta ve ad bilgilerini sorgula
     const userResult = await db.execute({
       sql: `SELECT name, email FROM users WHERE id = ?`,
       args: [assignedTo]
@@ -224,7 +219,6 @@ app.post('/api/tasks', async (req, res) => {
 
     const intern = userResult.rows[0];
 
-    // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
         const companyLogoUrl = "https://i.ibb.co/xtFPW7KP/Y-logo.png"; 
@@ -238,115 +232,10 @@ app.post('/api/tasks', async (req, res) => {
             'content-type': 'application/json'
           },
           body: JSON.stringify({
-            sender: { 
-              name: "Görev & Takip Sistemi", 
-              email: "semresahann@gmail.com" 
-            },
+            sender: { name: "Görev & Takip Sistemi", email: "semresahann@gmail.com" },
             to: [{ email: intern.email, name: intern.name }],
             subject: `Yeni Görev Atandı: ${title}`,
-            htmlContent: `
-              <!DOCTYPE html>
-              <html lang="tr">
-              <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Yeni Görev Atandı</title>
-              </head>
-              <body style="margin: 0; padding: 0; background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; -webkit-font-smoothing: antialiased;">
-                <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f4f6f9; padding: 40px 10px;">
-                  <tr>
-                    <td align="center">
-                      <table border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);">
-                        
-                        <!-- ÜST HEADER / LOGO ALANI -->
-                        <tr>
-                          <td align="center" style="background-color: #1e293b; padding: 25px 20px; border-bottom: 4px solid #dc2626;">
-                            <img src="${companyLogoUrl}" alt="Logo" style="height: 75px; width: auto; display: block; margin: 0 auto 10px auto; outline: none; border: none; text-decoration: none;" />
-                            <h1 style="color: #ffffff; font-size: 18px; font-weight: 600; margin: 0; letter-spacing: 0.5px;">GÖREV & TAKİP PANELİ</h1>
-                          </td>
-                        </tr>
-
-                        <!-- BİLGİLENDİRME BAŞLIĞI -->
-                        <tr>
-                          <td style="padding: 30px 30px 15px 30px;">
-                            <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; margin: 0 0 8px 0;">Merhaba ${intern.name},</h2>
-                            <p style="color: #475569; font-size: 15px; margin: 0; line-height: 1.5;">
-                              <strong style="color: #0f172a;">${createdBy}</strong> tarafından hesabınıza yeni bir görev tanımlandı.
-                            </p>
-                          </td>
-                        </tr>
-
-                        <!-- GÖREV DETAY KARTLARI -->
-                        <tr>
-                          <td style="padding: 0 30px 20px 30px;">
-                            <table border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 20px;">
-                              
-                              <tr>
-                                <td style="padding-bottom: 12px;">
-                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Görev Başlığı</span>
-                                  <div style="font-size: 16px; font-weight: 700; color: #1e293b; margin-top: 2px;">${title}</div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td style="padding-bottom: 12px;">
-                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Kategori</span>
-                                  <div style="margin-top: 4px;">
-                                    <span style="display: inline-block; background-color: #fee2e2; color: #dc2626; font-size: 13px; font-weight: 600; padding: 4px 10px; border-radius: 6px;">
-                                      ${category}
-                                    </span>
-                                  </div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td style="padding-bottom: 12px;">
-                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Açıklama</span>
-                                  <div style="font-size: 14px; color: #334155; margin-top: 2px; line-height: 1.5;">
-                                    ${description || 'Açıklama belirtilmedi.'}
-                                  </div>
-                                </td>
-                              </tr>
-
-                              <tr>
-                                <td>
-                                  <span style="font-size: 12px; font-weight: 600; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Son Teslim Tarihi</span>
-                                  <div style="font-size: 14px; font-weight: 600; color: #0f172a; margin-top: 2px;">
-                                    📅 ${endDate} <span style="font-size: 12px; font-weight: normal; color: #64748b;">(${workDays} iş günü)</span>
-                                  </div>
-                                </td>
-                              </tr>
-
-                            </table>
-                          </td>
-                        </tr>
-
-                        <!-- EYLEM BUTONU (CTA) -->
-                        <tr>
-                          <td align="center" style="padding: 0 30px 30px 30px;">
-                            <a href="${appDashboardUrl}" target="_blank" style="display: inline-block; background-color: #dc2626; color: #ffffff; text-decoration: none; font-size: 15px; font-weight: 600; padding: 12px 28px; border-radius: 8px; box-shadow: 0 2px 6px rgba(220, 38, 38, 0.25);">
-                              Görev Detayına Git & Panele Giriş Yap
-                            </a>
-                          </td>
-                        </tr>
-
-                        <!-- FOOTER -->
-                        <tr>
-                          <td style="background-color: #f8fafc; padding: 20px 30px; border-top: 1px solid #e2e8f0; text-align: center;">
-                            <p style="color: #94a3b8; font-size: 12px; margin: 0; line-height: 1.4;">
-                              Bu e-posta Görev & Takip Sistemi tarafından otomatik olarak gönderilmiştir.<br>
-                              Lütfen bu e-postaya doğrudan yanıt vermeyiniz.
-                            </p>
-                          </td>
-                        </tr>
-
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </body>
-              </html>
-            `
+            htmlContent: `<p>Merhaba ${intern.name}, ${createdBy} tarafından tarafınıza yeni bir görev atandı: <strong>${title}</strong></p>`
           })
         });
       } catch (mailErr) {
@@ -379,7 +268,7 @@ app.get('/api/tasks', async (req, res) => {
   }
 });
 
-// Görevi Tamamlama Endpoint'i
+// Geliştirme 1: Görevi Tamamlama & Brevo ile Ekip Liderine Mail Bildirimi
 app.put('/api/tasks/:id/complete', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -389,9 +278,78 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
     });
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
-    res.json({ message: 'Görev başarıyla tamamlandı olarak işaretlendi.' });
+
+    // Görev ve stajyer/lider detaylarını çek
+    const taskRes = await db.execute({
+      sql: `SELECT tasks.*, users.name as intern_name FROM tasks JOIN users ON tasks.assigned_to = users.id WHERE tasks.id = ?`,
+      args: [taskId]
+    });
+    const task = taskRes.rows[0];
+
+    if (task) {
+      // Görevi oluşturan lider/mühendisin mailini bul
+      const creatorRes = await db.execute({
+        sql: `SELECT email, name FROM users WHERE name = ?`,
+        args: [task.created_by]
+      });
+      const creator = creatorRes.rows[0];
+
+      if (creator && creator.email) {
+        try {
+          await fetch('https://api.brevo.com/v3/smtp/email', {
+            method: 'POST',
+            headers: {
+              'accept': 'application/json',
+              'api-key': process.env.BREVO_API_KEY,
+              'content-type': 'application/json'
+            },
+            body: JSON.stringify({
+              sender: { name: "Görev & Takip Sistemi", email: "semresahann@gmail.com" },
+              to: [{ email: creator.email, name: creator.name }],
+              subject: `Görev Tamamlandı: ${task.title}`,
+              htmlContent: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; background: #f4f6f9;">
+                  <h2 style="color: #0f172a;">Görev Tamamlandı Bildirimi</h2>
+                  <p><strong>${task.intern_name}</strong> adlı stajyer, <strong>${task.title}</strong> başlıklı görevi tamamlandı olarak işaretledi.</p>
+                  <p>Paneli ziyaret ederek görevi inceleyebilir ve onaylayabilirsiniz.</p>
+                </div>
+              `
+            })
+          });
+        } catch (mailErr) {
+          console.error('Tamamlama maili hatası:', mailErr);
+        }
+      }
+    }
+
+    res.json({ message: 'Görev tamamlandı olarak işaretlendi ve bildirim e-postası gönderildi.' });
   } catch (error) {
     res.status(500).json({ error: 'Görev durumu güncellenemedi: ' + error.message });
+  }
+});
+
+// Geliştirme 2: Görev İnceleme & Onay/Revize Mekanizması
+app.put('/api/tasks/:id/review', async (req, res) => {
+  try {
+    const taskId = req.params.id;
+    const { action, comment, userRole } = req.body; // action: 'APPROVE' or 'REVISE'
+
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+
+    const newStatus = action === 'APPROVE' ? 'APPROVED' : 'REVISION_REQUESTED';
+
+    const result = await db.execute({
+      sql: `UPDATE tasks SET status = ?, review_comment = ? WHERE id = ?`,
+      args: [newStatus, comment || null, taskId]
+    });
+
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
+
+    res.json({ message: action === 'APPROVE' ? 'Görev onaylandı.' : 'Görev revizeye gönderildi.', status: newStatus });
+  } catch (error) {
+    res.status(500).json({ error: 'Onay/Revize işlemi gerçekleştirilemedi: ' + error.message });
   }
 });
 
@@ -558,10 +516,7 @@ app.post('/api/send-verification-code', async (req, res) => {
         'content-type': 'application/json'
       },
       body: JSON.stringify({
-        sender: { 
-          name: "Ekip Portali", 
-          email: "semresahann@gmail.com" 
-        },
+        sender: { name: "Ekip Portali", email: "semresahann@gmail.com" },
         to: [{ email: email }],
         subject: "Ekip Lideri Doğrulama Kodu",
         htmlContent: `<p>Ekip Lideri kayıt doğrulama kodunuz: <strong>${verificationCode}</strong></p>`
