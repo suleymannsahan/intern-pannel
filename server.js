@@ -279,7 +279,7 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
 
-    // Görev ve stajyer/lider detaylarını çek
+    // Görev ve stajyer detaylarını çek
     const taskRes = await db.execute({
       sql: `SELECT tasks.*, users.name as intern_name FROM tasks JOIN users ON tasks.assigned_to = users.id WHERE tasks.id = ?`,
       args: [taskId]
@@ -296,6 +296,9 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
 
       if (creator && creator.email) {
         try {
+          const companyLogoUrl = "https://i.ibb.co/xtFPW7KP/Y-logo.png";
+          const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/";
+
           await fetch('https://api.brevo.com/v3/smtp/email', {
             method: 'POST',
             headers: {
@@ -308,10 +311,58 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
               to: [{ email: creator.email, name: creator.name }],
               subject: `Görev Tamamlandı: ${task.title}`,
               htmlContent: `
-                <div style="font-family: Arial, sans-serif; padding: 20px; background: #f4f6f9;">
-                  <h2 style="color: #0f172a;">Görev Tamamlandı Bildirimi</h2>
-                  <p><strong>${task.intern_name}</strong> adlı stajyer, <strong>${task.title}</strong> başlıklı görevi tamamlandı olarak işaretledi.</p>
-                  <p>Paneli ziyaret ederek görevi inceleyebilir ve onaylayabilirsiniz.</p>
+                <div style="background-color: #0f172a; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; color: #f8fafc;">
+                  <div style="max-width: 600px; margin: 0 auto; background-color: #1e293b; border-radius: 16px; border: 1px solid #334155; padding: 32px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);">
+                    
+                    <!-- Header & Logo -->
+                    <div style="text-align: center; margin-bottom: 28px;">
+                      <img src="${companyLogoUrl}" alt="Logo" style="height: 48px; width: auto; margin-bottom: 12px;" />
+                      <h2 style="color: #38bdf8; margin: 0; font-size: 20px; font-weight: 700; tracking-tight;">Görev Tamamlandı Bildirimi</h2>
+                    </div>
+
+                    <!-- Main Content -->
+                    <p style="font-size: 15px; line-height: 1.6; color: #cbd5e1; margin-bottom: 20px;">
+                      Merhaba <strong style="color: #ffffff;">${creator.name}</strong>,
+                    </p>
+                    <p style="font-size: 15px; line-height: 1.6; color: #cbd5e1; margin-bottom: 24px;">
+                      <strong style="color: #38bdf8;">${task.intern_name}</strong> isimli stajyer kendisine atanan görevi tamamlandı olarak işaretledi. Detaylar aşağıda yer almaktadır:
+                    </p>
+
+                    <!-- Details Card -->
+                    <div style="background-color: #0f172a; border-radius: 12px; border: 1px solid #334155; padding: 20px; margin-bottom: 28px;">
+                      <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                        <tr>
+                          <td style="padding: 6px 0; color: #94a3b8; width: 120px;">Görev Başlığı:</td>
+                          <td style="padding: 6px 0; color: #ffffff; font-weight: 600;">${task.title}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 6px 0; color: #94a3b8;">Kategori:</td>
+                          <td style="padding: 6px 0; color: #ffffff;">${task.category}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 6px 0; color: #94a3b8;">Tamamlayan:</td>
+                          <td style="padding: 6px 0; color: #38bdf8; font-weight: 600;">${task.intern_name}</td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 6px 0; color: #94a3b8;">Açıklama:</td>
+                          <td style="padding: 6px 0; color: #cbd5e1;">${task.description || 'Açıklama bulunmuyor.'}</td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Action Button -->
+                    <div style="text-align: center; margin-bottom: 12px;">
+                      <a href="${appDashboardUrl}" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);">
+                        Paneli İncele ve Onayla
+                      </a>
+                    </div>
+
+                  </div>
+                  
+                  <!-- Footer -->
+                  <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #64748b;">
+                    <p style="margin: 0;">Bu e-posta Görev & Takip Sistemi tarafından otomatik olarak gönderilmiştir.</p>
+                  </div>
                 </div>
               `
             })
