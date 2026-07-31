@@ -47,6 +47,13 @@ async function initDb() {
       )
     `);
 
+    // Eğer tablo önceden 'description' olmadan oluşturulduysa sütunu ekler
+    try {
+      await db.execute(`ALTER TABLE tasks ADD COLUMN description TEXT`);
+    } catch (e) {
+      // Sütun zaten varsa hata verir, bunu yok sayabiliriz
+    }
+
     await db.execute(`
       CREATE TABLE IF NOT EXISTS daily_logs (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -198,16 +205,64 @@ app.put('/api/users/:id/intern-dates', async (req, res) => {
   }
 });
 
-// Görev Oluşturma Endpoint'i
+// Görev Oluşturma ve Stajyere E-Posta Bildirimi Endpoint'i
 app.post('/api/tasks', async (req, res) => {
   try {
     const { title, description, assignedTo, category, endDate, workDays, createdBy } = req.body;
+
+    // 1. Görevi veritabanına ekle
     const result = await db.execute({
       sql: `INSERT INTO tasks (title, description, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
       args: [title, description || '', assignedTo, category, endDate, workDays, createdBy]
     });
 
-    res.json({ id: Number(result.lastInsertRowid) });
+    // 2. Atanan stajyerin e-posta ve ad bilgilerini sorgula
+    const userResult = await db.execute({
+      sql: `SELECT name, email FROM users WHERE id = ?`,
+      args: [assignedTo]
+    });
+
+    const intern = userResult.rows[0];
+
+    // 3. Stajyer bulunduysa bildirim maili gönder
+    if (intern && intern.email) {
+      try {
+        await fetch('https://api.brevo.com/v3/smtp/email', {
+          method: 'POST',
+          headers: {
+            'accept': 'application/json',
+            'api-key': process.env.BREVO_API_KEY,
+            'content-type': 'application/json'
+          },
+          body: JSON.stringify({
+            sender: { 
+              name: "Görev Takip Sistemi", 
+              email: "semresahann@gmail.com" 
+            },
+            to: [{ email: intern.email, name: intern.name }],
+            subject: `Yeni Görev Atandı: ${title}`,
+            htmlContent: `
+              <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                <h2>Merhaba ${intern.name},</h2>
+                <p><strong>${createdBy}</strong> tarafından size yeni bir görev atandı.</p>
+                <hr style="border: 0; border-top: 1px solid #ccc;" />
+                <p><strong>Görev Başlığı:</strong> ${title}</p>
+                <p><strong>Kategori:</strong> ${category}</p>
+                <p><strong>Açıklama:</strong> ${description || 'Açıklama belirtilmedi.'}</p>
+                <p><strong>Son Teslim Tarihi:</strong> ${endDate} (${workDays} iş günü)</p>
+                <hr style="border: 0; border-top: 1px solid #ccc;" />
+                <p>Detayları incelemek ve günlük notlarınızı girmek için panele giriş yapabilirsiniz.</p>
+              </div>
+            `
+          })
+        });
+      } catch (mailErr) {
+        console.error('Görev maili gönderilirken hata oluştu:', mailErr);
+        // Mail hatası oluşsa bile görevin oluşturulmasını engellemiyoruz
+      }
+    }
+
+    res.json({ id: Number(result.lastInsertRowid), message: "Görev oluşturuldu ve e-posta bildirimi gönderildi." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
