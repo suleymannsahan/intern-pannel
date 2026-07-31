@@ -227,9 +227,7 @@ app.post('/api/tasks', async (req, res) => {
     // 3. Stajyer bulunduysa şık HTML mailini gönder
     if (intern && intern.email) {
       try {
-        // NOT: Bağlantının sonu mutlaka .png / .jpg ile bitmelidir. 
-        // ImgBB'den sağ tıklayıp "Resim Adresini Kopyala" seçeneğiyle aldığınız linki buraya yerleştirin:
-        const companyLogoUrl = "https://i.ibb.co/xtFPW7KP/Y-logo.png"; 
+        const companyLogoUrl = "https://i.ibb.co/YTZmFXhz/beyes-logo.png"; 
         const appDashboardUrl = "https://intern-tasks-pannel.onrender.com/"; 
 
         await fetch('https://api.brevo.com/v3/smtp/email', {
