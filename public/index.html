@@ -1055,6 +1055,7 @@
       const internLogs = dailyLogsList.filter(l => l.intern_id == intern.id);
 
       // Üst Başlık ve PDF İndirme Butonu
+      // openInternProfileModal fonksiyonunun içindeki başlık kısmı:
       document.getElementById('internModalHeader').innerHTML = `
         <div class="flex items-center gap-3">
           <div class="w-12 h-12 rounded-2xl bg-cyan-500/20 text-cyan-500 flex items-center justify-center text-xl font-bold border border-cyan-500/30">
@@ -1065,7 +1066,8 @@
             <p class="text-xs text-slate-500 dark:text-slate-400">${intern.email} • <span class="text-cyan-500 font-semibold">Stajyer Paneli</span></p>
           </div>
         </div>
-        <button onclick="exportInternPDF('${intern.id}')" class="bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs px-4 py-2 rounded-xl transition-all shadow-md flex items-center gap-2">
+        <!-- mr-6 ve mr-8 sınıfları ile buton sağ kenardan sola doğru kaydırıldı -->
+        <button onclick="exportInternPDF('${intern.id}')" class="mr-6 sm:mr-8 bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-2">
           <i class="fa-solid fa-file-pdf text-sm"></i> Staj Sonu PDF Raporu İndir
         </button>
       `;
@@ -1124,6 +1126,18 @@
     }
 
     // Geliştirme 4: jsPDF İle Staj Sonu PDF Raporu Oluşturucu
+    // Türkçe karakterleri jsPDF standart fontlarının desteklediği biçime dönüştüren yardımcı fonksiyon
+    function fixTurkishChars(text) {
+      if (!text) return '';
+      return text
+        .replace(/Ğ/g, 'G').replace(/ğ/g, 'g')
+        .replace(/Ü/g, 'U').replace(/ü/g, 'u')
+        .replace(/Ş/g, 'S').replace(/ş/g, 's')
+        .replace(/İ/g, 'I').replace(/ı/g, 'i')
+        .replace(/Ö/g, 'O').replace(/ö/g, 'o')
+        .replace(/Ç/g, 'C').replace(/ç/g, 'c');
+    }
+
     function exportInternPDF(internId) {
       const intern = usersList.find(u => u.id == internId);
       if (!intern) return;
@@ -1134,59 +1148,148 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      doc.setFontSize(18);
-      doc.text("STAJ DEĞERLENDİRME VE GEÇMİŞ RAPORU", 14, 20);
+      // --- ÜST BANNER & BAŞLIK ---
+      doc.setFillColor(15, 23, 42); // Koyu Lacivert (slate-900)
+      doc.rect(0, 0, 210, 35, 'F');
 
+      doc.setTextColor(6, 182, 212); // Cyan Rengi
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.text(fixTurkishChars("STAJ DEĞERLENDİRME VE İLERLEME RAPORU"), 14, 20);
+
+      doc.setTextColor(203, 213, 225); // Açık gri
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 27);
+
+      let yPos = 48;
+
+      // --- STAJYER BİLGİ KARTI ---
+      doc.setFillColor(248, 250, 252); // Çok açık gri arka plan
+      doc.setDrawColor(226, 232, 240); // İnce çerçeve
+      doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
+
+      doc.setTextColor(15, 23, 42);
       doc.setFontSize(11);
-      doc.text(`Stajyer Adı: ${intern.name}`, 14, 32);
-      doc.text(`E-Posta: ${intern.email}`, 14, 38);
-      doc.text(`Staj Başlangıç: ${intern.intern_start_date || 'Belirtilmedi'}`, 14, 44);
-      doc.text(`Staj Bitiş: ${intern.intern_end_date || 'Belirtilmedi'}`, 14, 50);
+      doc.setFont("helvetica", "bold");
+      doc.text(fixTurkishChars(`Stajyer: ${intern.name}`), 18, yPos + 10);
 
-      doc.line(14, 55, 196, 55);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text(fixTurkishChars(`E-Posta: ${intern.email}`), 18, yPos + 18);
+      doc.text(fixTurkishChars(`Staj Dönemi: ${intern.intern_start_date || 'Belirtilmedi'} / ${intern.intern_end_date || 'Belirtilmedi'}`), 18, yPos + 25);
 
-      doc.setFontSize(14);
-      doc.text("Tamamlanan ve Atanan Görevler", 14, 65);
+      yPos += 42;
 
-      let yPos = 75;
-      doc.setFontSize(10);
+      // --- GÖREV ÖZETİ SEKSİYONU ---
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(fixTurkishChars("1. Atanan Görevler ve Durumları"), 14, yPos);
+      
+      doc.setDrawColor(6, 182, 212);
+      doc.setLineWidth(0.8);
+      doc.line(14, yPos + 2, 196, yPos + 2);
+      
+      yPos += 10;
+      doc.setFontSize(9);
 
       if (internTasks.length === 0) {
-        doc.text("Kayıtlı görev bulunmamaktadır.", 14, yPos);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(148, 163, 184);
+        doc.text(fixTurkishChars("Kayıtlı görev bulunmamaktadır."), 14, yPos);
+        yPos += 10;
       } else {
         internTasks.forEach((t, i) => {
-          if (yPos > 270) { doc.addPage(); yPos = 20; }
-          doc.text(`${i + 1}. ${t.title} [Kategori: ${t.category}] - Durum: ${t.status}`, 14, yPos);
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
+          
+          // Görev Maddesi
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(fixTurkishChars(`${i + 1}. ${t.title}`), 16, yPos);
+
+          // Kategori & Durum Rozeti
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          const categoryText = fixTurkishChars(`[Kategori: ${t.category}]`);
+          doc.text(categoryText, 120, yPos);
+
+          let statusLabel = t.status;
+          if (t.status === 'COMPLETED') statusLabel = 'TAMAMLANDI';
+          if (t.status === 'APPROVED') statusLabel = 'ONAYLANDI';
+          if (t.status === 'IN_PROGRESS') statusLabel = 'DEVAM EDİYOR';
+          if (t.status === 'REVISION_REQUESTED') statusLabel = 'REVİZE İSTENİYOR';
+
+          doc.setFont("helvetica", "bold");
+          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129); // Yeşil
+          else doc.setTextColor(245, 158, 11); // Turuncu
+
+          doc.text(fixTurkishChars(statusLabel), 165, yPos);
           yPos += 6;
+
+          // Açıklama varsa ekle
           if (t.description) {
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8.5);
+            doc.setTextColor(100, 116, 139);
+            const splitDesc = doc.splitTextToSize(fixTurkishChars(`Açıklama: ${t.description}`), 170);
+            doc.text(splitDesc, 20, yPos);
+            yPos += (splitDesc.length * 4) + 2;
             doc.setFontSize(9);
-            doc.text(`   Açıklama: ${t.description}`, 14, yPos);
-            doc.setFontSize(10);
-            yPos += 6;
           }
-          yPos += 2;
+          yPos += 3;
         });
       }
 
-      yPos += 10;
-      if (yPos > 270) { doc.addPage(); yPos = 20; }
+      yPos += 6;
+      if (yPos > 250) { doc.addPage(); yPos = 20; }
 
-      doc.setFontSize(14);
-      doc.text("Günlük Çalışma Logları", 14, yPos);
+      // --- GÜNLÜK ÇALIŞMA LOGLARI SEKSİYONU ---
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(fixTurkishChars("2. Günlük Çalışma Notları"), 14, yPos);
+      
+      doc.setLineWidth(0.8);
+      doc.line(14, yPos + 2, 196, yPos + 2);
+      
       yPos += 10;
-      doc.setFontSize(10);
+      doc.setFontSize(9);
 
       if (internLogs.length === 0) {
-        doc.text("Kayıtlı günlük not bulunmamaktadır.", 14, yPos);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(148, 163, 184);
+        doc.text(fixTurkishChars("Kayıtlı günlük not bulunmamaktadır."), 14, yPos);
       } else {
-        internLogs.forEach((l, i) => {
-          if (yPos > 270) { doc.addPage(); yPos = 20; }
-          doc.text(`• [${l.log_date}] Not: ${l.note}`, 14, yPos);
-          yPos += 8;
+        internLogs.forEach((l) => {
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
+
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(6, 182, 212);
+          doc.text(fixTurkishChars(`• [${l.log_date}]`), 16, yPos);
+
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(51, 65, 85);
+
+          const splitNote = doc.splitTextToSize(fixTurkishChars(l.note), 150);
+          doc.text(splitNote, 42, yPos);
+
+          yPos += (splitNote.length * 4.5) + 4;
         });
       }
 
-      doc.save(`Staj_Raporu_${intern.name.replace(/\s+/g, '_')}.pdf`);
+      // SAYFA NUMARALARI VE ALT BİLGİ
+      const pageCount = doc.internal.getNumberOfPages();
+      for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.setTextColor(148, 163, 184);
+        doc.text(fixTurkishChars(`Sayfa ${i} / ${pageCount}`), 105, 290, { align: "center" });
+      }
+
+      doc.save(`Staj_Raporu_${fixTurkishChars(intern.name).replace(/\s+/g, '_')}.pdf`);
     }
 
     async function deleteTask(taskId) {
