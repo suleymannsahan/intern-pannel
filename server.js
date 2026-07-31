@@ -235,7 +235,65 @@ app.post('/api/tasks', async (req, res) => {
             sender: { name: "Görev & Takip Sistemi", email: "semresahann@gmail.com" },
             to: [{ email: intern.email, name: intern.name }],
             subject: `Yeni Görev Atandı: ${title}`,
-            htmlContent: `<p>Merhaba ${intern.name}, ${createdBy} tarafından tarafınıza yeni bir görev atandı: <strong>${title}</strong></p>`
+            htmlContent: `
+              <div style="background-color: #ffffff; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 40px 20px; color: #0f172a;">
+                <div style="max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #e2e8f0; padding: 32px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);">
+                  
+                  <!-- Header & Logo -->
+                  <div style="text-align: center; margin-bottom: 28px;">
+                    <img src="${companyLogoUrl}" alt="Logo" style="height: 48px; width: auto; margin-bottom: 12px;" />
+                    <h2 style="color: #0284c7; margin: 0; font-size: 20px; font-weight: 700;">Yeni Görev Bildirimi</h2>
+                  </div>
+
+                  <!-- Main Content -->
+                  <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 20px;">
+                    Merhaba <strong style="color: #38bdf8;">${intern.name}</strong>,
+                  </p>
+                  <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 24px;">
+                    <strong style="color: #0284c7;">${createdBy}</strong> tarafından tarafınıza yeni bir görev atandı. Detaylar aşağıda yer almaktadır:
+                  </p>
+
+                  <!-- Details Card (Koyu Bilgi Alanı) -->
+                  <div style="background-color: #1e293b; border-radius: 12px; border: 1px solid #334155; padding: 20px; margin-bottom: 28px;">
+                    <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                      <tr>
+                        <td style="padding: 6px 0; color: #94a3b8; width: 120px;">Görev Başlığı:</td>
+                        <td style="padding: 6px 0; color: #ffffff; font-weight: 600;">${title}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #94a3b8;">Kategori:</td>
+                        <td style="padding: 6px 0; color: #ffffff;">${category}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #94a3b8;">Son Teslim:</td>
+                        <td style="padding: 6px 0; color: #38bdf8; font-weight: 600;">${endDate} (${workDays} İş Günü)</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #94a3b8;">Atayan Lider:</td>
+                        <td style="padding: 6px 0; color: #ffffff;">${createdBy}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding: 6px 0; color: #94a3b8;">Açıklama:</td>
+                        <td style="padding: 6px 0; color: #cbd5e1;">${description || 'Açıklama bulunmuyor.'}</td>
+                      </tr>
+                    </table>
+                  </div>
+
+                  <!-- Action Button -->
+                  <div style="text-align: center; margin-bottom: 12px;">
+                    <a href="${appDashboardUrl}" style="background: linear-gradient(135deg, #0284c7 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; font-weight: 700; font-size: 14px; padding: 12px 28px; border-radius: 10px; display: inline-block; box-shadow: 0 4px 12px rgba(6, 182, 212, 0.25);">
+                      Görevi İncele
+                    </a>
+                  </div>
+
+                </div>
+                
+                <!-- Footer -->
+                <div style="text-align: center; margin-top: 20px; font-size: 12px; color: #64748b;">
+                  <p style="margin: 0;">Bu e-posta Görev & Takip Sistemi tarafından otomatik olarak gönderilmiştir.</p>
+                </div>
+              </div>
+            `
           })
         });
       } catch (mailErr) {
@@ -321,10 +379,10 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
                     </div>
 
                     <!-- Main Content -->
-                    <p style="font-size: 15px; line-height: 1.6; color: #334155; margin-bottom: 20px;">
+                    <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 20px;">
                       Merhaba <strong style="color: #0f172a;">${creator.name}</strong>,
                     </p>
-                    <p style="font-size: 15px; line-height: 1.6; color: #334155; margin-bottom: 24px;">
+                    <p style="font-size: 15px; line-height: 1.6; color: #ffffff; margin-bottom: 24px;">
                       <strong style="color: #0284c7;">${task.intern_name}</strong> isimli stajyer kendisine atanan görevi tamamlandı olarak işaretledi. Detaylar aşağıda yer almaktadır:
                     </p>
 
