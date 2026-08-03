@@ -37,6 +37,10 @@ async function initDb() {
 
     // Eğer 'users' tablosu zaten varsa ve 'unit' sütunu eksikse veritabanını günceller:
     try { await db.execute(`ALTER TABLE users ADD COLUMN unit TEXT`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE users ADD COLUMN leader_sub_unit TEXT`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE users ADD COLUMN is_approved INTEGER DEFAULT 1`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE users ADD COLUMN intern_start_date TEXT`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE users ADD COLUMN intern_end_date TEXT`); } catch (e) {}
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS tasks (
