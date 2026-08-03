@@ -108,10 +108,9 @@ initDb();
 
 // --- API ENDPOINT'LERİ ---
 
-// Kayıt Ol (Yeni username, department ve leaderSubType alanlarına uyumlu)
+// Kayıt Ol Endpoint'i
 app.post('/api/register', async (req, res) => {
   try {
-    // 1. Gelen parametreleri destructure edin (email yerine username + yeni alanlar)
     const { 
       name, 
       username, 
@@ -123,33 +122,35 @@ app.post('/api/register', async (req, res) => {
       endDate 
     } = req.body;
 
-    // 2. Zorunlu alan kontrolünü email yerine username ile yapın
     if (!name || !username || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
-    // Stajyer kontrolü
     if (role === 'INTERN' && (!startDate || !endDate)) {
       return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // 3. SQL Sorgusunu ve Parametreleri Güncelleyin
+    // email alanına kullanıcı adından türetilen dummy bir email veya boş metin veriyoruz
+    const dummyEmail = `${username}@system.local`;
+
     const result = await db.execute({
       sql: `INSERT INTO users (
               name, 
               username, 
+              email, 
               password, 
               role, 
               department, 
               leader_sub_type, 
               intern_start_date, 
               intern_end_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name, 
         username, 
+        dummyEmail, // NOT NULL hatasını önlemek için eklendi
         hashedPassword, 
         role, 
         department || null,
@@ -165,7 +166,6 @@ app.post('/api/register', async (req, res) => {
     });
 
   } catch (error) {
-    // Unique constraint hatasında e-posta yerine kullanıcı adı uyarısı verin
     if (error.message.includes('UNIQUE constraint failed')) {
       return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış!' });
     }
