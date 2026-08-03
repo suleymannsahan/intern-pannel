@@ -463,7 +463,7 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
 app.put('/api/tasks/:id/review', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { action, comment, userRole, revisedBy } = req.body; // revisedBy: işlemi yapan kişinin adı
+    const { action, comment, userRole, revisedBy } = req.body;
 
     // Yetki Kontrolü
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
@@ -471,28 +471,32 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     }
 
     let newStatus = 'APPROVED';
-    if (action === 'REVISION' || action === 'REVISION_REQUESTED') {
+    const isRevision = (action === 'REVISION' || action === 'REVISION_REQUESTED');
+
+    if (isRevision) {
       newStatus = 'REVISION_REQUESTED';
 
+      // Zaman damgası (YYYY-MM-DD HH:mm:ss)
+      const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
       // Revizyon geçmişi kaydı ekle
-      const now = new Date().toISOString();
       await db.execute({
         sql: `INSERT INTO task_revisions (task_id, revised_by, comment, created_at) VALUES (?, ?, ?, ?)`,
         args: [taskId, revisedBy || 'Sistem / Yetkili', comment || '', now]
       });
     }
 
-    // Görev durumunu ve revize notunu veritabanında güncelle
+    // Görev durumunu ve son revize notunu veritabanında güncelle
     const result = await db.execute({
       sql: `UPDATE tasks SET status = ?, review_comment = ? WHERE id = ?`,
-      args: [newStatus, comment || '', taskId]
+      args: [newStatus, isRevision ? (comment || '') : '', taskId]
     });
 
     if (result.rowsAffected === 0) {
       return res.status(404).json({ error: 'Görev bulunamadı.' });
     }
 
-    res.json({ message: action === 'APPROVE' ? 'Görev onaylandı.' : 'Revize talebi iletildi.' });
+    res.json({ message: !isRevision ? 'Görev onaylandı.' : 'Revize talebi iletildi.' });
   } catch (error) {
     console.error('Görev inceleme hatası:', error);
     res.status(500).json({ error: 'Görev durumu güncellenirken hata oluştu: ' + error.message });
