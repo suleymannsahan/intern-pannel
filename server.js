@@ -634,16 +634,14 @@ app.get('/api/daily-logs', async (req, res) => {
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const userRole = req.headers['user-role'];
 
-    // Yalnızca Mühendis veya Ekip Lideri silebilir
-    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
-      return res.status(403).json({ error: 'Görev silmek için yetkiniz bulunmamaktadır.' });
-    }
-
-    // Göreve ait günlük logları sil
+    // Göreve ait logları ve revizyonları temizle
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
+      args: [taskId]
+    });
+    await db.execute({
+      sql: `DELETE FROM task_revisions WHERE task_id = ?`,
       args: [taskId]
     });
 
@@ -657,9 +655,10 @@ app.delete('/api/tasks/:id', async (req, res) => {
       return res.status(404).json({ error: 'Görev bulunamadı.' });
     }
 
-    res.json({ message: 'Görev ve ilişkili loglar başarıyla silindi.' });
+    res.json({ message: 'Görev başarıyla silindi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Görev silinirken hata oluştu: ' + error.message });
+    console.error('Görev silme hatası:', error);
+    res.status(500).json({ error: 'Görev silinirken bir hata oluştu: ' + error.message });
   }
 });
 

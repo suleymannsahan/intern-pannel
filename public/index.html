@@ -1094,10 +1094,12 @@
       if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            ${task.status === 'COMPLETED' ? `
-              <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
-                <i class="fa-solid fa-check"></i> Onayla
-              </button>
+            ${task.status !== 'APPROVED' ? `
+              ${task.status === 'COMPLETED' ? `
+                <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                  <i class="fa-solid fa-check"></i> Onayla
+                </button>
+              ` : ''}
               <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
                 <i class="fa-solid fa-rotate-left"></i> Revize Et
               </button>
