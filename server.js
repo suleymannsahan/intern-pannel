@@ -17,6 +17,30 @@ const db = createClient({
   authToken: process.env.TURSO_AUTH_TOKEN
 });
 
+// Veritabanı sütunlarını tek tek kontrol edip yoksa ekleyen güvenli fonksiyon
+async function initDbMigration() {
+  const columnsToAdd = [
+    { name: 'username', type: 'TEXT' },
+    { name: 'department', type: 'TEXT' },
+    { name: 'leader_sub_type', type: 'TEXT' }
+  ];
+
+  for (const col of columnsToAdd) {
+    try {
+      // Her sütunu bağımsız try-catch bloğunda ekliyoruz.
+      // Sütun zaten varsa hata verecek ve sessizce sonraki sütuna geçecek.
+      await db.execute(`ALTER TABLE users ADD COLUMN ${col.name} ${col.type};`);
+      console.log(`✅ ${col.name} sütunu users tablosuna başarıyla eklendi.`);
+    } catch (err) {
+      // "duplicate column name" hatasını yutuyoruz, bu normaldir (sütun zaten var demektir).
+      console.log(`ℹ️ ${col.name} sütun kontrolü: ${err.message}`);
+    }
+  }
+}
+
+// Sunucu kalkarken veya DB başlatılırken çağırın
+initDbMigration();
+
 // Veritabanı Tablolarını Oluşturma
 async function initDb() {
   try {
