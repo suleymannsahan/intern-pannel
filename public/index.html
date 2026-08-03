@@ -88,7 +88,7 @@
           <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
         </div>
 
-        <!-- 1. BİRİM SEÇİMİ (YENİ EKLENDİ) -->
+        <!-- 1. BİRİM SEÇİMİ -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Birim Seçimi</label>
           <select id="regUnit" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
@@ -101,7 +101,7 @@
           </select>
         </div>
 
-        <!-- 2. ROL SEÇİMİ (GÜNCELLENDİ) -->
+        <!-- 2. ROL SEÇİMİ -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
           <select id="regRole" onchange="handleRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
@@ -114,7 +114,7 @@
           </select>
         </div>
 
-        <!-- 3. EKİP LİDERİ EKSTRA BRANŞ / BİRİM ALANI (YENİ EKLENDİ - Sadece Ekip Lideri seçilince görünür) -->
+        <!-- 3. EKİP LİDERİ BRANŞ / BİRİM ALANI -->
         <div id="leaderSubUnitFields" class="hidden p-3.5 bg-cyan-100/50 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 rounded-xl space-y-1.5">
           <label class="block text-xs font-semibold text-cyan-800 dark:text-cyan-300">Ekip Lideri Branşı / Birimi</label>
           <select id="regLeaderSubUnit" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
@@ -124,7 +124,7 @@
           </select>
         </div>
 
-        <!-- 4. STAJYER ALANLARI (GÜNCELLENDİ - Sadece Stajyer seçilince görünür) -->
+        <!-- 4. STAJYER ALANLARI -->
         <div id="internRegisterFields" class="hidden space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Sorumlu Mühendis Seçin</label>
@@ -191,6 +191,15 @@
       </div>
     </header>
 
+    <!-- ONAY BEKLEME UYARISI BANNERI -->
+    <div id="approvalPendingBanner" class="hidden m-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 text-amber-600 dark:text-amber-400 flex items-center gap-4 shadow-lg backdrop-blur-md">
+      <i class="fa-solid fa-clock-rotate-left text-3xl shrink-0"></i>
+      <div>
+        <h3 class="font-bold text-base mb-1">Hesap Onayı Bekleniyor</h3>
+        <p class="text-xs opacity-90 leading-relaxed">Hesabınızın yönetici tarafından onaylanması gerekmektedir. Onay verildikten sonra panel yetkilerinize tam erişim sağlayabilirsiniz.</p>
+      </div>
+    </div>
+
     <div class="flex-1 flex relative overflow-hidden">
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
@@ -204,7 +213,8 @@
         <div id="sidebarDirectory" class="space-y-4 text-xs"></div>
       </aside>
 
-      <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+      <!-- ANA İÇERİK KAPSAYICISI (id="mainDashboardContent") -->
+      <main id="mainDashboardContent" class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
         
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-600 dark:text-amber-300 backdrop-blur-md">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -589,11 +599,9 @@
     }
 
     async function quickAdminLogin() {
-      // Input değerlerini doldur
       document.getElementById('loginEmail').value = 'admin@admin.com';
       document.getElementById('loginPassword').value = 'admin123';
       
-      // Giriş fonksiyonunu doğrudan çağır
       try {
         const res = await fetch(`${API_BASE_URL}/api/login`, {
           method: 'POST',
@@ -679,9 +687,11 @@
     }
 
     function handleRoleChange() {
-      const role = document.getElementById('regRole').value;
+      const role = document.getElementById('regRole')?.value;
       const leaderSubFields = document.getElementById('leaderSubUnitFields');
       const internFields = document.getElementById('internRegisterFields');
+
+      if (!leaderSubFields || !internFields) return;
 
       if (role === 'ekip_lideri') {
         leaderSubFields.classList.remove('hidden');
@@ -689,6 +699,7 @@
       } else if (role === 'stajyer') {
         leaderSubFields.classList.add('hidden');
         internFields.classList.remove('hidden');
+        populateEngineerDropdown();
       } else {
         leaderSubFields.classList.add('hidden');
         internFields.classList.add('hidden');
@@ -697,14 +708,14 @@
 
     async function handleRegister(e) {
       e.preventDefault();
-      
-      // HTML elemanlarından değerleri eksiksiz çekiyoruz
       const name = document.getElementById('regName').value;
       const email = document.getElementById('regEmail').value;
       const password = document.getElementById('regPassword').value;
-      const unit = document.getElementById('regUnit').value; // Eksik olan Birim alanı eklendi
+      const unit = document.getElementById('regUnit').value;
       const role = document.getElementById('regRole').value;
-      const leaderSubUnit = document.getElementById('regLeaderSubUnit')?.value || null; // Ekip Lideri Alanı eklendi
+      
+      // Elemanlar yoksa veya boşsa çökmemesi için ?. ve || null eklendi
+      const leaderSubUnit = document.getElementById('regLeaderSubUnit')?.value || null;
       const startDate = document.getElementById('regStartDate')?.value || null;
       const endDate = document.getElementById('regEndDate')?.value || null;
 
@@ -712,16 +723,7 @@
         const res = await fetch(`${API_BASE_URL}/api/register`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            name, 
-            email, 
-            password, 
-            unit, 
-            role, 
-            leaderSubUnit, 
-            startDate, 
-            endDate 
-          })
+          body: JSON.stringify({ name, email, password, unit, role, leaderSubUnit, startDate, endDate })
         });
 
         const data = await res.json();
@@ -733,12 +735,10 @@
           alert("Kayıt Hatası: " + data.error);
         }
       } catch (err) {
-        console.error("Kayıt sırasında ağ hatası oluştu:", err);
-        alert("Sunucuya bağlanırken bir hata oluştu.");
+        console.error("Kayıt ağ hatası:", err);
       }
     }
 
-    // Onay bekleyen kullanıcıları yükler
     async function loadPendingUsers() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/admin/pending-users`);
@@ -770,7 +770,6 @@
       }
     }
 
-    // Kullanıcıyı onaylama isteği atar
     async function approveUser(userId) {
       try {
         const res = await fetch(`${API_BASE_URL}/api/admin/approve-user/${userId}`, {
@@ -778,7 +777,7 @@
         });
         if (res.ok) {
           alert("Kullanıcı onaylandı!");
-          await loadPendingUsers(); // Listeyi yenile
+          await loadPendingUsers();
         } else {
           alert("Onaylama sırasında bir hata oluştu.");
         }
@@ -789,8 +788,11 @@
 
     function populateEngineerDropdown() {
       const select = document.getElementById('regEngineer');
+      if (!select) return;
       select.innerHTML = '<option value="">-- Mühendis Seçiniz --</option>';
-      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+      
+      // 'ENGINEER' yerine backend uyumlu 'muhendis' kullanıldı
+      const engineers = usersList.filter(u => u.role === 'muhendis'); 
       engineers.forEach(eng => {
         const opt = document.createElement('option');
         opt.value = eng.id;
@@ -1010,24 +1012,28 @@
       document.getElementById('authContainer').classList.add('hidden');
       document.getElementById('dashboardContainer').classList.remove('hidden');
 
-      // KONTROL: Ekip Lideri veya Müdür onaylı değilse ekranı kilitle
+      document.getElementById('userInfoName').innerText = currentUser.name;
+      document.getElementById('userInfoRole').innerText = currentUser.role.toUpperCase();
+
       const isPendingApproval = (currentUser.role === 'mudur' || currentUser.role === 'ekip_lideri') && currentUser.is_approved === 0;
 
+      const mainContent = document.getElementById('mainDashboardContent');
+      const pendingBanner = document.getElementById('approvalPendingBanner');
+
       if (isPendingApproval) {
-        document.getElementById('mainDashboardContent').classList.add('hidden');
-        document.getElementById('approvalPendingBanner').classList.remove('hidden');
+        if (mainContent) mainContent.classList.add('hidden');
+        if (pendingBanner) pendingBanner.classList.remove('hidden');
         return;
       } else {
-        document.getElementById('mainDashboardContent').classList.remove('hidden');
-        document.getElementById('approvalPendingBanner').classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('hidden');
+        if (pendingBanner) pendingBanner.classList.add('hidden');
       }
 
       await loadUsers();
-      await loadTasks();
-
-      // Admin / Yönetim birimi ise onay paneli alanını göster
+      
       if (currentUser.unit === 'yonetim' || currentUser.role === 'mudur') {
-        document.getElementById('adminApprovalSection').classList.remove('hidden');
+        const adminSec = document.getElementById('adminApprovalSection');
+        if (adminSec) adminSec.classList.remove('hidden');
         await loadPendingUsers();
       }
     }
@@ -1309,7 +1315,6 @@
       if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <!-- Düzenle Butonu Her Aktif/Revize Durumda Çalışır -->
             <button onclick="openEditTaskModal(${task.id})" title="Görevi ve Tarihini Düzenle" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
               <i class="fa-solid fa-pen"></i> Düzenle
             </button>
@@ -1327,7 +1332,6 @@
               ` : ''}
             ` : ''}
 
-            <!-- Sil Butonu Her Zaman Aktiftir -->
             <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
               <i class="fa-solid fa-trash-can"></i> Sil
             </button>
@@ -1351,7 +1355,6 @@
         `;
       }
 
-      // Revize Notu Görünüm Alanı (Yazan Kişi ve Tarih Ekli)
       let revisionNoteHtml = '';
       if (task.review_comment) {
         revisionNoteHtml = `
@@ -1419,7 +1422,7 @@
 
         if (res.ok) {
           alert("Görev başarıyla silindi.");
-          await loadTasks(); // Veriyi backend'den tazeleyip arayüzü yeniden çizer
+          await loadTasks();
         } else {
           const err = await res.json();
           alert(err.error || "Görev silinemedi.");
