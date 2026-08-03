@@ -26,7 +26,7 @@ async function initDb() {
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        unit TEXT NOT NULL,             -- Birim (elektronik, mekanik, yazilim, ik, yonetim)
+        unit TEXT,             -- Birim (elektronik, mekanik, yazilim, ik, yonetim)
         role TEXT NOT NULL,             -- Rol (mudur, ekip_lideri, muhendis, teknisyen, stajyer)
         leader_sub_unit TEXT,           -- Ekip Lideri ekstra birimi (gomulu / test)
         is_approved INTEGER DEFAULT 1,  -- Admin Onayı (0: Bekliyor, 1: Onaylı)
