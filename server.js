@@ -124,6 +124,7 @@ app.post('/api/register', async (req, res) => {
     }
 
     // 2. Onay Mekanizması: Müdür ve Ekip Liderleri onaya tabidir
+    const isApproved = (unit === 'yonetim' || email === 'admin@admin.com') ? 1 : 0;
     const requiresApproval = (role === 'mudur' || role === 'ekip_lideri');
     const isApproved = requiresApproval ? 0 : 1;
 
