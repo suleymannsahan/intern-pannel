@@ -26,21 +26,11 @@ async function initDb() {
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        unit TEXT NOT NULL,             -- Birim (elektronik, mekanik, yazilim, ik, yonetim)
-        role TEXT NOT NULL,             -- Rol (mudur, ekip_lideri, muhendis, teknisyen, stajyer)
-        leader_sub_unit TEXT,           -- Ekip Lideri ekstra birimi (gomulu / test)
-        is_approved INTEGER DEFAULT 1,  -- Admin Onayı (0: Bekliyor, 1: Onaylı)
+        role TEXT NOT NULL,
         intern_start_date TEXT,
         intern_end_date TEXT
       )
     `);
-
-    // Eğer 'users' tablosu zaten varsa ve 'unit' sütunu eksikse veritabanını günceller:
-    try { await db.execute(`ALTER TABLE users ADD COLUMN unit TEXT`); } catch (e) {}
-    try { await db.execute(`ALTER TABLE users ADD COLUMN leader_sub_unit TEXT`); } catch (e) {}
-    try { await db.execute(`ALTER TABLE users ADD COLUMN is_approved INTEGER DEFAULT 1`); } catch (e) {}
-    try { await db.execute(`ALTER TABLE users ADD COLUMN intern_start_date TEXT`); } catch (e) {}
-    try { await db.execute(`ALTER TABLE users ADD COLUMN intern_end_date TEXT`); } catch (e) {}
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS tasks (
@@ -68,36 +58,10 @@ async function initDb() {
         intern_id INTEGER NOT NULL,
         log_date TEXT NOT NULL,
         note TEXT NOT NULL,
-        FOREIGN KEY(intern_id) REFERENCES users(id),
-        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
+        FOREIGN KEY(task_id) REFERENCES tasks(id),
+        FOREIGN KEY(intern_id) REFERENCES users(id)
       )
     `);
-
-    // Veritabanı bağlantısı kurulduğunda çalıştırılmalı:
-    await db.execute("PRAGMA foreign_keys = ON;");
-
-    try {
-      const adminEmail = 'admin@admin.com';
-      const adminPass = 'admin123'; // İstediğiniz şifreyi belirleyebilirsiniz
-      const hashedPassword = await bcrypt.hash(adminPass, 10);
-
-      // Admin var mı kontrol et, yoksa ekle
-      const [existingAdmin] = await db.execute({
-        sql: 'SELECT * FROM users WHERE email = ?',
-        args: [adminEmail]
-      });
-
-      if (existingAdmin.rows.length === 0) {
-        await db.execute({
-          sql: `INSERT INTO users (name, email, password, unit, role, is_approved) 
-                VALUES (?, ?, ?, ?, ?, 1)`,
-          args: ['Sistem Yöneticisi', adminEmail, hashedPassword, 'yonetim', 'mudur']
-        });
-        console.log('✅ Sabit Admin Hesabı Oluşturuldu: admin@admin.com / admin123');
-      }
-    } catch (err) {
-      console.error('Sabit admin oluşturulurken hata:', err);
-    }
 
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
@@ -112,48 +76,27 @@ initDb();
 // Kayıt Ol
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, unit, role, leaderSubUnit, startDate, endDate } = req.body;
-
-    if (!name || !email || !password || !unit || !role) {
+    const { name, email, password, role, startDate, endDate } = req.body;
+    if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
-    // 1. Ekip Lideri özel kontrolü
-    if (role === 'ekip_lideri' && !leaderSubUnit) {
-      return res.status(400).json({ error: 'Ekip Liderleri için Test veya Gömülü birimi seçimi zorunludur!' });
+    if (role === 'INTERN' && (!startDate || !endDate)) {
+      return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
     }
-
-    // 2. Onay Mekanizması: Müdür ve Ekip Liderleri onaya tabidir
-    const isApproved = (unit === 'yonetim' || email === 'admin@admin.com') ? 1 : 0;
-    //const requiresApproval = (role === 'mudur' || role === 'ekip_lideri');
-    //const isApproved = requiresApproval ? 0 : 1;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.execute({
-      sql: `INSERT INTO users (name, email, password, unit, role, leader_sub_unit, is_approved, intern_start_date, intern_end_date) 
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      args: [
-        name, 
-        email, 
-        hashedPassword, 
-        unit, 
-        role, 
-        role === 'ekip_lideri' ? leaderSubUnit : null, 
-        isApproved, 
-        role === 'stajyer' ? startDate : null, 
-        role === 'stajyer' ? endDate : null
-      ]
+      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [name, email, hashedPassword, role, role === 'INTERN' ? startDate : null, role === 'INTERN' ? endDate : null]
     });
 
-    res.json({ 
-      message: requiresApproval 
-        ? 'Kayıt başarılı! Hesabınız Admin onayı beklemektedir.' 
-        : 'Kullanıcı kaydı başarıyla tamamlandı.',
-      userId: Number(result.lastInsertRowid),
-      requiresApproval
-    });
+    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: Number(result.lastInsertRowid) });
   } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
+    }
     res.status(500).json({ error: 'Veritabanı hatası: ' + error.message });
   }
 });
@@ -177,38 +120,6 @@ app.post('/api/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
   }
-});
-
-// 1. Onay Bekleyen Lider/Müdür Listesi
-app.get('/api/admin/pending-users', async (req, res) => {
-  const result = await db.execute(`
-    SELECT id, name, email, unit, role, leader_sub_unit 
-    FROM users 
-    WHERE is_approved = 0 AND role IN ('mudur', 'ekip_lideri')
-  `);
-  res.json(result.rows);
-});
-
-// 2. Kullanıcı Onaylama
-app.put('/api/admin/approve-user/:id', async (req, res) => {
-  try {
-    await db.execute({
-      sql: `UPDATE users SET is_approved = 1 WHERE id = ?`,
-      args: [req.params.id]
-    });
-    res.json({ message: 'Kullanıcı başarıyla onaylandı.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Onaylama hatası: ' + error.message });
-  }
-});
-
-// 3. Kullanıcı Reddetme / Silme
-app.delete('/api/admin/reject-user/:id', async (req, res) => {
-  await db.execute({
-    sql: `DELETE FROM users WHERE id = ?`,
-    args: [req.params.id]
-  });
-  res.json({ message: 'Kullanıcı kaydı reddedildi.' });
 });
 
 // Şifre Sıfırlama
@@ -692,38 +603,34 @@ app.get('/api/daily-logs', async (req, res) => {
 
 // Görev Silme Endpoint'i
 app.delete('/api/tasks/:id', async (req, res) => {
-  const taskId = req.params.id;
-
   try {
-    // Önce revizyon kayıtlarını sil
-    await db.execute({
-      sql: `DELETE FROM task_revisions WHERE task_id = ?`,
-      args: [taskId]
-    });
+    const taskId = req.params.id;
+    const userRole = req.headers['user-role'];
 
-    // Sonra günlük kayıtlarını sil
+    // Yalnızca Mühendis veya Ekip Lideri silebilir
+    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
+      return res.status(403).json({ error: 'Görev silmek için yetkiniz bulunmamaktadır.' });
+    }
+
+    // Göreve ait günlük logları sil
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
       args: [taskId]
     });
 
-    // En son görevi sil
+    // Görevi sil
     const result = await db.execute({
       sql: `DELETE FROM tasks WHERE id = ?`,
       args: [taskId]
     });
 
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ error: 'Silinecek görev bulunamadı.' });
+      return res.status(404).json({ error: 'Görev bulunamadı.' });
     }
 
-    res.json({ message: 'Görev başarıyla silindi.' });
-
+    res.json({ message: 'Görev ve ilişkili loglar başarıyla silindi.' });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({
-      error: error.message
-    });
+    res.status(500).json({ error: 'Görev silinirken hata oluştu: ' + error.message });
   }
 });
 
@@ -752,24 +659,21 @@ app.delete('/api/users/:id', async (req, res) => {
 app.put('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { title, assignedTo, description, category, endDate, userRole } = req.body;
+    const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
 
-    // Yetki Kontrolü
-    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
-    // Görevi Güncelle (Revize istendiyse tekrar 'IN_PROGRESS' durumuna çekebilirsiniz)
-    await db.execute({
-      sql: `UPDATE tasks 
-            SET title = ?, assigned_to = ?, description = ?, category = ?, end_date = ? 
-            WHERE id = ?`,
-      args: [title, assignedTo, description || '', category, endDate, taskId]
+    const result = await db.execute({
+      sql: `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
+      args: [title, description || '', assignedTo, category, endDate, workDays, taskId]
     });
 
+    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
     res.json({ message: 'Görev başarıyla güncellendi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Görev güncellenirken hata oluştu: ' + error.message });
+    res.status(500).json({ error: 'Görev güncellenemedi: ' + error.message });
   }
 });
 

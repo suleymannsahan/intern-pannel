@@ -41,6 +41,7 @@
     <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/60 rounded-2xl p-8 w-full max-w-md shadow-2xl backdrop-blur-xl">
       <div class="text-center mb-8 flex flex-col items-center">
         <img src="Y_logo.png" alt="Logo" class="h-20 w-auto mb-3 drop-shadow-[0_0_15px_rgba(6,182,212,0.25)]">
+        <!-- Tüm Başlığın Beyaz Olması İçin -->
         <h1 class="text-2xl font-bold text-center text-white mb-6">
           Görevlendirme & Takip Sistemi
         </h1>
@@ -64,111 +65,83 @@
           <button type="button" onclick="openResetModal()" class="text-xs text-cyan-500 hover:text-cyan-400 transition-colors">Şifremi Unuttum?</button>
         </div>
         <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Oturum Aç</button>
-        <button type="button" onclick="quickAdminLogin()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2">
-          <i class="fa-solid fa-user-shield"></i> Admin Olarak Hızlı Giriş Yap
-        </button>
       </form>
 
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
-        <!-- Ad Soyad -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Ad Soyad</label>
-          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
+          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
         </div>
-
-        <!-- E-Posta -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">E-Posta</label>
-          <input type="email" id="regEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
+          <input type="email" id="regEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
         </div>
-
-        <!-- Şifre -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Şifre</label>
-          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
+          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
         </div>
-
-        <!-- 1. BİRİM SEÇİMİ -->
-        <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Birim Seçimi</label>
-          <select id="regUnit" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
-            <option value="">-- Birim Seçiniz --</option>
-            <option value="elektronik">Elektronik</option>
-            <option value="mekanik">Mekanik</option>
-            <option value="yazilim">Yazılım</option>
-            <option value="ik">İnsan Kaynakları</option>
-            <option value="yonetim">Yönetim</option>
-          </select>
-        </div>
-
-        <!-- 2. ROL SEÇİMİ -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
-          <select id="regRole" onchange="handleRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
-            <option value="">-- Rol Seçiniz --</option>
-            <option value="mudur">Müdür</option>
-            <option value="ekip_lideri">Ekip Lideri</option>
-            <option value="muhendis">Mühendis</option>
-            <option value="teknisyen">Teknisyen</option>
-            <option value="stajyer">Stajyer</option>
+          <select id="regRole" onchange="handleRoleChange()" class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+            <option value="INTERN">Stajyer</option>
+            <option value="ENGINEER">Mühendis</option>
+            <option value="LEADER">Ekip Lideri</option>
           </select>
         </div>
 
-        <!-- 3. EKİP LİDERİ BRANŞ / BİRİM ALANI -->
-        <div id="leaderSubUnitFields" class="hidden p-3.5 bg-cyan-100/50 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 rounded-xl space-y-1.5">
-          <label class="block text-xs font-semibold text-cyan-800 dark:text-cyan-300">Ekip Lideri Branşı / Birimi</label>
-          <select id="regLeaderSubUnit" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
-            <option value="">-- Ekip Lideri Birimi Seçin --</option>
-            <option value="gomulu">Gömülü Birimi Ekip Lideri</option>
-            <option value="test">Test Birimi Ekip Lideri</option>
-          </select>
-        </div>
-
-        <!-- 4. STAJYER ALANLARI -->
-        <div id="internRegisterFields" class="hidden space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
+        <div id="internRegisterFields" class="space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Sorumlu Mühendis Seçin</label>
-            <select id="regEngineer" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
+            <select id="regEngineer" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
               <option value="">-- Mühendis Seçiniz --</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Başlangıç</label>
-              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
+              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Bitiş</label>
-              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
+              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
             </div>
           </div>
         </div>
 
-        <!-- Kayıt Butonu -->
-        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20 mt-2">
-          Hesap Oluştur
-        </button>
+        <div id="leaderVerificationFields" class="hidden space-y-2 p-3.5 bg-cyan-100/50 dark:bg-cyan-950/30 rounded-xl border border-cyan-300 dark:border-cyan-800/50">
+          <label class="block text-xs font-semibold text-cyan-700 dark:text-cyan-300">Ekip Lideri Doğrulama Kodu</label>
+          <div class="flex gap-2">
+            <input type="text" id="regVerificationCode" placeholder="Kodu Girin" class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-cyan-600 hover:bg-cyan-500 text-white dark:text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition-all shadow-md">Kod Gönder</button>
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Hesap Oluştur</button>
       </form>
     </div>
   </div>
 
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+    <!-- HEADER -->
     <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex justify-between items-center z-20 backdrop-blur-xl sticky top-0 shadow-md">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
         <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
-        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme & Takip Paneli</span>
+        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
 
+      <!-- SAĞ ÜST KULLANICI BİLGİSİ & AYARLAR SİMGESİ -->
       <div class="flex items-center gap-3">
+        <!-- Kullanıcı İsim ve Rol Bilgisi (Sol Tarafta) -->
         <div class="text-right">
           <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
           <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
         </div>
 
+        <!-- Ayarlar Simgesi & Dropdown (Sağ Tarafta) -->
         <div class="relative">
           <button onclick="toggleSettingsDropdown()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none">
             <i class="fa-solid fa-gear text-lg"></i>
@@ -191,16 +164,8 @@
       </div>
     </header>
 
-    <!-- ONAY BEKLEME UYARISI BANNERI -->
-    <div id="approvalPendingBanner" class="hidden m-6 bg-amber-500/10 border border-amber-500/30 rounded-2xl p-6 text-amber-600 dark:text-amber-400 flex items-center gap-4 shadow-lg backdrop-blur-md">
-      <i class="fa-solid fa-clock-rotate-left text-3xl shrink-0"></i>
-      <div>
-        <h3 class="font-bold text-base mb-1">Hesap Onayı Bekleniyor</h3>
-        <p class="text-xs opacity-90 leading-relaxed">Hesabınızın yönetici tarafından onaylanması gerekmektedir. Onay verildikten sonra panel yetkilerinize tam erişim sağlayabilirsiniz.</p>
-      </div>
-    </div>
-
     <div class="flex-1 flex relative overflow-hidden">
+      <!-- SOL SIDEBAR -->
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
           <h3 class="font-bold text-xs uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
@@ -213,8 +178,8 @@
         <div id="sidebarDirectory" class="space-y-4 text-xs"></div>
       </aside>
 
-      <!-- ANA İÇERİK KAPSAYICISI (id="mainDashboardContent") -->
-      <main id="mainDashboardContent" class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+      <!-- SAĞ ANA İÇERİK -->
+      <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
         
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-600 dark:text-amber-300 backdrop-blur-md">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -224,6 +189,7 @@
           </div>
         </div>
 
+        <!-- Canlı Arama ve Dinamik Filtreleme Paneli -->
         <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-md backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div class="flex-1 min-w-[200px] relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
@@ -247,14 +213,6 @@
             </select>
           </div>
         </div>
-
-        <!-- ADMİN ONAY PANELİ -->
-        <section id="adminApprovalSection" class="hidden space-y-4 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-          <h3 class="font-bold text-sm text-amber-500 flex items-center gap-2">
-            <i class="fa-solid fa-user-clock"></i> Onay Bekleyen Lider ve Müdürler
-          </h3>
-          <div id="pendingUsersList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
-        </section>
 
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
@@ -321,45 +279,6 @@
 
   <!-- MODALLAR -->
 
-  <!-- GÖREV DÜZENLEME MODALI (MÜHENDİS VE LİDER İÇİN) -->
-  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
-      <h3 class="font-bold text-lg mb-4 text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-pen-to-square me-2"></i>Görevi Düzenle</h3>
-      <form onsubmit="handleUpdateTask(event)" class="space-y-3">
-        <input type="hidden" id="editTaskId">
-        <div>
-          <label class="block text-xs font-semibold mb-1">Görev Tanımı</label>
-          <input type="text" id="editTaskTitle" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Atanan Stajyer</label>
-          <select id="editTaskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm"></select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Açıklama</label>
-          <textarea id="editTaskDescription" rows="3" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm"></textarea>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Alan / Departman</label>
-          <select id="editTaskCategory" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-            <option value="Yazılım">Yazılım</option>
-            <option value="Donanım">Donanım</option>
-            <option value="Ağ & Sistem">Ağ & Sistem</option>
-            <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-semibold mb-1">Bitiş Tarihi</label>
-          <input type="date" id="editTaskEndDate" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
-        </div>
-        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
-          <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl">İptal</button>
-          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Güncelle</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
   <!-- Revize Yorum Modalı -->
   <div id="revisionModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -394,6 +313,7 @@
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
 
+        <!-- Stajyer Kayıt Detayları -->
         <div id="editProfileInternFields" class="hidden space-y-3 p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Sorumlu Mühendis</label>
@@ -453,7 +373,6 @@
     </div>
   </div>
 
-  <!-- ŞİFRE SIFIRLAMA MODALI -->
   <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
       <h3 class="font-bold text-lg mb-2">Şifre Sıfırlama</h3>
@@ -469,7 +388,6 @@
     </div>
   </div>
 
-  <!-- GÜNLÜK NOT EKLENEN MODAL -->
   <div id="logModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
       <h3 class="font-bold text-lg mb-1">Günlük Not / Bilgilendirme Ekle</h3>
@@ -485,7 +403,6 @@
     </div>
   </div>
 
-  <!-- KULLANICI DÜZENLEME MODALI (LİDER/ADMİN İÇİN) -->
   <div id="manageUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-user-gear me-2"></i>Kullanıcı Hesabını Düzenle</h3>
@@ -532,11 +449,13 @@
       handleRoleChange();
     };
 
+    // Sağ üst Ayarlar Dropdown Menü Aç/Kapat
     function toggleSettingsDropdown() {
       const dropdown = document.getElementById('settingsDropdown');
       dropdown.classList.toggle('hidden');
     }
 
+    // Dışarı tıklandığında ayarlar menüsünü kapat
     document.addEventListener('click', function(e) {
       const dropdown = document.getElementById('settingsDropdown');
       const button = e.target.closest('button[onclick="toggleSettingsDropdown()"]');
@@ -545,6 +464,7 @@
       }
     });
 
+    // Karanlık Mod Mantığı
     function toggleDarkMode() {
       const html = document.documentElement;
       const themeText = document.getElementById('themeText');
@@ -562,6 +482,7 @@
       sidebar.classList.toggle('-ml-80');
     }
 
+    // Kullanıcının Kayıtta Girdiği Tüm Bilgileri Düzenlemesi
     function openEditProfileModal() {
       if (!currentUser) return;
       document.getElementById('editProfileName').value = currentUser.name || '';
@@ -596,30 +517,6 @@
 
     function closeEditProfileModal() {
       document.getElementById('editProfileModal').classList.add('hidden');
-    }
-
-    async function quickAdminLogin() {
-      document.getElementById('loginEmail').value = 'admin@admin.com';
-      document.getElementById('loginPassword').value = 'admin123';
-      
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/login`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'admin@admin.com', password: 'admin123' })
-        });
-        
-        const data = await res.json();
-        if (res.ok) {
-          currentUser = data.user;
-          localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          showDashboard();
-        } else {
-          alert(data.error || 'Giriş başarısız.');
-        }
-      } catch (err) {
-        console.error("Hızlı giriş hatası:", err);
-      }
     }
 
     async function handleSaveProfile(e) {
@@ -687,22 +584,20 @@
     }
 
     function handleRoleChange() {
-      const role = document.getElementById('regRole')?.value;
-      const leaderSubFields = document.getElementById('leaderSubUnitFields');
+      const role = document.getElementById('regRole').value;
       const internFields = document.getElementById('internRegisterFields');
+      const leaderFields = document.getElementById('leaderVerificationFields');
 
-      if (!leaderSubFields || !internFields) return;
-
-      if (role === 'ekip_lideri') {
-        leaderSubFields.classList.remove('hidden');
-        internFields.classList.add('hidden');
-      } else if (role === 'stajyer') {
-        leaderSubFields.classList.add('hidden');
+      if (role === 'INTERN') {
         internFields.classList.remove('hidden');
+        leaderFields.classList.add('hidden');
         populateEngineerDropdown();
-      } else {
-        leaderSubFields.classList.add('hidden');
+      } else if (role === 'LEADER') {
         internFields.classList.add('hidden');
+        leaderFields.classList.remove('hidden');
+      } else {
+        internFields.classList.add('hidden');
+        leaderFields.classList.add('hidden');
       }
     }
 
@@ -711,88 +606,37 @@
       const name = document.getElementById('regName').value;
       const email = document.getElementById('regEmail').value;
       const password = document.getElementById('regPassword').value;
-      const unit = document.getElementById('regUnit').value;
       const role = document.getElementById('regRole').value;
-      
-      // Elemanlar yoksa veya boşsa çökmemesi için ?. ve || null eklendi
-      const leaderSubUnit = document.getElementById('regLeaderSubUnit')?.value || null;
-      const startDate = document.getElementById('regStartDate')?.value || null;
-      const endDate = document.getElementById('regEndDate')?.value || null;
+      const startDate = document.getElementById('regStartDate').value;
+      const endDate = document.getElementById('regEndDate').value;
+      const engineerId = document.getElementById('regEngineer').value;
+      const verificationCode = document.getElementById('regVerificationCode').value;
 
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/register`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, password, unit, role, leaderSubUnit, startDate, endDate })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert(data.message || "Hesabınız oluşturuldu!");
-          await loadUsers();
-          switchAuthTab('login');
-        } else {
-          alert("Kayıt Hatası: " + data.error);
-        }
-      } catch (err) {
-        console.error("Kayıt ağ hatası:", err);
+      if (role === 'LEADER' && !verificationCode.trim()) {
+        alert("Ekip lideri doğrulama kodunu giriniz.");
+        return;
       }
-    }
 
-    async function loadPendingUsers() {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/pending-users`);
-        const pendingUsers = await res.json();
-        const container = document.getElementById('pendingUsersList');
-        container.innerHTML = '';
+      const res = await fetch(`${API_BASE_URL}/api/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId, verificationCode })
+      });
 
-        if (pendingUsers.length === 0) {
-          container.innerHTML = '<div class="text-xs text-slate-500">Onay bekleyen kullanıcı bulunmuyor.</div>';
-          return;
-        }
-
-        pendingUsers.forEach(user => {
-          const card = document.createElement('div');
-          card.className = "p-3 bg-slate-100 dark:bg-slate-800 rounded-xl flex justify-between items-center border border-slate-200 dark:border-slate-700";
-          card.innerHTML = `
-            <div>
-              <div class="font-bold text-sm text-slate-900 dark:text-slate-100">${user.name}</div>
-              <div class="text-xs text-slate-500">${user.email} - Birim: ${user.unit} - Rol: ${user.role}</div>
-            </div>
-            <button onclick="approveUser(${user.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all">
-              Onayla
-            </button>
-          `;
-          container.appendChild(card);
-        });
-      } catch (err) {
-        console.error("Onay bekleyenler yüklenemedi:", err);
-      }
-    }
-
-    async function approveUser(userId) {
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/approve-user/${userId}`, {
-          method: 'PUT'
-        });
-        if (res.ok) {
-          alert("Kullanıcı onaylandı!");
-          await loadPendingUsers();
-        } else {
-          alert("Onaylama sırasında bir hata oluştu.");
-        }
-      } catch (err) {
-        console.error("Onaylama hatası:", err);
+      const data = await res.json();
+      if (res.ok) {
+        alert("Hesabınız oluşturuldu!");
+        await loadUsers();
+        switchAuthTab('login');
+      } else {
+        alert(data.error);
       }
     }
 
     function populateEngineerDropdown() {
       const select = document.getElementById('regEngineer');
-      if (!select) return;
       select.innerHTML = '<option value="">-- Mühendis Seçiniz --</option>';
-      
-      // 'ENGINEER' yerine backend uyumlu 'muhendis' kullanıldı
-      const engineers = usersList.filter(u => u.role === 'muhendis'); 
+      const engineers = usersList.filter(u => u.role === 'ENGINEER');
       engineers.forEach(eng => {
         const opt = document.createElement('option');
         opt.value = eng.id;
@@ -827,7 +671,9 @@
       const tabLogin = document.getElementById('tabLogin');
       const tabRegister = document.getElementById('tabRegister');
 
+      // Mavi aktif sekme sınıfları
       const activeClasses = ['bg-cyan-600', 'text-white', 'shadow-lg', 'shadow-cyan-600/25'];
+      // Pasif sekme sınıfları
       const inactiveClasses = ['text-slate-500', 'dark:text-slate-400', 'hover:text-slate-900', 'dark:hover:text-white'];
 
       if (tab === 'login') {
@@ -856,67 +702,8 @@
     function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
     function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
     function closeLogModal() { document.getElementById('logModal').classList.add('hidden'); }
-    function closeRevisionModal() { document.getElementById('revisionModal').classList.add('hidden'); }
     function closeEditTaskModal() { document.getElementById('editTaskModal').classList.add('hidden'); }
-
-    function openManageUserModal(userId) {
-      const user = usersList.find(u => u.id == userId);
-      if (!user) return;
-      document.getElementById('manageUserId').value = user.id;
-      document.getElementById('manageUserName').value = user.name;
-      document.getElementById('manageUserEmail').value = user.email;
-      document.getElementById('manageUserRole').value = user.role;
-      document.getElementById('manageUserModal').classList.remove('hidden');
-    }
-
-    function closeManageUserModal() {
-      document.getElementById('manageUserModal').classList.add('hidden');
-    }
-
-    async function handleSaveManagedUser(e) {
-      e.preventDefault();
-      const userId = document.getElementById('manageUserId').value;
-      const name = document.getElementById('manageUserName').value;
-      const email = document.getElementById('manageUserEmail').value;
-      const role = document.getElementById('manageUserRole').value;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, email, role })
-        });
-        if (res.ok) {
-          alert('Kullanıcı bilgileri güncellendi.');
-          closeManageUserModal();
-          await loadUsers();
-          renderSidebarDirectory();
-        } else {
-          const data = await res.json();
-          alert('Hata: ' + data.error);
-        }
-      } catch (err) {
-        console.error('Kullanıcı güncelleme hatası:', err);
-      }
-    }
-
-    async function deleteAnyUser(userId, userName) {
-      if (!confirm(`${userName} isimli kullanıcıyı silmek istediğinize emin misiniz?`)) return;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, { method: 'DELETE' });
-        if (res.ok) {
-          alert('Kullanıcı silindi.');
-          await loadUsers();
-          renderSidebarDirectory();
-        } else {
-          const data = await res.json();
-          alert('Hata: ' + data.error);
-        }
-      } catch (err) {
-        console.error('Kullanıcı silme hatası:', err);
-      }
-    }
+    function closeRevisionModal() { document.getElementById('revisionModal').classList.add('hidden'); }
 
     function calculateWorkDays(startDateStr, endDateStr) {
       if (!startDateStr || !endDateStr) return 0;
@@ -1013,28 +800,27 @@
       document.getElementById('dashboardContainer').classList.remove('hidden');
 
       document.getElementById('userInfoName').innerText = currentUser.name;
-      document.getElementById('userInfoRole').innerText = currentUser.role.toUpperCase();
-
-      const isPendingApproval = (currentUser.role === 'mudur' || currentUser.role === 'ekip_lideri') && currentUser.is_approved === 0;
-
-      const mainContent = document.getElementById('mainDashboardContent');
-      const pendingBanner = document.getElementById('approvalPendingBanner');
-
-      if (isPendingApproval) {
-        if (mainContent) mainContent.classList.add('hidden');
-        if (pendingBanner) pendingBanner.classList.remove('hidden');
-        return;
-      } else {
-        if (mainContent) mainContent.classList.remove('hidden');
-        if (pendingBanner) pendingBanner.classList.add('hidden');
-      }
-
-      await loadUsers();
       
-      if (currentUser.unit === 'yonetim' || currentUser.role === 'mudur') {
-        const adminSec = document.getElementById('adminApprovalSection');
-        if (adminSec) adminSec.classList.remove('hidden');
-        await loadPendingUsers();
+      let roleLabel = 'Stajyer';
+      if (currentUser.role === 'ENGINEER') roleLabel = 'Sorumlu Mühendis';
+      if (currentUser.role === 'LEADER') roleLabel = 'Ekip Lideri';
+      document.getElementById('userInfoRole').innerText = roleLabel;
+
+      const isManager = currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER';
+      
+      await loadUsers();
+      await loadLogs();
+      await loadTasks();
+      renderSidebarDirectory();
+
+      if (isManager) {
+        document.getElementById('leaderSection').classList.remove('hidden');
+        document.getElementById('dailyWarningBanner').classList.add('hidden');
+        populateAssigneeOptions();
+        renderInternStatusList();
+      } else {
+        document.getElementById('leaderSection').classList.add('hidden');
+        checkDailyLogWarning();
       }
     }
 
@@ -1128,6 +914,7 @@
       });
     }
 
+    // STAJYER DURUM VE İŞ YÜKÜ
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
@@ -1238,62 +1025,6 @@
       else pastTasks.forEach(task => pastContainer.appendChild(createTaskCard(task, true, isManager)));
     }
 
-    function openEditTaskModal(taskId) {
-      const task = tasksList.find(t => t.id == taskId);
-      if (!task) return;
-
-      document.getElementById('editTaskId').value = task.id;
-      document.getElementById('editTaskTitle').value = task.title;
-      document.getElementById('editTaskDescription').value = task.description || '';
-      document.getElementById('editTaskCategory').value = task.category || 'Yazılım';
-      document.getElementById('editTaskEndDate').value = task.end_date || '';
-
-      const select = document.getElementById('editTaskAssignee');
-      select.innerHTML = '';
-      const interns = usersList.filter(u => u.role === 'INTERN');
-      interns.forEach(intern => {
-        const opt = document.createElement('option');
-        opt.value = intern.id;
-        opt.innerText = intern.name;
-        if (intern.id == task.assigned_to) opt.selected = true;
-        select.appendChild(opt);
-      });
-
-      document.getElementById('editTaskModal').classList.remove('hidden');
-    }
-
-    async function handleUpdateTask(e) {
-      e.preventDefault();
-      const taskId = document.getElementById('editTaskId').value;
-      const title = document.getElementById('editTaskTitle').value;
-      const assignedTo = document.getElementById('editTaskAssignee').value;
-      const description = document.getElementById('editTaskDescription').value;
-      const category = document.getElementById('editTaskCategory').value;
-      const endDate = document.getElementById('editTaskEndDate').value;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, assignedTo, description, category, endDate, userRole: currentUser.role })
-        });
-
-        if (res.ok) {
-          alert("Görev güncellendi!");
-          closeEditTaskModal();
-          await loadTasks();
-          if (currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER') {
-            renderInternStatusList();
-          }
-        } else {
-          const data = await res.json();
-          alert("Hata: " + data.error);
-        }
-      } catch (err) {
-        console.error("Görev güncelleme hatası:", err);
-      }
-    }
-
     function createTaskCard(task, isPast, isManager) {
       const taskLogs = dailyLogsList.filter(l => l.task_id === task.id);
       const card = document.createElement('div');
@@ -1312,26 +1043,18 @@
       if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
 
       let managerReviewButtons = '';
+      // Lider veya Mühendis ise ve görev stajyer tarafından tamamlandıysa veya revize sürecindeyse aksiyon butonlarını göster
       if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <button onclick="openEditTaskModal(${task.id})" title="Görevi ve Tarihini Düzenle" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
-              <i class="fa-solid fa-pen"></i> Düzenle
-            </button>
-
-            ${task.status !== 'APPROVED' ? `
-              ${task.status === 'COMPLETED' ? `
-                <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-check"></i> Onayla
-                </button>
-              ` : ''}
-              ${task.status !== 'REVISION_REQUESTED' ? `
-                <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
-                  <i class="fa-solid fa-rotate-left"></i> Revize Et
-                </button>
-              ` : ''}
+            ${task.status === 'COMPLETED' ? `
+              <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                <i class="fa-solid fa-check"></i> Onayla
+              </button>
+              <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                <i class="fa-solid fa-rotate-left"></i> Revize Et
+              </button>
             ` : ''}
-
             <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
               <i class="fa-solid fa-trash-can"></i> Sil
             </button>
@@ -1355,19 +1078,6 @@
         `;
       }
 
-      let revisionNoteHtml = '';
-      if (task.review_comment) {
-        revisionNoteHtml = `
-          <div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1 text-xs">
-            <div class="flex items-center gap-1 font-bold">
-              <i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu 
-              ${task.revised_by ? `<span class="text-[10px] text-slate-400 font-normal">(${task.revised_by} tarafından ${task.revised_at || ''} tarihinde yazıldı)</span>` : ''}
-            </div>
-            <div class="text-rose-400 font-normal mt-0.5">${task.review_comment}</div>
-          </div>
-        `;
-      }
-
       card.innerHTML = `
         <div>
           <div class="flex justify-between items-start gap-2 mb-2">
@@ -1376,8 +1086,8 @@
           </div>
 
           <div class="text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 mb-3">
-            <b></b> ${task.description || 'Açıklama belirtilmemiş.'}
-            ${revisionNoteHtml}
+            <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
+            ${task.review_comment ? `<div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu: ${task.review_comment}</div>` : ''}
           </div>
 
           <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
@@ -1411,27 +1121,6 @@
       } catch (err) { console.error('Hata:', err); }
     }
 
-    async function deleteTask(taskId) {
-      if (!confirm("Bu görevi silmek istediğinize emin misiniz?")) return;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json' }
-        });
-
-        if (res.ok) {
-          alert("Görev başarıyla silindi.");
-          await loadTasks();
-        } else {
-          const err = await res.json();
-          alert(err.error || "Görev silinemedi.");
-        }
-      } catch (err) {
-        console.error("Silme hatası:", err);
-      }
-    }
-
     function openRevisionModal(taskId) {
       document.getElementById('revisionTaskId').value = taskId;
       document.getElementById('revisionCommentText').value = '';
@@ -1442,30 +1131,8 @@
       e.preventDefault();
       const taskId = document.getElementById('revisionTaskId').value;
       const comment = document.getElementById('revisionCommentText').value;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/review`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            action: 'REVISION_REQUESTED',
-            comment: comment,
-            userRole: currentUser.role,
-            revisedBy: currentUser.name
-          })
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert(data.message || 'Revize talebi iletildi.');
-          closeRevisionModal();
-          await loadTasks();
-        } else {
-          alert("Hata: " + data.error);
-        }
-      } catch (err) {
-        console.error("Revize gönderme hatası:", err);
-      }
+      await reviewTask(taskId, 'REVISE', comment);
+      closeRevisionModal();
     }
 
     async function reviewTask(taskId, action, comment = '') {
@@ -1473,7 +1140,7 @@
         const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/review`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, comment, userRole: currentUser.role, revisedBy: currentUser.name })
+          body: JSON.stringify({ action, comment, userRole: currentUser.role })
         });
         if (response.ok) {
           alert(action === 'APPROVE' ? 'Görev onaylandı!' : 'Revize isteği iletildi.');
@@ -1496,34 +1163,6 @@
       document.getElementById('logModalTaskTitle').innerText = taskTitle;
       document.getElementById('logNoteText').value = '';
       document.getElementById('logModal').classList.remove('hidden');
-    }
-
-    async function handleSaveDailyLog(e) {
-      e.preventDefault();
-      const taskId = document.getElementById('logTaskId').value;
-      const note = document.getElementById('logNoteText').value;
-      const logDate = new Date().toISOString().split('T')[0];
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/daily-logs`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ taskId, internId: currentUser.id, note, logDate })
-        });
-
-        if (res.ok) {
-          alert('Günlük not eklendi!');
-          closeLogModal();
-          await loadLogs();
-          await loadTasks();
-          checkDailyLogWarning();
-        } else {
-          const data = await res.json();
-          alert('Hata: ' + data.error);
-        }
-      } catch (err) {
-        console.error('Log kaydetme hatası:', err);
-      }
     }
 
     function openInternProfileModal(internId) {
@@ -1639,76 +1278,137 @@
       doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, 210, 38, 'F');
 
-      doc.setTextColor(255, 255, 255);
-      doc.setFontSize(18);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fixTurkishChars("STAJ PERFORMANS VE DEGERLENDIRME RAPORU"), 15, 22);
+      doc.setTextColor(6, 182, 212);
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(15);
+      doc.text(fixTurkishChars("STAJ DEĞERLENDİRME VE İLERLEME RAPORU"), 14, 20);
+
+      doc.setTextColor(203, 213, 225);
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 28);
+
+      const logoImg = new Image();
+      logoImg.src = 'Y_logo_2.png';
+
+      logoImg.onload = function () {
+        doc.addImage(logoImg, 'PNG', 175, 5, 20, 28);
+        generatePDFContent(doc, intern, internTasks, internLogs);
+      };
+
+      logoImg.onerror = function () {
+        generatePDFContent(doc, intern, internTasks, internLogs);
+      };
+    }
+
+    function generatePDFContent(doc, intern, internTasks, internLogs) {
+      let yPos = 50;
+
+      doc.setFillColor(248, 250, 252);
+      doc.setDrawColor(226, 232, 240);
+      doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
+
+      doc.setTextColor(15, 23, 42);
+      doc.setFontSize(11);
+      doc.setFont("helvetica", "bold");
+      doc.text(fixTurkishChars(`Stajyer: ${intern.name}`), 18, yPos + 10);
 
       doc.setFontSize(9);
-      doc.setFont('helvetica', 'normal');
-      doc.text(fixTurkishChars(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`), 160, 22);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(71, 85, 105);
+      doc.text(fixTurkishChars(`E-Posta: ${intern.email}`), 18, yPos + 18);
+      doc.text(fixTurkishChars(`Staj Dönemi: ${intern.intern_start_date || 'Belirtilmedi'} / ${intern.intern_end_date || 'Belirtilmedi'}`), 18, yPos + 25);
 
-      let y = 48;
+      yPos += 42;
+
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
       doc.setTextColor(15, 23, 42);
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fixTurkishChars("Stajyer Bilgileri"), 15, y);
+      doc.text(fixTurkishChars("1. Atanan Görevler ve Durumları"), 14, yPos);
+      
+      doc.setDrawColor(6, 182, 212);
+      doc.setLineWidth(0.8);
+      doc.line(14, yPos + 2, 196, yPos + 2);
+      
+      yPos += 10;
+      doc.setFontSize(9);
 
-      y += 8;
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.text(fixTurkishChars(`Ad Soyad: ${intern.name}`), 15, y);
-      doc.text(fixTurkishChars(`E-Posta: ${intern.email}`), 110, y);
-
-      y += 6;
-      doc.text(fixTurkishChars(`Baslangic Tarihi: ${intern.intern_start_date || '-'}`), 15, y);
-      doc.text(fixTurkishChars(`Bitis Tarihi: ${intern.intern_end_date || '-'}`), 110, y);
-
-      y += 12;
-      doc.setFillColor(241, 245, 249);
-      doc.rect(15, y, 180, 22, 'F');
-
-      const approvedCount = internTasks.filter(t => t.status === 'APPROVED').length;
-      const completedCount = internTasks.filter(t => t.status === 'COMPLETED').length;
-
-      doc.setFont('helvetica', 'bold');
-      doc.text(fixTurkishChars(`Toplam Gorev: ${internTasks.length}`), 22, y + 13);
-      doc.text(fixTurkishChars(`Onaylanan: ${approvedCount}`), 72, y + 13);
-      doc.text(fixTurkishChars(`Onay Bekleyen: ${completedCount}`), 122, y + 13);
-      doc.text(fixTurkishChars(`Girilen Log: ${internLogs.length}`), 165, y + 13);
-
-      y += 32;
-      doc.setFontSize(12);
-      doc.setFont('helvetica', 'bold');
-      doc.text(fixTurkishChars("Gorev ve Calisma Gecmisi"), 15, y);
-
-      y += 8;
       if (internTasks.length === 0) {
-        doc.setFontSize(10);
-        doc.setFont('helvetica', 'italic');
-        doc.text(fixTurkishChars("Kayitli gorev bulunamadi."), 15, y);
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(148, 163, 184);
+        doc.text(fixTurkishChars("Kayıtlı görev bulunmamaktadır."), 14, yPos);
+        yPos += 10;
       } else {
-        internTasks.forEach((task, index) => {
-          if (y > 270) {
-            doc.addPage();
-            y = 20;
+        internTasks.forEach((t, i) => {
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
+          
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(30, 41, 59);
+          doc.text(fixTurkishChars(`${i + 1}. ${t.title}`), 16, yPos);
+
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(100, 116, 139);
+          doc.text(fixTurkishChars(`[Kategori: ${t.category} | Veren: ${t.created_by || 'Sistem'}]`), 110, yPos);
+
+          let statusLabel = t.status;
+          if (t.status === 'COMPLETED') statusLabel = 'TAMAMLANDI';
+          if (t.status === 'APPROVED') statusLabel = 'ONAYLANDI';
+          if (t.status === 'IN_PROGRESS') statusLabel = 'DEVAM EDİYOR';
+          if (t.status === 'REVISION_REQUESTED') statusLabel = 'REVİZE İSTENİYOR';
+
+          doc.setFont("helvetica", "bold");
+          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129);
+          else doc.setTextColor(245, 158, 11);
+
+          doc.text(fixTurkishChars(statusLabel), 165, yPos);
+          yPos += 6;
+
+          if (t.description) {
+            doc.setFont("helvetica", "italic");
+            doc.setFontSize(8.5);
+            doc.setTextColor(100, 116, 139);
+            const splitDesc = doc.splitTextToSize(fixTurkishChars(`Açıklama: ${t.description}`), 170);
+            doc.text(splitDesc, 20, yPos);
+            yPos += (splitDesc.length * 4) + 2;
+            doc.setFontSize(9);
           }
+          yPos += 3;
+        });
+      }
 
-          doc.setFillColor(248, 250, 252);
-          doc.rect(15, y, 180, 18, 'F');
+      yPos += 6;
+      if (yPos > 250) { doc.addPage(); yPos = 20; }
 
-          doc.setFontSize(10);
-          doc.setFont('helvetica', 'bold');
-          doc.text(fixTurkishChars(`${index + 1}. ${task.title}`), 18, y + 7);
+      doc.setFontSize(12);
+      doc.setFont("helvetica", "bold");
+      doc.setTextColor(15, 23, 42);
+      doc.text(fixTurkishChars("2. Günlük Çalışma Notları"), 14, yPos);
+      
+      doc.setLineWidth(0.8);
+      doc.line(14, yPos + 2, 196, yPos + 2);
+      
+      yPos += 10;
+      doc.setFontSize(9);
 
-          doc.setFontSize(8);
-          doc.setFont('helvetica', 'normal');
-          doc.text(fixTurkishChars(`Kategori: ${task.category || '-'} | Veren: ${task.created_by || 'Sistem'} | Bitis: ${task.end_date || '-'}`), 18, y + 13);
+      if (internLogs.length === 0) {
+        doc.setFont("helvetica", "italic");
+        doc.setTextColor(148, 163, 184);
+        doc.text(fixTurkishChars("Kayıtlı günlük not bulunmamaktadır."), 14, yPos);
+      } else {
+        internLogs.forEach((l) => {
+          if (yPos > 260) { doc.addPage(); yPos = 20; }
 
-          doc.setFont('helvetica', 'bold');
-          doc.text(fixTurkishChars(`Durum: ${task.status}`), 150, y + 7);
+          doc.setFont("helvetica", "bold");
+          doc.setTextColor(6, 182, 212);
+          doc.text(fixTurkishChars(`• [${l.log_date}]`), 16, yPos);
 
-          y += 22;
+          doc.setFont("helvetica", "normal");
+          doc.setTextColor(51, 65, 85);
+
+          const splitNote = doc.splitTextToSize(fixTurkishChars(l.note), 150);
+          doc.text(splitNote, 42, yPos);
+
+          yPos += (splitNote.length * 4.5) + 4;
         });
       }
 
@@ -1716,12 +1416,132 @@
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
         doc.setTextColor(148, 163, 184);
-        doc.text(fixTurkishChars("Gorevlendirme & Takip Sistemi Otomatik Raporudur."), 15, 290);
-        doc.text(`Sayfa ${i} / ${pageCount}`, 180, 290);
+        doc.text(fixTurkishChars(`Sayfa ${i} / ${pageCount}`), 105, 290, { align: "center" });
       }
 
       doc.save(`Staj_Raporu_${fixTurkishChars(intern.name).replace(/\s+/g, '_')}.pdf`);
+    }
+
+    async function deleteTask(taskId) {
+      if (!confirm("Bu görevi ve göreve ait tüm günlük notları silmek istediğinize emin misiniz?")) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+            'user-role': currentUser.role
+          }
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert("Görev başarıyla silindi.");
+          await loadTasks();
+          if (currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER') {
+            renderInternStatusList();
+          }
+        } else {
+          alert("Hata: " + data.error);
+        }
+      } catch (err) {
+        console.error("Görev silme hatası:", err);
+      }
+    }
+
+    function openManageUserModal(userId) {
+      const user = usersList.find(u => u.id == userId);
+      if (!user) return;
+      document.getElementById('manageUserId').value = user.id;
+      document.getElementById('manageUserName').value = user.name;
+      document.getElementById('manageUserEmail').value = user.email;
+      document.getElementById('manageUserRole').value = user.role;
+      document.getElementById('manageUserModal').classList.remove('hidden');
+    }
+
+    function closeManageUserModal() { document.getElementById('manageUserModal').classList.add('hidden'); }
+
+    async function handleSaveManagedUser(e) {
+      e.preventDefault();
+      const userId = document.getElementById('manageUserId').value;
+      const name = document.getElementById('manageUserName').value;
+      const email = document.getElementById('manageUserEmail').value;
+      const role = document.getElementById('manageUserRole').value;
+
+      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'user-role': currentUser ? currentUser.role : '' },
+        body: JSON.stringify({ name, email, role })
+      });
+
+      if (res.ok) {
+        alert("Kullanıcı güncellendi!");
+        closeManageUserModal();
+        await loadUsers();
+        renderSidebarDirectory();
+      }
+    }
+
+    async function deleteAnyUser(userId, userName) {
+      if (!confirm(`${userName} kullanıcısını silmek istediğinize emin misiniz?`)) return;
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json', 'user-role': currentUser ? currentUser.role : '' }
+        });
+        if (response.ok) {
+          alert('Kullanıcı silindi.');
+          await loadUsers();
+          renderSidebarDirectory();
+        }
+      } catch (err) { console.error('Hata:', err); }
+    }
+
+    async function handleSaveEditedTask(e) {
+      e.preventDefault();
+      const taskId = document.getElementById('editTaskId').value;
+      const title = document.getElementById('editTaskTitle').value;
+      const description = document.getElementById('editTaskDescription').value;
+      const assignedTo = document.getElementById('editTaskAssignee').value;
+      const category = document.getElementById('editTaskCategory').value;
+      const endDate = document.getElementById('editTaskEndDate').value;
+      const today = new Date().toISOString().split('T')[0];
+      const workDays = calculateWorkDays(today, endDate);
+
+      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, assignedTo, category, endDate, workDays, userRole: currentUser.role })
+      });
+
+      if (response.ok) {
+        alert('Görev güncellendi.');
+        closeEditTaskModal();
+        await loadTasks();
+      }
+    }
+
+    async function handleSaveDailyLog(e) {
+      e.preventDefault();
+      const taskId = document.getElementById('logTaskId').value;
+      const note = document.getElementById('logNoteText').value;
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      const res = await fetch(`${API_BASE_URL}/api/daily-logs`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ taskId, internId: currentUser.id, logDate: todayStr, note })
+      });
+
+      if (res.ok) {
+        alert("Günlük not eklendi!");
+        closeLogModal();
+        await loadLogs();
+        checkDailyLogWarning();
+        renderTaskList();
+      }
     }
   </script>
 </body>
