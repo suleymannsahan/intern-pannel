@@ -630,7 +630,7 @@ app.get('/api/daily-logs', async (req, res) => {
   }
 });
 
-// Görev Silme Endpoint'i
+// Görev Silme Endpoint'ii
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
