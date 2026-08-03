@@ -582,11 +582,24 @@
       dropdown.classList.toggle('hidden');
     }
 
+    // 1. Dışarıya Tıklandığında Ayarlar Menüsünü Kapatma
     document.addEventListener('click', function(e) {
       const dropdown = document.getElementById('settingsDropdown');
       const button = e.target.closest('button[onclick="toggleSettingsDropdown()"]');
       if (!button && dropdown && !dropdown.contains(e.target)) {
         dropdown.classList.add('hidden');
+      }
+    });
+
+    // 2. Sayfa Yenilendiğinde (F5) Oturumu ve Ekranı Koru
+    document.addEventListener('DOMContentLoaded', () => {
+      const savedUser = localStorage.getItem('currentUser');
+      if (savedUser) {
+        currentUser = JSON.parse(savedUser);
+        
+        // Paneli göster ve role göre yönlendir
+        if (typeof showDashboard === 'function') showDashboard();
+        if (typeof handleUserNavigation === 'function') handleUserNavigation(currentUser);
       }
     });
 
@@ -747,16 +760,38 @@
       }
     }
 
+    // Kullanıcı Giriş Yaptıktan Sonra Çalışacak Ana Yönlendirme Fonksiyonu
+    function handleUserNavigation(currentUser) {
+      const tasksSection = document.getElementById('tasksSection');
+      const adminSection = document.getElementById('adminPanelSection');
+      const adminNavBtn = document.getElementById('adminPanelTabBtn');
+
+      if (currentUser.role === 'ADMIN') {
+        // 1. Admin ise menüdeki Admin Paneli butonunu görünür yap
+        if (adminNavBtn) adminNavBtn.classList.remove('hidden');
+
+        // 2. Doğrudan Admin Panelini aç
+        showSection('admin');
+
+        // 3. Admin Paneli verilerini yükle
+        loadAdminPanel();
+      } else {
+        // Admin değilse Admin butonunu gizle ve normal Görevler panelini göster
+        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        showSection('tasks');
+      }
+
+      // Tüm roller için görev listesini yükle
+      loadTasks();
+    }
+
     function showSection(sectionName) {
       const tasksSection = document.getElementById('tasksSection');
       const adminSection = document.getElementById('adminPanelSection');
 
       if (sectionName === 'admin') {
         if (tasksSection) tasksSection.classList.add('hidden');
-        if (adminSection) {
-          adminSection.classList.remove('hidden');
-          loadAdminPanel(); // Admin paneli verilerini çek
-        }
+        if (adminSection) adminSection.classList.remove('hidden');
       } else if (sectionName === 'tasks') {
         if (adminSection) adminSection.classList.add('hidden');
         if (tasksSection) tasksSection.classList.remove('hidden');
@@ -794,6 +829,8 @@
         alert(data.error);
       }
     }
+
+
 
     function populateEngineerDropdown() {
       const select = document.getElementById('regEngineer');
@@ -980,7 +1017,13 @@
         if (res.ok) {
           currentUser = data;
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          
+          // 1. Ana paneli / ekranı görünür yap
           showDashboard();
+          
+          // 2. Kullanıcının rolüne göre (ADMIN vs.) sayfa yönlendirmesini yap
+          handleUserNavigation(currentUser);
+
         } else {
           alert(data.error);
         }
@@ -1214,13 +1257,14 @@
       const container = document.getElementById('taskList');
       const pastContainer = document.getElementById('pastTaskList');
       
-      container.innerHTML = '';
-      pastContainer.innerHTML = '';
+      if (container) container.innerHTML = '';
+      if (pastContainer) pastContainer.innerHTML = '';
 
       const searchVal = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const filterCat = document.getElementById('filterCategory')?.value || '';
       const filterStat = document.getElementById('filterStatus')?.value || '';
 
+      // Filtreleme işlemleri
       const filtered = tasksList.filter(t => {
         const matchesSearch = t.title.toLowerCase().includes(searchVal) || 
                               (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
@@ -1233,13 +1277,32 @@
       const activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
       const pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
 
-      const isManager = currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER';
+      // Yetki Kontrolü (ADMIN, LEADER veya ENGINEER kontrolü)
+      const isManager = (
+        currentUser.role === 'ADMIN' || 
+        currentUser.role === 'LEADER' || 
+        currentUser.role === 'ENGINEER'
+      );
 
-      if (activeTasks.length === 0) container.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Görev bulunmamaktadır.</div>`;
-      else activeTasks.forEach(task => container.appendChild(createTaskCard(task, false, isManager)));
+      // Aktif Görevleri Ekrana Bas
+      if (activeTasks.length === 0) {
+        if (container) container.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Görev bulunmamaktadır.</div>`;
+      } else {
+        activeTasks.forEach(task => {
+          const card = createTaskCard(task, false, isManager);
+          if (container) container.appendChild(card);
+        });
+      }
 
-      if (pastTasks.length === 0) pastContainer.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Geçmiş/Tamamlanan görev kaydı bulunmuyor.</div>`;
-      else pastTasks.forEach(task => pastContainer.appendChild(createTaskCard(task, true, isManager)));
+      // Geçmiş / Tamamlanan Görevleri Ekrana Bas
+      if (pastTasks.length === 0) {
+        if (pastContainer) pastContainer.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Geçmiş/Tamamlanan görev kaydı bulunmuyor.</div>`;
+      } else {
+        pastTasks.forEach(task => {
+          const card = createTaskCard(task, true, isManager);
+          if (pastContainer) pastContainer.appendChild(card);
+        });
+      }
     }
 
     function createTaskCard(task, isPast, isManager) {
