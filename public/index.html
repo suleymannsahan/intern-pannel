@@ -777,58 +777,80 @@
     }
 
     function handleRoleChange() {
-      const role = document.getElementById('regRole').value;
+      const roleSelect = document.getElementById('regRole');
+      if (!roleSelect) return; // Dropdown bulunamazsa dur
+
+      const selectedRole = roleSelect.value;
       const internFields = document.getElementById('internRegisterFields');
       const leaderFields = document.getElementById('leaderVerificationFields');
 
-      if (role === 'INTERN') {
-        internFields.classList.remove('hidden');
-        leaderFields.classList.add('hidden');
-        populateEngineerDropdown();
-      } else if (role === 'LEADER') {
-        internFields.classList.add('hidden');
-        leaderFields.classList.remove('hidden');
-      } else {
-        internFields.classList.add('hidden');
-        leaderFields.classList.add('hidden');
+      // Stajyer Alanları Mantığı
+      if (internFields) {
+        if (selectedRole === 'INTERN') {
+          internFields.classList.remove('hidden');
+          
+          // Mühendis listesi dolduran fonksiyon tanımlıysa çağır
+          if (typeof populateEngineerDropdown === 'function') {
+            populateEngineerDropdown();
+          }
+        } else {
+          internFields.classList.add('hidden');
+        }
+      }
+
+      // Takım Lideri / Yönetici Alanları Mantığı
+      if (leaderFields) {
+        if (selectedRole === 'LEADER' || selectedRole === 'EKIP_LIDERI') {
+          leaderFields.classList.remove('hidden');
+        } else {
+          leaderFields.classList.add('hidden');
+        }
       }
     }
 
     // Kullanıcı Giriş Yaptıktan Sonra Çalışacak Ana Yönlendirme Fonksiyonu
     function handleUserNavigation(currentUser) {
-      const tasksSection = document.getElementById('tasksSection');
-      const adminSection = document.getElementById('adminPanelSection');
+      // Kullanıcı oturumu yoksa veya rolü tanımlı değilse güvenli çıkış
+      if (!currentUser || !currentUser.role) {
+        console.warn("Kullanıcı oturumu veya rolü bulunamadı.");
+        return;
+      }
+
       const adminNavBtn = document.getElementById('adminPanelTabBtn');
 
       if (currentUser.role === 'ADMIN') {
         // 1. Admin ise menüdeki Admin Paneli butonunu görünür yap
         if (adminNavBtn) adminNavBtn.classList.remove('hidden');
 
-        // 2. Doğrudan Admin Panelini aç
+        // 2. Doğrudan Admin Panelini aç ve verilerini yükle
         showSection('admin');
-
-        // 3. Admin Paneli verilerini yükle
-        loadAdminPanel();
+        
+        if (typeof loadAdminPanel === 'function') {
+          loadAdminPanel();
+        }
       } else {
-        // Admin değilse Admin butonunu gizle ve normal Görevler panelini göster
+        // 3. Admin değilse Admin butonunu gizle ve normal Görevler panelini göster
         if (adminNavBtn) adminNavBtn.classList.add('hidden');
         showSection('tasks');
       }
 
-      // Tüm roller için görev listesini yükle
-      loadTasks();
+      // Tüm roller için görev listesini yükle (Fonksiyon kontrolü ile)
+      if (typeof loadTasks === 'function') {
+        loadTasks();
+      }
     }
 
     function showSection(sectionName) {
       const tasksSection = document.getElementById('tasksSection');
       const adminSection = document.getElementById('adminPanelSection');
 
-      if (sectionName === 'admin') {
-        if (tasksSection) tasksSection.classList.add('hidden');
-        if (adminSection) adminSection.classList.remove('hidden');
-      } else if (sectionName === 'tasks') {
-        if (adminSection) adminSection.classList.add('hidden');
-        if (tasksSection) tasksSection.classList.remove('hidden');
+      // Geçiş mantığını basitleştirme ve guard ekleme
+      if (tasksSection) {
+        tasksSection.classList.toggle('hidden', sectionName !== 'tasks');
+      }
+
+      if (adminSection) {
+        adminSection.classList.toggle('hidden', sectionName !== 'admin');
       }
     }
 
@@ -995,6 +1017,31 @@
       document.getElementById('manageUserModal').classList.add('hidden');
     }
 
+    function openEditProfileModal() {
+      if (!currentUser) return;
+      
+      document.getElementById('editProfileName').value = currentUser.name || '';
+      document.getElementById('editProfileEmail').value = currentUser.email || '';
+      document.getElementById('editProfilePassword').value = '';
+
+      const internFields = document.getElementById('editProfileInternFields');
+      if (currentUser.role === 'INTERN') {
+        if (internFields) internFields.classList.remove('hidden');
+        populateEditProfileEngineers();
+        document.getElementById('editProfileStartDate').value = currentUser.intern_start_date || '';
+        document.getElementById('editProfileEndDate').value = currentUser.intern_end_date || '';
+        document.getElementById('editProfileEngineer').value = currentUser.engineer_id || '';
+      } else {
+        if (internFields) internFields.classList.add('hidden');
+      }
+
+      document.getElementById('editProfileModal').classList.remove('hidden');
+    }
+
+    function closeEditProfileModal() {
+      document.getElementById('editProfileModal').classList.add('hidden');
+    }
+
     async function handleSaveManagedUser(e) {
       e.preventDefault();
       const userId = document.getElementById('manageUserId').value;
@@ -1083,7 +1130,7 @@
 
     async function handleLogin(e) {
       e.preventDefault();
-      const email = document.getElementById('loginEmail').value;
+      const email = document.getElementById('loginUsername').value;
       const password = document.getElementById('loginPassword').value;
 
       try {
@@ -1676,12 +1723,16 @@
     }
 
     async function approveUser(userId) {
-      // backend/API kullanıyorsanız:
-      // await fetch(`${API_BASE_URL}/users/${userId}/approve`, { method: 'PATCH' });
-      
-      alert("Kullanıcı kaydı onaylandı!");
-      // Tabloyu yeniden yükleyin
-      renderAdminTables();
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/approve`, { method: 'PATCH' });
+        if (res.ok) {
+          alert("Kullanıcı kaydı onaylandı!");
+          await loadUsers();
+          if (typeof loadPendingUsers === 'function') await loadPendingUsers();
+        }
+      } catch(err) {
+        console.error("Onaylama hatası:", err);
+      }
     }
 
     function openInternProfileModal(internId) {
