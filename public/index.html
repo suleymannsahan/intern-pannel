@@ -660,33 +660,44 @@
 
     async function handleRegister(e) {
       e.preventDefault();
+      
+      // HTML elemanlarından değerleri eksiksiz çekiyoruz
       const name = document.getElementById('regName').value;
       const email = document.getElementById('regEmail').value;
       const password = document.getElementById('regPassword').value;
+      const unit = document.getElementById('regUnit').value; // Eksik olan Birim alanı eklendi
       const role = document.getElementById('regRole').value;
-      const startDate = document.getElementById('regStartDate').value;
-      const endDate = document.getElementById('regEndDate').value;
-      const engineerId = document.getElementById('regEngineer').value;
-      const verificationCode = document.getElementById('regVerificationCode').value;
+      const leaderSubUnit = document.getElementById('regLeaderSubUnit')?.value || null; // Ekip Lideri Alanı eklendi
+      const startDate = document.getElementById('regStartDate')?.value || null;
+      const endDate = document.getElementById('regEndDate')?.value || null;
 
-      if (role === 'LEADER' && !verificationCode.trim()) {
-        alert("Ekip lideri doğrulama kodunu giriniz.");
-        return;
-      }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name, 
+            email, 
+            password, 
+            unit, 
+            role, 
+            leaderSubUnit, 
+            startDate, 
+            endDate 
+          })
+        });
 
-      const res = await fetch(`${API_BASE_URL}/api/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId, verificationCode })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Hesabınız oluşturuldu!");
-        await loadUsers();
-        switchAuthTab('login');
-      } else {
-        alert(data.error);
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message || "Hesabınız oluşturuldu!");
+          await loadUsers();
+          switchAuthTab('login');
+        } else {
+          alert("Kayıt Hatası: " + data.error);
+        }
+      } catch (err) {
+        console.error("Kayıt sırasında ağ hatası oluştu:", err);
+        alert("Sunucuya bağlanırken bir hata oluştu.");
       }
     }
 
