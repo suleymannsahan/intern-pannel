@@ -605,20 +605,14 @@ app.get('/api/daily-logs', async (req, res) => {
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const userRole = req.headers['user-role'];
 
-    // Yalnızca Mühendis veya Ekip Lideri silebilir
-    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
-      return res.status(403).json({ error: 'Görev silmek için yetkiniz bulunmamaktadır.' });
-    }
-
-    // Göreve ait günlük logları sil
+    // Önce bu göreve bağlı günlük logları siliyoruz (Foreign Key hatası almamak için)
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
       args: [taskId]
     });
 
-    // Görevi sil
+    // Ardından görevi siliyoruz
     const result = await db.execute({
       sql: `DELETE FROM tasks WHERE id = ?`,
       args: [taskId]
@@ -659,21 +653,24 @@ app.delete('/api/users/:id', async (req, res) => {
 app.put('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
+    const { title, assignedTo, description, category, endDate, userRole } = req.body;
 
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+    // Yetki Kontrolü
+    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
-    const result = await db.execute({
-      sql: `UPDATE tasks SET title = ?, description = ?, assigned_to = ?, category = ?, end_date = ?, work_days = ? WHERE id = ?`,
-      args: [title, description || '', assignedTo, category, endDate, workDays, taskId]
+    // Görevi Güncelle (Revize istendiyse tekrar 'IN_PROGRESS' durumuna çekebilirsiniz)
+    await db.execute({
+      sql: `UPDATE tasks 
+            SET title = ?, assigned_to = ?, description = ?, category = ?, end_date = ? 
+            WHERE id = ?`,
+      args: [title, assignedTo, description || '', category, endDate, taskId]
     });
 
-    if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
     res.json({ message: 'Görev başarıyla güncellendi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Görev güncellenemedi: ' + error.message });
+    res.status(500).json({ error: 'Görev güncellenirken hata oluştu: ' + error.message });
   }
 });
 
