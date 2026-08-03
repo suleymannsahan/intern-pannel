@@ -606,35 +606,39 @@ app.get('/api/daily-logs', async (req, res) => {
 
 // Görev Silme Endpoint'i
 app.delete('/api/tasks/:id', async (req, res) => {
-    const taskId = req.params.id;
+  const taskId = req.params.id;
 
-    try {
-        console.log("Silinecek görev:", taskId);
+  try {
+    // Önce revizyon kayıtlarını sil
+    await db.execute({
+      sql: `DELETE FROM task_revisions WHERE task_id = ?`,
+      args: [taskId]
+    });
 
-        await db.execute({
-            sql: "DELETE FROM daily_logs WHERE task_id = ?",
-            args: [taskId]
-        });
+    // Sonra günlük kayıtlarını sil
+    await db.execute({
+      sql: `DELETE FROM daily_logs WHERE task_id = ?`,
+      args: [taskId]
+    });
 
-        console.log("daily_logs silindi");
+    // En son görevi sil
+    const result = await db.execute({
+      sql: `DELETE FROM tasks WHERE id = ?`,
+      args: [taskId]
+    });
 
-        const result = await db.execute({
-            sql: "DELETE FROM tasks WHERE id = ?",
-            args: [taskId]
-        });
-
-        console.log("tasks silindi");
-
-        res.json({ message: "Görev başarıyla silindi." });
-
-    } catch (error) {
-        console.error("DELETE HATASI:");
-        console.error(error);
-
-        res.status(500).json({
-            error: error.message
-        });
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Silinecek görev bulunamadı.' });
     }
+
+    res.json({ message: 'Görev başarıyla silindi.' });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      error: error.message
+    });
+  }
 });
 
 // Stajyer Silme
