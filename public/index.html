@@ -1196,6 +1196,7 @@
       switch (currentUser.role) {
         case 'ADMIN':
           roleLabel = 'Sistem Yöneticisi (Admin)';
+          loadPendingUsers();
           break;
         case 'MUDUR':
           roleLabel = 'Müdür';
