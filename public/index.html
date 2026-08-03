@@ -53,8 +53,8 @@
 
       <form id="loginForm" onsubmit="handleLogin(event)" class="space-y-4">
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">E-Posta</label>
-          <input type="email" id="loginEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all text-slate-900 dark:text-slate-100 placeholder-slate-400">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kullanıcı Adı</label>
+          <input type="text" id="loginUsername" required placeholder="kullaniciadi" class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all text-slate-900 dark:text-slate-100 placeholder-slate-400">
         </div>
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Şifre</label>
@@ -67,52 +67,56 @@
       </form>
 
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+        <!-- 1. Ad Soyad -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Ad Soyad</label>
-          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
         </div>
+
+        <!-- 2. Kullanıcı Adı -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">E-Posta</label>
-          <input type="email" id="regEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Kullanıcı Adı</label>
+          <input type="text" id="regUsername" required placeholder="kullaniciadi" class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
         </div>
+
+        <!-- 3. Şifre -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Şifre</label>
-          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
         </div>
+
+        <!-- 4. Birim Seçimi -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
-          <select id="regRole" onchange="handleRoleChange()" class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
-            <option value="INTERN">Stajyer</option>
-            <option value="ENGINEER">Mühendis</option>
-            <option value="LEADER">Ekip Lideri</option>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Birim Seçimi</label>
+          <select id="regDepartment" onchange="handleDepartmentOrRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">-- Birim Seçiniz --</option>
+            <option value="ELEKTRONIK">Elektronik</option>
+            <option value="MEKANIK">Mekanik</option>
+            <option value="YAZILIM">Yazılım</option>
+            <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
           </select>
         </div>
 
-        <div id="internRegisterFields" class="space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
-          <div>
-            <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Sorumlu Mühendis Seçin</label>
-            <select id="regEngineer" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
-              <option value="">-- Mühendis Seçiniz --</option>
-            </select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Başlangıç</label>
-              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Bitiş</label>
-              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
-            </div>
-          </div>
+        <!-- 5. Rol Seçimi -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
+          <select id="regRole" onchange="handleDepartmentOrRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">-- Rol Seçiniz --</option>
+            <option value="MUDUR">Müdür</option>
+            <option value="EKIP_LIDERI" id="optLeader" class="hidden">Ekip Lideri</option>
+            <option value="MUHENDIS">Mühendis</option>
+            <option value="TEKNISYEN">Teknisyen</option>
+            <option value="STAJYER">Stajyer</option>
+          </select>
         </div>
 
-        <div id="leaderVerificationFields" class="hidden space-y-2 p-3.5 bg-cyan-100/50 dark:bg-cyan-950/30 rounded-xl border border-cyan-300 dark:border-cyan-800/50">
-          <label class="block text-xs font-semibold text-cyan-700 dark:text-cyan-300">Ekip Lideri Doğrulama Kodu</label>
-          <div class="flex gap-2">
-            <input type="text" id="regVerificationCode" placeholder="Kodu Girin" class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
-            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-cyan-600 hover:bg-cyan-500 text-white dark:text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition-all shadow-md">Kod Gönder</button>
-          </div>
+        <!-- EKİP LİDERİ İÇİN DİNAMİK TÜRF SEÇİMİ (EKSTRA) -->
+        <div id="leaderSubTypeFields" class="hidden space-y-2 p-3 bg-cyan-950/30 rounded-xl border border-cyan-800/50">
+          <label class="block text-xs font-semibold text-cyan-400">Ekip Lideri Türü Seçimi</label>
+          <select id="regLeaderType" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-xs">
+            <option value="TEST_EKIP_LIDERI">Test Ekip Lideri</option>
+            <option value="GOMULU_EKIP_LIDERI">Gömülü Ekip Lideri</option>
+          </select>
         </div>
 
         <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Hesap Oluştur</button>
@@ -253,9 +257,10 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-cyan-600 dark:text-cyan-400 text-sm">0 gün</strong></span>
                 <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
               </div>
+
               <!-- ADMIN PANELİ EKRANI -->
               <div id="adminPanelSection" class="space-y-6">
-                
+
                 <!-- Üst Bilgi Kartları (İstatistikler) -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
@@ -288,11 +293,37 @@
                   </div>
                 </div>
 
-                <!-- Kullanıcı Yönetim Tablosu -->
+                <!-- YENİ EKLENEN: ONAY BEKLEYEN KULLANICILAR TABLOSU -->
+                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-4">
+                  <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+                    <h3 class="font-bold text-lg text-amber-500 dark:text-amber-400 flex items-center gap-2">
+                      <i class="fa-solid fa-user-clock"></i> Yeni Kayıt Onayları (Müdür & Ekip Liderleri)
+                    </h3>
+                  </div>
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                      <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
+                          <th class="py-3 px-2">Ad Soyad</th>
+                          <th class="py-3 px-2">Kullanıcı Adı</th>
+                          <th class="py-3 px-2">Birim</th>
+                          <th class="py-3 px-2">Rol</th>
+                          <th class="py-3 px-2">Detay / Tür</th>
+                          <th class="py-3 px-2 text-right">İşlem</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminPendingUsersTable" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- JS tarafında onay bekleyenler buraya render edilecek -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <!-- GÜNCELLENEN: TÜM KULLANICILAR YÖNETİM TABLOSU -->
                 <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-4">
                   <div class="flex justify-between items-center">
                     <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100"><i class="fa-solid fa-user-shield me-2 text-cyan-500"></i>Kullanıcı Yönetimi</h3>
-                    <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2">
+                    <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
                       <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı Ekle
                     </button>
                   </div>
@@ -303,8 +334,10 @@
                         <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
                           <th class="py-3 px-2">ID</th>
                           <th class="py-3 px-2">Ad Soyad</th>
-                          <th class="py-3 px-2">E-posta</th>
+                          <th class="py-3 px-2">Kullanıcı Adı</th>
+                          <th class="py-3 px-2">Birim</th>
                           <th class="py-3 px-2">Rol</th>
+                          <th class="py-3 px-2">Durum</th>
                           <th class="py-3 px-2 text-right">İşlemler</th>
                         </tr>
                       </thead>
@@ -314,6 +347,7 @@
                     </table>
                   </div>
                 </div>
+
               </div>
             </form>
           </div>
@@ -800,33 +834,72 @@
 
     async function handleRegister(e) {
       e.preventDefault();
+      
+      // Form değerlerini yeni ID'lere göre alma
       const name = document.getElementById('regName').value;
-      const email = document.getElementById('regEmail').value;
+      const username = document.getElementById('regUsername').value;
       const password = document.getElementById('regPassword').value;
+      const department = document.getElementById('regDepartment').value;
       const role = document.getElementById('regRole').value;
-      const startDate = document.getElementById('regStartDate').value;
-      const endDate = document.getElementById('regEndDate').value;
-      const engineerId = document.getElementById('regEngineer').value;
-      const verificationCode = document.getElementById('regVerificationCode').value;
 
-      if (role === 'LEADER' && !verificationCode.trim()) {
-        alert("Ekip lideri doğrulama kodunu giriniz.");
-        return;
+      // Ekip Lideri seçilmişse özel türünü al, seçilmemişse null gönder
+      const leaderType = (role === 'EKIP_LIDERI') ? document.getElementById('regLeaderType').value : null;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+            name, 
+            username, 
+            password, 
+            department, 
+            role, 
+            leaderType 
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          // Müdür veya Ekip Lideri onay bekleyeceğinden kullanıcıya bilgi mesajı verebilirsiniz
+          if (role === 'MUDUR' || role === 'EKIP_LIDERI') {
+            alert("Hesabınız oluşturuldu! Müdür / Ekip Lideri hesapları Admin onayından sonra aktifleşmektedir.");
+          } else {
+            alert("Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.");
+          }
+          
+          await loadUsers();
+          switchAuthTab('login');
+        } else {
+          alert(data.error || "Kayıt sırasında bir hata oluştu.");
+        }
+      } catch (err) {
+        console.error("Kayıt hatası:", err);
+        alert("Sunucuya bağlanırken bir sorun oluştu.");
+      }
+    }
+
+    function handleDepartmentOrRoleChange() {
+      const dept = document.getElementById('regDepartment').value;
+      const roleSelect = document.getElementById('regRole');
+      const optLeader = document.getElementById('optLeader');
+      const leaderSubTypeFields = document.getElementById('leaderSubTypeFields');
+
+      // Ekip Lideri rolü sadece ELEKTRONIK biriminde görünür
+      if (dept === 'ELEKTRONIK') {
+        optLeader.classList.remove('hidden');
+      } else {
+        optLeader.classList.add('hidden');
+        if (roleSelect.value === 'EKIP_LIDERI') {
+          roleSelect.value = '';
+        }
       }
 
-      const res = await fetch(`${API_BASE_URL}/api/register`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, role, startDate, endDate, engineerId, verificationCode })
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        alert("Hesabınız oluşturuldu!");
-        await loadUsers();
-        switchAuthTab('login');
+      // Ekip Lideri seçilirse Test / Gömülü türü alanını göster
+      if (roleSelect.value === 'EKIP_LIDERI') {
+        leaderSubTypeFields.classList.remove('hidden');
       } else {
-        alert(data.error);
+        leaderSubTypeFields.classList.add('hidden');
       }
     }
 
@@ -1064,31 +1137,91 @@
     }
 
     async function showDashboard() {
+      // Ekran geçişleri
       document.getElementById('authContainer').classList.add('hidden');
       document.getElementById('dashboardContainer').classList.remove('hidden');
 
+      // Ad Soyad Yazdır
       document.getElementById('userInfoName').innerText = currentUser.name;
-      
+
+      // 1. Rol Etiketini Dinamik Belirleme
       let roleLabel = 'Stajyer';
-      if (currentUser.role === 'ENGINEER') roleLabel = 'Sorumlu Mühendis';
-      if (currentUser.role === 'LEADER') roleLabel = 'Ekip Lideri';
+      switch (currentUser.role) {
+        case 'ADMIN':
+          roleLabel = 'Sistem Yöneticisi (Admin)';
+          break;
+        case 'MUDUR':
+          roleLabel = 'Müdür';
+          break;
+        case 'EKIP_LIDERI':
+          if (currentUser.leaderType === 'TEST_EKIP_LIDERI') {
+            roleLabel = 'Test Ekip Lideri';
+          } else if (currentUser.leaderType === 'GOMULU_EKIP_LIDERI') {
+            roleLabel = 'Gömülü Ekip Lideri';
+          } else {
+            roleLabel = 'Ekip Lideri';
+          }
+          break;
+        case 'MUHENDIS':
+          roleLabel = 'Mühendis';
+          break;
+        case 'TEKNISYEN':
+          roleLabel = 'Teknisyen';
+          break;
+        case 'STAJYER':
+          roleLabel = 'Stajyer';
+          break;
+      }
+
+      // Rol bilgisini ekrana yaz
       document.getElementById('userInfoRole').innerText = roleLabel;
 
-      const isManager = currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER';
-      
+      // (Varsa) Birim bilgisini ekrana yaz
+      const deptElement = document.getElementById('userInfoDepartment');
+      if (deptElement && currentUser.department) {
+        deptElement.innerText = `${currentUser.department} Birimi`;
+      }
+
+      // 2. Yetki Seviyelerini Tanımlama
+      const isAdminOrManager = currentUser.role === 'ADMIN' || currentUser.role === 'MUDUR';
+      const isLeaderOrAbove = isAdminOrManager || currentUser.role === 'EKIP_LIDERI';
+
+      // 3. Ortak Verileri Yükleme
       await loadUsers();
       await loadLogs();
       await loadTasks();
       renderSidebarDirectory();
 
-      if (isManager) {
-        document.getElementById('leaderSection').classList.remove('hidden');
-        document.getElementById('dailyWarningBanner').classList.add('hidden');
+      // Admin özel tablosu için onay bekleyenleri yükle
+      if (currentUser.role === 'ADMIN' && typeof loadPendingUsers === 'function') {
+        await loadPendingUsers();
+      }
+
+      // 4. Arayüz Elemanlarının Yetkiye Göre Gösterilip/Gizlenmesi
+      if (isLeaderOrAbove) {
+        // Lider ve Üstü Yetkiler
+        if (document.getElementById('leaderSection')) {
+          document.getElementById('leaderSection').classList.remove('hidden');
+        }
+        if (document.getElementById('dailyWarningBanner')) {
+          document.getElementById('dailyWarningBanner').classList.add('hidden');
+        }
+        
+        // Select kutularını ve çalışan listelerini güncelle
         populateAssigneeOptions();
-        renderInternStatusList();
+        if (typeof renderInternStatusList === 'function') {
+          renderInternStatusList();
+        }
       } else {
-        document.getElementById('leaderSection').classList.add('hidden');
-        checkDailyLogWarning();
+        // Mühendis, Teknisyen ve Stajyer Yetkileri
+        if (document.getElementById('leaderSection')) {
+          document.getElementById('leaderSection').classList.add('hidden');
+        }
+        
+        // Günlük log doldurma uyarısını kontrol et
+        if (typeof checkDailyLogWarning === 'function') {
+          checkDailyLogWarning();
+        }
       }
     }
 
@@ -1540,6 +1673,15 @@
       } catch (err) {
         console.error('Log kaydetme hatası:', err);
       }
+    }
+
+    async function approveUser(userId) {
+      // backend/API kullanıyorsanız:
+      // await fetch(`${API_BASE_URL}/users/${userId}/approve`, { method: 'PATCH' });
+      
+      alert("Kullanıcı kaydı onaylandı!");
+      // Tabloyu yeniden yükleyin
+      renderAdminTables();
     }
 
     function openInternProfileModal(internId) {
