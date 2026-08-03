@@ -318,11 +318,17 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// Görevleri Getirme
+// Görevleri Getirme Endpoint'i
 app.get('/api/tasks', async (req, res) => {
   try {
     const { userId, role } = req.query;
-    let sql = `SELECT tasks.*, users.name as assignee_name FROM tasks JOIN users ON tasks.assigned_to = users.id`;
+
+    // 1. Görevleri ve Atanan Kullanıcı Adını Çek (INNER JOIN yerine LEFT JOIN)
+    let sql = `
+      SELECT tasks.*, users.name as assignee_name 
+      FROM tasks 
+      LEFT JOIN users ON tasks.assigned_to = users.id
+    `;
     let args = [];
 
     if (role === 'INTERN') {
@@ -330,21 +336,45 @@ app.get('/api/tasks', async (req, res) => {
       args.push(userId);
     }
 
-    const result = await db.execute({ sql, args });
-    const tasks = result.rows;
+    sql += ` ORDER BY tasks.id DESC`;
 
-    // Her görev için revizyon geçmişini de getir
-    for (let task of tasks) {
-      const revRes = await db.execute({
-        sql: `SELECT * FROM task_revisions WHERE task_id = ? ORDER BY id DESC`,
-        args: [task.id]
-      });
-      task.revisions = revRes.rows;
+    const result = await db.execute({ sql, args });
+    
+    // Rows dizisini düz JavaScript objelerine dönüştür (Read-only engeli aşmak için)
+    const tasks = result.rows.map(row => ({ ...row, revisions: [] }));
+
+    if (tasks.length === 0) {
+      return res.json([]);
     }
 
-    res.json(tasks);
+    // 2. N+1 Problemini Çözme: Tüm revizyonları TEK SORGUMUZA çekiyoruz
+    const taskIds = tasks.map(t => t.id);
+    const placeholders = taskIds.map(() => '?').join(',');
+
+    const revisionsResult = await db.execute({
+      sql: `SELECT * FROM task_revisions WHERE task_id IN (${placeholders}) ORDER BY id DESC`,
+      args: taskIds
+    });
+
+    // 3. Revizyonları İlgili Görevlere Gruplayarak Dağıt
+    const revisionsByTaskId = {};
+    for (const rev of revisionsResult.rows) {
+      if (!revisionsByTaskId[rev.task_id]) {
+        revisionsByTaskId[rev.task_id] = [];
+      }
+      revisionsByTaskId[rev.task_id].push(rev);
+    }
+
+    // Görev objelerine revizyonlarını ekle
+    const finalTasks = tasks.map(task => ({
+      ...task,
+      revisions: revisionsByTaskId[task.id] || []
+    }));
+
+    res.json(finalTasks);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error('Görev getirme hatası:', error);
+    res.status(500).json({ error: 'Görevler yüklenirken hata oluştu: ' + error.message });
   }
 });
 
