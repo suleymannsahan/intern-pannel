@@ -58,7 +58,6 @@ async function initDb() {
         intern_id INTEGER NOT NULL,
         log_date TEXT NOT NULL,
         note TEXT NOT NULL,
-        FOREIGN KEY(task_id) REFERENCES tasks(id),
         FOREIGN KEY(intern_id) REFERENCES users(id),
         FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
       )
@@ -607,29 +606,35 @@ app.get('/api/daily-logs', async (req, res) => {
 
 // Görev Silme Endpoint'i
 app.delete('/api/tasks/:id', async (req, res) => {
-  const taskId = req.params.id;
+    const taskId = req.params.id;
 
-  try {
-    // Önce göreve bağlı daily_logs kayıtlarını temizleyelim (Foreign key çakışması olmaması için)
-    await db.execute({
-      sql: `DELETE FROM daily_logs WHERE task_id = ?`,
-      args: [taskId]
-    });
+    try {
+        console.log("Silinecek görev:", taskId);
 
-    // Görevi sil
-    const result = await db.execute({
-      sql: `DELETE FROM tasks WHERE id = ?`,
-      args: [taskId]
-    });
+        await db.execute({
+            sql: "DELETE FROM daily_logs WHERE task_id = ?",
+            args: [taskId]
+        });
 
-    if (result.rowsAffected === 0) {
-      return res.status(404).json({ error: 'Silinecek görev bulunamadı.' });
+        console.log("daily_logs silindi");
+
+        const result = await db.execute({
+            sql: "DELETE FROM tasks WHERE id = ?",
+            args: [taskId]
+        });
+
+        console.log("tasks silindi");
+
+        res.json({ message: "Görev başarıyla silindi." });
+
+    } catch (error) {
+        console.error("DELETE HATASI:");
+        console.error(error);
+
+        res.status(500).json({
+            error: error.message
+        });
     }
-
-    res.json({ message: 'Görev başarıyla silindi.' });
-  } catch (error) {
-    res.status(500).json({ error: 'Veritabanı silme hatası: ' + error.message });
-  }
 });
 
 // Stajyer Silme
