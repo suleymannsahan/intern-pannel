@@ -64,6 +64,9 @@
           <button type="button" onclick="openResetModal()" class="text-xs text-cyan-500 hover:text-cyan-400 transition-colors">Şifremi Unuttum?</button>
         </div>
         <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Oturum Aç</button>
+        <button type="button" onclick="quickAdminLogin()" class="w-full mt-2 bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg text-sm flex items-center justify-center gap-2">
+          <i class="fa-solid fa-user-shield"></i> Admin Olarak Hızlı Giriş Yap
+        </button>
       </form>
 
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
@@ -234,6 +237,14 @@
             </select>
           </div>
         </div>
+
+        <!-- ADMİN ONAY PANELİ -->
+        <section id="adminApprovalSection" class="hidden space-y-4 bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+          <h3 class="font-bold text-sm text-amber-500 flex items-center gap-2">
+            <i class="fa-solid fa-user-clock"></i> Onay Bekleyen Lider ve Müdürler
+          </h3>
+          <div id="pendingUsersList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </section>
 
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
@@ -577,6 +588,15 @@
       document.getElementById('editProfileModal').classList.add('hidden');
     }
 
+    async function quickAdminLogin() {
+      document.getElementById('loginEmail').value = 'admin@admin.com';
+      document.getElementById('loginPassword').value = 'admin123';
+      
+      // Giriş formunu otomatik tetikle
+      const loginForm = document.getElementById('loginForm');
+      loginForm.dispatchEvent(new Event('submit'));
+    }
+
     async function handleSaveProfile(e) {
       e.preventDefault();
       const name = document.getElementById('editProfileName').value;
@@ -698,6 +718,55 @@
       } catch (err) {
         console.error("Kayıt sırasında ağ hatası oluştu:", err);
         alert("Sunucuya bağlanırken bir hata oluştu.");
+      }
+    }
+
+    // Onay bekleyen kullanıcıları yükler
+    async function loadPendingUsers() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/pending-users`);
+        const pendingUsers = await res.json();
+        const container = document.getElementById('pendingUsersList');
+        container.innerHTML = '';
+
+        if (pendingUsers.length === 0) {
+          container.innerHTML = '<div class="text-xs text-slate-500">Onay bekleyen kullanıcı bulunmuyor.</div>';
+          return;
+        }
+
+        pendingUsers.forEach(user => {
+          const card = document.createElement('div');
+          card.className = "p-3 bg-slate-100 dark:bg-slate-800 rounded-xl flex justify-between items-center border border-slate-200 dark:border-slate-700";
+          card.innerHTML = `
+            <div>
+              <div class="font-bold text-sm text-slate-900 dark:text-slate-100">${user.name}</div>
+              <div class="text-xs text-slate-500">${user.email} - Birim: ${user.unit} - Rol: ${user.role}</div>
+            </div>
+            <button onclick="approveUser(${user.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold px-3 py-1.5 rounded-lg transition-all">
+              Onayla
+            </button>
+          `;
+          container.appendChild(card);
+        });
+      } catch (err) {
+        console.error("Onay bekleyenler yüklenemedi:", err);
+      }
+    }
+
+    // Kullanıcıyı onaylama isteği atar
+    async function approveUser(userId) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/approve-user/${userId}`, {
+          method: 'PUT'
+        });
+        if (res.ok) {
+          alert("Kullanıcı onaylandı!");
+          await loadPendingUsers(); // Listeyi yenile
+        } else {
+          alert("Onaylama sırasında bir hata oluştu.");
+        }
+      } catch (err) {
+        console.error("Onaylama hatası:", err);
       }
     }
 

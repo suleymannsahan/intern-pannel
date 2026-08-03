@@ -76,6 +76,29 @@ async function initDb() {
     // Veritabanı bağlantısı kurulduğunda çalıştırılmalı:
     await db.execute("PRAGMA foreign_keys = ON;");
 
+    try {
+      const adminEmail = 'admin@admin.com';
+      const adminPass = 'admin123'; // İstediğiniz şifreyi belirleyebilirsiniz
+      const hashedPassword = await bcrypt.hash(adminPass, 10);
+
+      // Admin var mı kontrol et, yoksa ekle
+      const [existingAdmin] = await db.execute({
+        sql: 'SELECT * FROM users WHERE email = ?',
+        args: [adminEmail]
+      });
+
+      if (existingAdmin.rows.length === 0) {
+        await db.execute({
+          sql: `INSERT INTO users (name, email, password, unit, role, is_approved) 
+                VALUES (?, ?, ?, ?, ?, 1)`,
+          args: ['Sistem Yöneticisi', adminEmail, hashedPassword, 'yonetim', 'mudur']
+        });
+        console.log('✅ Sabit Admin Hesabı Oluşturuldu: admin@admin.com / admin123');
+      }
+    } catch (err) {
+      console.error('Sabit admin oluşturulurken hata:', err);
+    }
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -167,11 +190,15 @@ app.get('/api/admin/pending-users', async (req, res) => {
 
 // 2. Kullanıcı Onaylama
 app.put('/api/admin/approve-user/:id', async (req, res) => {
-  await db.execute({
-    sql: `UPDATE users SET is_approved = 1 WHERE id = ?`,
-    args: [req.params.id]
-  });
-  res.json({ message: 'Kullanıcı başarıyla onaylandı.' });
+  try {
+    await db.execute({
+      sql: `UPDATE users SET is_approved = 1 WHERE id = ?`,
+      args: [req.params.id]
+    });
+    res.json({ message: 'Kullanıcı başarıyla onaylandı.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Onaylama hatası: ' + error.message });
+  }
 });
 
 // 3. Kullanıcı Reddetme / Silme
