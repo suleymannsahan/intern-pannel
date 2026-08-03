@@ -41,7 +41,6 @@
     <div class="bg-white/90 dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700/60 rounded-2xl p-8 w-full max-w-md shadow-2xl backdrop-blur-xl">
       <div class="text-center mb-8 flex flex-col items-center">
         <img src="Y_logo.png" alt="Logo" class="h-20 w-auto mb-3 drop-shadow-[0_0_15px_rgba(6,182,212,0.25)]">
-        <!-- Tüm Başlığın Beyaz Olması İçin -->
         <h1 class="text-2xl font-bold text-center text-white mb-6">
           Görevlendirme & Takip Sistemi
         </h1>
@@ -133,15 +132,12 @@
         <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
 
-      <!-- SAĞ ÜST KULLANICI BİLGİSİ & AYARLAR SİMGESİ -->
       <div class="flex items-center gap-3">
-        <!-- Kullanıcı İsim ve Rol Bilgisi (Sol Tarafta) -->
         <div class="text-right">
           <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
           <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
         </div>
 
-        <!-- Ayarlar Simgesi & Dropdown (Sağ Tarafta) -->
         <div class="relative">
           <button onclick="toggleSettingsDropdown()" class="p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none">
             <i class="fa-solid fa-gear text-lg"></i>
@@ -189,7 +185,6 @@
           </div>
         </div>
 
-        <!-- Canlı Arama ve Dinamik Filtreleme Paneli -->
         <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-md backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div class="flex-1 min-w-[200px] relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
@@ -313,7 +308,6 @@
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
 
-        <!-- Stajyer Kayıt Detayları -->
         <div id="editProfileInternFields" class="hidden space-y-3 p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Sorumlu Mühendis</label>
@@ -373,6 +367,7 @@
     </div>
   </div>
 
+  <!-- ŞİFRE SIFIRLAMA MODALI -->
   <div id="resetModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-sm shadow-2xl">
       <h3 class="font-bold text-lg mb-2">Şifre Sıfırlama</h3>
@@ -388,6 +383,7 @@
     </div>
   </div>
 
+  <!-- GÜNLÜK NOT EKLENEN MODAL -->
   <div id="logModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
       <h3 class="font-bold text-lg mb-1">Günlük Not / Bilgilendirme Ekle</h3>
@@ -403,6 +399,7 @@
     </div>
   </div>
 
+  <!-- KULLANICI DÜZENLEME MODALI (LİDER/ADMİN İÇİN) -->
   <div id="manageUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-user-gear me-2"></i>Kullanıcı Hesabını Düzenle</h3>
@@ -449,13 +446,11 @@
       handleRoleChange();
     };
 
-    // Sağ üst Ayarlar Dropdown Menü Aç/Kapat
     function toggleSettingsDropdown() {
       const dropdown = document.getElementById('settingsDropdown');
       dropdown.classList.toggle('hidden');
     }
 
-    // Dışarı tıklandığında ayarlar menüsünü kapat
     document.addEventListener('click', function(e) {
       const dropdown = document.getElementById('settingsDropdown');
       const button = e.target.closest('button[onclick="toggleSettingsDropdown()"]');
@@ -464,7 +459,6 @@
       }
     });
 
-    // Karanlık Mod Mantığı
     function toggleDarkMode() {
       const html = document.documentElement;
       const themeText = document.getElementById('themeText');
@@ -482,7 +476,6 @@
       sidebar.classList.toggle('-ml-80');
     }
 
-    // Kullanıcının Kayıtta Girdiği Tüm Bilgileri Düzenlemesi
     function openEditProfileModal() {
       if (!currentUser) return;
       document.getElementById('editProfileName').value = currentUser.name || '';
@@ -671,9 +664,7 @@
       const tabLogin = document.getElementById('tabLogin');
       const tabRegister = document.getElementById('tabRegister');
 
-      // Mavi aktif sekme sınıfları
       const activeClasses = ['bg-cyan-600', 'text-white', 'shadow-lg', 'shadow-cyan-600/25'];
-      // Pasif sekme sınıfları
       const inactiveClasses = ['text-slate-500', 'dark:text-slate-400', 'hover:text-slate-900', 'dark:hover:text-white'];
 
       if (tab === 'login') {
@@ -702,8 +693,66 @@
     function openResetModal() { document.getElementById('resetModal').classList.remove('hidden'); }
     function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
     function closeLogModal() { document.getElementById('logModal').classList.add('hidden'); }
-    function closeEditTaskModal() { document.getElementById('editTaskModal').classList.add('hidden'); }
     function closeRevisionModal() { document.getElementById('revisionModal').classList.add('hidden'); }
+
+    function openManageUserModal(userId) {
+      const user = usersList.find(u => u.id == userId);
+      if (!user) return;
+      document.getElementById('manageUserId').value = user.id;
+      document.getElementById('manageUserName').value = user.name;
+      document.getElementById('manageUserEmail').value = user.email;
+      document.getElementById('manageUserRole').value = user.role;
+      document.getElementById('manageUserModal').classList.remove('hidden');
+    }
+
+    function closeManageUserModal() {
+      document.getElementById('manageUserModal').classList.add('hidden');
+    }
+
+    async function handleSaveManagedUser(e) {
+      e.preventDefault();
+      const userId = document.getElementById('manageUserId').value;
+      const name = document.getElementById('manageUserName').value;
+      const email = document.getElementById('manageUserEmail').value;
+      const role = document.getElementById('manageUserRole').value;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, role })
+        });
+        if (res.ok) {
+          alert('Kullanıcı bilgileri güncellendi.');
+          closeManageUserModal();
+          await loadUsers();
+          renderSidebarDirectory();
+        } else {
+          const data = await res.json();
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Kullanıcı güncelleme hatası:', err);
+      }
+    }
+
+    async function deleteAnyUser(userId, userName) {
+      if (!confirm(`${userName} isimli kullanıcıyı silmek istediğinize emin misiniz?`)) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, { method: 'DELETE' });
+        if (res.ok) {
+          alert('Kullanıcı silindi.');
+          await loadUsers();
+          renderSidebarDirectory();
+        } else {
+          const data = await res.json();
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Kullanıcı silme hatası:', err);
+      }
+    }
 
     function calculateWorkDays(startDateStr, endDateStr) {
       if (!startDateStr || !endDateStr) return 0;
@@ -914,7 +963,6 @@
       });
     }
 
-    // STAJYER DURUM VE İŞ YÜKÜ
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
@@ -1043,7 +1091,6 @@
       if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
 
       let managerReviewButtons = '';
-      // Lider veya Mühendis ise ve görev stajyer tarafından tamamlandıysa veya revize sürecindeyse aksiyon butonlarını göster
       if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
@@ -1121,6 +1168,18 @@
       } catch (err) { console.error('Hata:', err); }
     }
 
+    async function deleteTask(taskId) {
+      if (!confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, { method: 'DELETE' });
+        if (res.ok) {
+          alert('Görev silindi.');
+          await loadTasks();
+          renderInternStatusList();
+        }
+      } catch (err) { console.error('Hata:', err); }
+    }
+
     function openRevisionModal(taskId) {
       document.getElementById('revisionTaskId').value = taskId;
       document.getElementById('revisionCommentText').value = '';
@@ -1131,8 +1190,30 @@
       e.preventDefault();
       const taskId = document.getElementById('revisionTaskId').value;
       const comment = document.getElementById('revisionCommentText').value;
-      await reviewTask(taskId, 'REVISE', comment);
-      closeRevisionModal();
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/review`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'REVISION_REQUESTED',
+            comment: comment,
+            userRole: currentUser.role,
+            revisedBy: currentUser.name
+          })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert(data.message || 'Revize talebi iletildi.');
+          closeRevisionModal();
+          await loadTasks();
+        } else {
+          alert("Hata: " + data.error);
+        }
+      } catch (err) {
+        console.error("Revize gönderme hatası:", err);
+      }
     }
 
     async function reviewTask(taskId, action, comment = '') {
@@ -1163,6 +1244,34 @@
       document.getElementById('logModalTaskTitle').innerText = taskTitle;
       document.getElementById('logNoteText').value = '';
       document.getElementById('logModal').classList.remove('hidden');
+    }
+
+    async function handleSaveDailyLog(e) {
+      e.preventDefault();
+      const taskId = document.getElementById('logTaskId').value;
+      const note = document.getElementById('logNoteText').value;
+      const logDate = new Date().toISOString().split('T')[0];
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/daily-logs`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ taskId, internId: currentUser.id, note, logDate })
+        });
+
+        if (res.ok) {
+          alert('Günlük not eklendi!');
+          closeLogModal();
+          await loadLogs();
+          await loadTasks();
+          checkDailyLogWarning();
+        } else {
+          const data = await res.json();
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Log kaydetme hatası:', err);
+      }
     }
 
     function openInternProfileModal(internId) {
@@ -1275,273 +1384,97 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
+      // Üst Başlık Şeridi
       doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, 210, 38, 'F');
 
-      doc.setTextColor(6, 182, 212);
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(15);
-      doc.text(fixTurkishChars("STAJ DEĞERLENDİRME VE İLERLEME RAPORU"), 14, 20);
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(18);
+      doc.setFont('helvetica', 'bold');
+      doc.text(fixTurkishChars("STAJ PERFORMANS VE DEGERLENDIRME RAPORU"), 15, 22);
 
-      doc.setTextColor(203, 213, 225);
       doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.text(fixTurkishChars(`Rapor Tarihi: ${new Date().toLocaleDateString('tr-TR')}`), 14, 28);
+      doc.setFont('helvetica', 'normal');
+      doc.text(fixTurkishChars(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`), 160, 22);
 
-      const logoImg = new Image();
-      logoImg.src = 'Y_logo_2.png';
-
-      logoImg.onload = function () {
-        doc.addImage(logoImg, 'PNG', 175, 5, 20, 28);
-        generatePDFContent(doc, intern, internTasks, internLogs);
-      };
-
-      logoImg.onerror = function () {
-        generatePDFContent(doc, intern, internTasks, internLogs);
-      };
-    }
-
-    function generatePDFContent(doc, intern, internTasks, internLogs) {
-      let yPos = 50;
-
-      doc.setFillColor(248, 250, 252);
-      doc.setDrawColor(226, 232, 240);
-      doc.roundedRect(14, yPos, 182, 32, 3, 3, 'FD');
-
+      // Stajyer Kimlik Bilgileri
+      let y = 48;
       doc.setTextColor(15, 23, 42);
-      doc.setFontSize(11);
-      doc.setFont("helvetica", "bold");
-      doc.text(fixTurkishChars(`Stajyer: ${intern.name}`), 18, yPos + 10);
-
-      doc.setFontSize(9);
-      doc.setFont("helvetica", "normal");
-      doc.setTextColor(71, 85, 105);
-      doc.text(fixTurkishChars(`E-Posta: ${intern.email}`), 18, yPos + 18);
-      doc.text(fixTurkishChars(`Staj Dönemi: ${intern.intern_start_date || 'Belirtilmedi'} / ${intern.intern_end_date || 'Belirtilmedi'}`), 18, yPos + 25);
-
-      yPos += 42;
-
       doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(15, 23, 42);
-      doc.text(fixTurkishChars("1. Atanan Görevler ve Durumları"), 14, yPos);
-      
-      doc.setDrawColor(6, 182, 212);
-      doc.setLineWidth(0.8);
-      doc.line(14, yPos + 2, 196, yPos + 2);
-      
-      yPos += 10;
-      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.text(fixTurkishChars("Stajyer Bilgileri"), 15, y);
 
+      y += 8;
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'normal');
+      doc.text(fixTurkishChars(`Ad Soyad: ${intern.name}`), 15, y);
+      doc.text(fixTurkishChars(`E-Posta: ${intern.email}`), 110, y);
+
+      y += 6;
+      doc.text(fixTurkishChars(`Baslangic Tarihi: ${intern.intern_start_date || '-'}`), 15, y);
+      doc.text(fixTurkishChars(`Bitis Tarihi: ${intern.intern_end_date || '-'}`), 110, y);
+
+      // Özet İstatistik Kutusu
+      y += 12;
+      doc.setFillColor(241, 245, 249);
+      doc.rect(15, y, 180, 22, 'F');
+
+      const approvedCount = internTasks.filter(t => t.status === 'APPROVED').length;
+      const completedCount = internTasks.filter(t => t.status === 'COMPLETED').length;
+
+      doc.setFont('helvetica', 'bold');
+      doc.text(fixTurkishChars(`Toplam Gorev: ${internTasks.length}`), 22, y + 13);
+      doc.text(fixTurkishChars(`Onaylanan: ${approvedCount}`), 72, y + 13);
+      doc.text(fixTurkishChars(`Onay Bekleyen: ${completedCount}`), 122, y + 13);
+      doc.text(fixTurkishChars(`Girilen Log: ${internLogs.length}`), 165, y + 13);
+
+      // Görev Geçmişi Listesi
+      y += 32;
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text(fixTurkishChars("Gorev ve Calisma Gecmisi"), 15, y);
+
+      y += 8;
       if (internTasks.length === 0) {
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(148, 163, 184);
-        doc.text(fixTurkishChars("Kayıtlı görev bulunmamaktadır."), 14, yPos);
-        yPos += 10;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'italic');
+        doc.text(fixTurkishChars("Kayitli gorev bulunamadi."), 15, y);
       } else {
-        internTasks.forEach((t, i) => {
-          if (yPos > 260) { doc.addPage(); yPos = 20; }
-          
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(30, 41, 59);
-          doc.text(fixTurkishChars(`${i + 1}. ${t.title}`), 16, yPos);
-
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(100, 116, 139);
-          doc.text(fixTurkishChars(`[Kategori: ${t.category} | Veren: ${t.created_by || 'Sistem'}]`), 110, yPos);
-
-          let statusLabel = t.status;
-          if (t.status === 'COMPLETED') statusLabel = 'TAMAMLANDI';
-          if (t.status === 'APPROVED') statusLabel = 'ONAYLANDI';
-          if (t.status === 'IN_PROGRESS') statusLabel = 'DEVAM EDİYOR';
-          if (t.status === 'REVISION_REQUESTED') statusLabel = 'REVİZE İSTENİYOR';
-
-          doc.setFont("helvetica", "bold");
-          if (t.status === 'APPROVED' || t.status === 'COMPLETED') doc.setTextColor(16, 185, 129);
-          else doc.setTextColor(245, 158, 11);
-
-          doc.text(fixTurkishChars(statusLabel), 165, yPos);
-          yPos += 6;
-
-          if (t.description) {
-            doc.setFont("helvetica", "italic");
-            doc.setFontSize(8.5);
-            doc.setTextColor(100, 116, 139);
-            const splitDesc = doc.splitTextToSize(fixTurkishChars(`Açıklama: ${t.description}`), 170);
-            doc.text(splitDesc, 20, yPos);
-            yPos += (splitDesc.length * 4) + 2;
-            doc.setFontSize(9);
+        internTasks.forEach((task, index) => {
+          if (y > 270) {
+            doc.addPage();
+            y = 20;
           }
-          yPos += 3;
+
+          doc.setFillColor(248, 250, 252);
+          doc.rect(15, y, 180, 18, 'F');
+
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'bold');
+          doc.text(fixTurkishChars(`${index + 1}. ${task.title}`), 18, y + 7);
+
+          doc.setFontSize(8);
+          doc.setFont('helvetica', 'normal');
+          doc.text(fixTurkishChars(`Kategori: ${task.category || '-'} | Veren: ${task.created_by || 'Sistem'} | Bitis: ${task.end_date || '-'}`), 18, y + 13);
+
+          doc.setFont('helvetica', 'bold');
+          doc.text(fixTurkishChars(`Durum: ${task.status}`), 150, y + 7);
+
+          y += 22;
         });
       }
 
-      yPos += 6;
-      if (yPos > 250) { doc.addPage(); yPos = 20; }
-
-      doc.setFontSize(12);
-      doc.setFont("helvetica", "bold");
-      doc.setTextColor(15, 23, 42);
-      doc.text(fixTurkishChars("2. Günlük Çalışma Notları"), 14, yPos);
-      
-      doc.setLineWidth(0.8);
-      doc.line(14, yPos + 2, 196, yPos + 2);
-      
-      yPos += 10;
-      doc.setFontSize(9);
-
-      if (internLogs.length === 0) {
-        doc.setFont("helvetica", "italic");
-        doc.setTextColor(148, 163, 184);
-        doc.text(fixTurkishChars("Kayıtlı günlük not bulunmamaktadır."), 14, yPos);
-      } else {
-        internLogs.forEach((l) => {
-          if (yPos > 260) { doc.addPage(); yPos = 20; }
-
-          doc.setFont("helvetica", "bold");
-          doc.setTextColor(6, 182, 212);
-          doc.text(fixTurkishChars(`• [${l.log_date}]`), 16, yPos);
-
-          doc.setFont("helvetica", "normal");
-          doc.setTextColor(51, 65, 85);
-
-          const splitNote = doc.splitTextToSize(fixTurkishChars(l.note), 150);
-          doc.text(splitNote, 42, yPos);
-
-          yPos += (splitNote.length * 4.5) + 4;
-        });
-      }
-
+      // Alt Bilgi (Footer)
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
         doc.setFontSize(8);
-        doc.setFont("helvetica", "normal");
         doc.setTextColor(148, 163, 184);
-        doc.text(fixTurkishChars(`Sayfa ${i} / ${pageCount}`), 105, 290, { align: "center" });
+        doc.text(fixTurkishChars("Gorevlendirme & Takip Sistemi Otomatik Raporudur."), 15, 290);
+        doc.text(`Sayfa ${i} / ${pageCount}`, 180, 290);
       }
 
       doc.save(`Staj_Raporu_${fixTurkishChars(intern.name).replace(/\s+/g, '_')}.pdf`);
-    }
-
-    async function deleteTask(taskId) {
-      if (!confirm("Bu görevi ve göreve ait tüm günlük notları silmek istediğinize emin misiniz?")) return;
-
-      try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'user-role': currentUser.role
-          }
-        });
-
-        const data = await res.json();
-        if (res.ok) {
-          alert("Görev başarıyla silindi.");
-          await loadTasks();
-          if (currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER') {
-            renderInternStatusList();
-          }
-        } else {
-          alert("Hata: " + data.error);
-        }
-      } catch (err) {
-        console.error("Görev silme hatası:", err);
-      }
-    }
-
-    function openManageUserModal(userId) {
-      const user = usersList.find(u => u.id == userId);
-      if (!user) return;
-      document.getElementById('manageUserId').value = user.id;
-      document.getElementById('manageUserName').value = user.name;
-      document.getElementById('manageUserEmail').value = user.email;
-      document.getElementById('manageUserRole').value = user.role;
-      document.getElementById('manageUserModal').classList.remove('hidden');
-    }
-
-    function closeManageUserModal() { document.getElementById('manageUserModal').classList.add('hidden'); }
-
-    async function handleSaveManagedUser(e) {
-      e.preventDefault();
-      const userId = document.getElementById('manageUserId').value;
-      const name = document.getElementById('manageUserName').value;
-      const email = document.getElementById('manageUserEmail').value;
-      const role = document.getElementById('manageUserRole').value;
-
-      const res = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json', 'user-role': currentUser ? currentUser.role : '' },
-        body: JSON.stringify({ name, email, role })
-      });
-
-      if (res.ok) {
-        alert("Kullanıcı güncellendi!");
-        closeManageUserModal();
-        await loadUsers();
-        renderSidebarDirectory();
-      }
-    }
-
-    async function deleteAnyUser(userId, userName) {
-      if (!confirm(`${userName} kullanıcısını silmek istediğinize emin misiniz?`)) return;
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/users/${userId}`, {
-          method: 'DELETE',
-          headers: { 'Content-Type': 'application/json', 'user-role': currentUser ? currentUser.role : '' }
-        });
-        if (response.ok) {
-          alert('Kullanıcı silindi.');
-          await loadUsers();
-          renderSidebarDirectory();
-        }
-      } catch (err) { console.error('Hata:', err); }
-    }
-
-    async function handleSaveEditedTask(e) {
-      e.preventDefault();
-      const taskId = document.getElementById('editTaskId').value;
-      const title = document.getElementById('editTaskTitle').value;
-      const description = document.getElementById('editTaskDescription').value;
-      const assignedTo = document.getElementById('editTaskAssignee').value;
-      const category = document.getElementById('editTaskCategory').value;
-      const endDate = document.getElementById('editTaskEndDate').value;
-      const today = new Date().toISOString().split('T')[0];
-      const workDays = calculateWorkDays(today, endDate);
-
-      const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, assignedTo, category, endDate, workDays, userRole: currentUser.role })
-      });
-
-      if (response.ok) {
-        alert('Görev güncellendi.');
-        closeEditTaskModal();
-        await loadTasks();
-      }
-    }
-
-    async function handleSaveDailyLog(e) {
-      e.preventDefault();
-      const taskId = document.getElementById('logTaskId').value;
-      const note = document.getElementById('logNoteText').value;
-      const todayStr = new Date().toISOString().split('T')[0];
-
-      const res = await fetch(`${API_BASE_URL}/api/daily-logs`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ taskId, internId: currentUser.id, logDate: todayStr, note })
-      });
-
-      if (res.ok) {
-        alert("Günlük not eklendi!");
-        closeLogModal();
-        await loadLogs();
-        checkDailyLogWarning();
-        renderTaskList();
-      }
     }
   </script>
 </body>

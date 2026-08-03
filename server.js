@@ -63,6 +63,17 @@ async function initDb() {
       )
     `);
 
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS task_revisions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER NOT NULL,
+        revised_by TEXT NOT NULL,
+        comment TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(task_id) REFERENCES tasks(id)
+      )
+    `);
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -320,7 +331,18 @@ app.get('/api/tasks', async (req, res) => {
     }
 
     const result = await db.execute({ sql, args });
-    res.json(result.rows);
+    const tasks = result.rows;
+
+    // Her görev için revizyon geçmişini de getir
+    for (let task of tasks) {
+      const revRes = await db.execute({
+        sql: `SELECT * FROM task_revisions WHERE task_id = ? ORDER BY id DESC`,
+        args: [task.id]
+      });
+      task.revisions = revRes.rows;
+    }
+
+    res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -437,11 +459,11 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
   }
 });
 
-// Görev Onaylama / Revize Etme Endpoint'i (Eksik Olan Rota)
+// Görev Onaylama / Revize Etme Endpoint'i
 app.put('/api/tasks/:id/review', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { action, comment, userRole } = req.body;
+    const { action, comment, userRole, revisedBy } = req.body; // revisedBy: işlemi yapan kişinin adı
 
     // Yetki Kontrolü
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
@@ -451,6 +473,13 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     let newStatus = 'APPROVED';
     if (action === 'REVISION' || action === 'REVISION_REQUESTED') {
       newStatus = 'REVISION_REQUESTED';
+
+      // Revizyon geçmişi kaydı ekle
+      const now = new Date().toISOString();
+      await db.execute({
+        sql: `INSERT INTO task_revisions (task_id, revised_by, comment, created_at) VALUES (?, ?, ?, ?)`,
+        args: [taskId, revisedBy || 'Sistem / Yetkili', comment || '', now]
+      });
     }
 
     // Görev durumunu ve revize notunu veritabanında güncelle
