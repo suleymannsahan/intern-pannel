@@ -122,7 +122,6 @@
 
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
-    <!-- HEADER -->
     <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex justify-between items-center z-20 backdrop-blur-xl sticky top-0 shadow-md">
       <div class="flex items-center gap-3">
         <button onclick="toggleSidebar()" class="text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all">
@@ -161,7 +160,6 @@
     </header>
 
     <div class="flex-1 flex relative overflow-hidden">
-      <!-- SOL SIDEBAR -->
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
           <h3 class="font-bold text-xs uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
@@ -174,7 +172,6 @@
         <div id="sidebarDirectory" class="space-y-4 text-xs"></div>
       </aside>
 
-      <!-- SAĞ ANA İÇERİK -->
       <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
         
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-600 dark:text-amber-300 backdrop-blur-md">
@@ -273,6 +270,45 @@
   </div>
 
   <!-- MODALLAR -->
+
+  <!-- GÖREV DÜZENLEME MODALI (MÜHENDİS VE LİDER İÇİN) -->
+  <div id="editTaskModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <h3 class="font-bold text-lg mb-4 text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-pen-to-square me-2"></i>Görevi Düzenle</h3>
+      <form onsubmit="handleUpdateTask(event)" class="space-y-3">
+        <input type="hidden" id="editTaskId">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Görev Tanımı</label>
+          <input type="text" id="editTaskTitle" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Atanan Stajyer</label>
+          <select id="editTaskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Açıklama</label>
+          <textarea id="editTaskDescription" rows="3" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm"></textarea>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Alan / Departman</label>
+          <select id="editTaskCategory" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+            <option value="Yazılım">Yazılım</option>
+            <option value="Donanım">Donanım</option>
+            <option value="Ağ & Sistem">Ağ & Sistem</option>
+            <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
+          </select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Bitiş Tarihi</label>
+          <input type="date" id="editTaskEndDate" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button type="button" onclick="closeEditTaskModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Güncelle</button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <!-- Revize Yorum Modalı -->
   <div id="revisionModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -694,6 +730,7 @@
     function closeResetModal() { document.getElementById('resetModal').classList.add('hidden'); }
     function closeLogModal() { document.getElementById('logModal').classList.add('hidden'); }
     function closeRevisionModal() { document.getElementById('revisionModal').classList.add('hidden'); }
+    function closeEditTaskModal() { document.getElementById('editTaskModal').classList.add('hidden'); }
 
     function openManageUserModal(userId) {
       const user = usersList.find(u => u.id == userId);
@@ -1073,6 +1110,62 @@
       else pastTasks.forEach(task => pastContainer.appendChild(createTaskCard(task, true, isManager)));
     }
 
+    function openEditTaskModal(taskId) {
+      const task = tasksList.find(t => t.id == taskId);
+      if (!task) return;
+
+      document.getElementById('editTaskId').value = task.id;
+      document.getElementById('editTaskTitle').value = task.title;
+      document.getElementById('editTaskDescription').value = task.description || '';
+      document.getElementById('editTaskCategory').value = task.category || 'Yazılım';
+      document.getElementById('editTaskEndDate').value = task.end_date || '';
+
+      const select = document.getElementById('editTaskAssignee');
+      select.innerHTML = '';
+      const interns = usersList.filter(u => u.role === 'INTERN');
+      interns.forEach(intern => {
+        const opt = document.createElement('option');
+        opt.value = intern.id;
+        opt.innerText = intern.name;
+        if (intern.id == task.assigned_to) opt.selected = true;
+        select.appendChild(opt);
+      });
+
+      document.getElementById('editTaskModal').classList.remove('hidden');
+    }
+
+    async function handleUpdateTask(e) {
+      e.preventDefault();
+      const taskId = document.getElementById('editTaskId').value;
+      const title = document.getElementById('editTaskTitle').value;
+      const assignedTo = document.getElementById('editTaskAssignee').value;
+      const description = document.getElementById('editTaskDescription').value;
+      const category = document.getElementById('editTaskCategory').value;
+      const endDate = document.getElementById('editTaskEndDate').value;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title, assignedTo, description, category, endDate, userRole: currentUser.role })
+        });
+
+        if (res.ok) {
+          alert("Görev güncellendi!");
+          closeEditTaskModal();
+          await loadTasks();
+          if (currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER') {
+            renderInternStatusList();
+          }
+        } else {
+          const data = await res.json();
+          alert("Hata: " + data.error);
+        }
+      } catch (err) {
+        console.error("Görev güncelleme hatası:", err);
+      }
+    }
+
     function createTaskCard(task, isPast, isManager) {
       const taskLogs = dailyLogsList.filter(l => l.task_id === task.id);
       const card = document.createElement('div');
@@ -1094,6 +1187,9 @@
       if (isManager) {
         managerReviewButtons = `
           <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
+            <button onclick="openEditTaskModal(${task.id})" title="Görevi ve Tarihini Düzenle" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-500 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
+              <i class="fa-solid fa-pen"></i> Düzenle
+            </button>
             ${task.status !== 'APPROVED' ? `
               ${task.status === 'COMPLETED' ? `
                 <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
@@ -1127,6 +1223,20 @@
         `;
       }
 
+      // Revize Notu Görünüm Alanı (Yazan Kişi ve Tarih Ekli)
+      let revisionNoteHtml = '';
+      if (task.review_comment) {
+        revisionNoteHtml = `
+          <div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1 text-xs">
+            <div class="flex items-center gap-1 font-bold">
+              <i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu 
+              ${task.revised_by ? `<span class="text-[10px] text-slate-400 font-normal">(${task.revised_by} tarafından ${task.revised_at || ''} tarihinde yazıldı)</span>` : ''}
+            </div>
+            <div class="text-rose-400 font-normal mt-0.5">${task.review_comment}</div>
+          </div>
+        `;
+      }
+
       card.innerHTML = `
         <div>
           <div class="flex justify-between items-start gap-2 mb-2">
@@ -1136,7 +1246,7 @@
 
           <div class="text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 mb-3">
             <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
-            ${task.review_comment ? `<div class="mt-2 text-rose-500 font-semibold border-t border-rose-500/20 pt-1"><i class="fa-solid fa-circle-exclamation me-1"></i> Revize Notu: ${task.review_comment}</div>` : ''}
+            ${revisionNoteHtml}
           </div>
 
           <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
@@ -1223,7 +1333,7 @@
         const response = await fetch(`${API_BASE_URL}/api/tasks/${taskId}/review`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action, comment, userRole: currentUser.role })
+          body: JSON.stringify({ action, comment, userRole: currentUser.role, revisedBy: currentUser.name })
         });
         if (response.ok) {
           alert(action === 'APPROVE' ? 'Görev onaylandı!' : 'Revize isteği iletildi.');
@@ -1386,7 +1496,6 @@
       const { jsPDF } = window.jspdf;
       const doc = new jsPDF();
 
-      // Üst Başlık Şeridi
       doc.setFillColor(15, 23, 42);
       doc.rect(0, 0, 210, 38, 'F');
 
@@ -1399,7 +1508,6 @@
       doc.setFont('helvetica', 'normal');
       doc.text(fixTurkishChars(`Tarih: ${new Date().toLocaleDateString('tr-TR')}`), 160, 22);
 
-      // Stajyer Kimlik Bilgileri
       let y = 48;
       doc.setTextColor(15, 23, 42);
       doc.setFontSize(12);
@@ -1416,7 +1524,6 @@
       doc.text(fixTurkishChars(`Baslangic Tarihi: ${intern.intern_start_date || '-'}`), 15, y);
       doc.text(fixTurkishChars(`Bitis Tarihi: ${intern.intern_end_date || '-'}`), 110, y);
 
-      // Özet İstatistik Kutusu
       y += 12;
       doc.setFillColor(241, 245, 249);
       doc.rect(15, y, 180, 22, 'F');
@@ -1430,7 +1537,6 @@
       doc.text(fixTurkishChars(`Onay Bekleyen: ${completedCount}`), 122, y + 13);
       doc.text(fixTurkishChars(`Girilen Log: ${internLogs.length}`), 165, y + 13);
 
-      // Görev Geçmişi Listesi
       y += 32;
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
@@ -1466,7 +1572,6 @@
         });
       }
 
-      // Alt Bilgi (Footer)
       const pageCount = doc.internal.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
