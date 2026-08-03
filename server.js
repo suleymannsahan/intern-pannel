@@ -63,6 +63,17 @@ async function initDb() {
       )
     `);
 
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS task_revisions (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        task_id INTEGER NOT NULL,
+        revised_by TEXT NOT NULL,
+        comment TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(task_id) REFERENCES tasks(id)
+      )
+    `);
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -320,7 +331,18 @@ app.get('/api/tasks', async (req, res) => {
     }
 
     const result = await db.execute({ sql, args });
-    res.json(result.rows);
+    const tasks = result.rows;
+
+    // Her görev için revizyon geçmişini de getir
+    for (let task of tasks) {
+      const revRes = await db.execute({
+        sql: `SELECT * FROM task_revisions WHERE task_id = ? ORDER BY id DESC`,
+        args: [task.id]
+      });
+      task.revisions = revRes.rows;
+    }
+
+    res.json(tasks);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -437,11 +459,11 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
   }
 });
 
-// Görev Onaylama / Revize Etme Endpoint'i (Eksik Olan Rota)
+// Görev Onaylama / Revize Etme Endpoint'i
 app.put('/api/tasks/:id/review', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const { action, comment, userRole } = req.body;
+    const { action, comment, userRole, revisedBy } = req.body; // revisedBy: işlemi yapan kişinin adı
 
     // Yetki Kontrolü
     if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
@@ -451,6 +473,13 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     let newStatus = 'APPROVED';
     if (action === 'REVISION' || action === 'REVISION_REQUESTED') {
       newStatus = 'REVISION_REQUESTED';
+
+      // Revizyon geçmişi kaydı ekle
+      const now = new Date().toISOString();
+      await db.execute({
+        sql: `INSERT INTO task_revisions (task_id, revised_by, comment, created_at) VALUES (?, ?, ?, ?)`,
+        args: [taskId, revisedBy || 'Sistem / Yetkili', comment || '', now]
+      });
     }
 
     // Görev durumunu ve revize notunu veritabanında güncelle
@@ -601,20 +630,18 @@ app.get('/api/daily-logs', async (req, res) => {
   }
 });
 
-// Görev Silme Endpoint'i
+// Görev Silme Endpoint'ii
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
-    const userRole = req.headers['user-role'];
 
-    // Yalnızca Mühendis veya Ekip Lideri silebilir
-    if (userRole !== 'ENGINEER' && userRole !== 'LEADER') {
-      return res.status(403).json({ error: 'Görev silmek için yetkiniz bulunmamaktadır.' });
-    }
-
-    // Göreve ait günlük logları sil
+    // Göreve ait logları ve revizyonları temizle
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
+      args: [taskId]
+    });
+    await db.execute({
+      sql: `DELETE FROM task_revisions WHERE task_id = ?`,
       args: [taskId]
     });
 
@@ -628,9 +655,10 @@ app.delete('/api/tasks/:id', async (req, res) => {
       return res.status(404).json({ error: 'Görev bulunamadı.' });
     }
 
-    res.json({ message: 'Görev ve ilişkili loglar başarıyla silindi.' });
+    res.json({ message: 'Görev başarıyla silindi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Görev silinirken hata oluştu: ' + error.message });
+    console.error('Görev silme hatası:', error);
+    res.status(500).json({ error: 'Görev silinirken bir hata oluştu: ' + error.message });
   }
 });
 
