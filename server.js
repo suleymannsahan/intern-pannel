@@ -84,30 +84,68 @@ initDb();
 
 // --- API ENDPOINT'LERİ ---
 
-// Kayıt Ol
+// Kayıt Ol (Yeni username, department ve leaderSubType alanlarına uyumlu)
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, role, startDate, endDate } = req.body;
-    if (!name || !email || !password || !role) {
+    // 1. Gelen parametreleri destructure edin (email yerine username + yeni alanlar)
+    const { 
+      name, 
+      username, 
+      password, 
+      role, 
+      department, 
+      leaderSubType, 
+      startDate, 
+      endDate 
+    } = req.body;
+
+    // 2. Zorunlu alan kontrolünü email yerine username ile yapın
+    if (!name || !username || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
+    // Stajyer kontrolü
     if (role === 'INTERN' && (!startDate || !endDate)) {
       return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // 3. SQL Sorgusunu ve Parametreleri Güncelleyin
     const result = await db.execute({
-      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [name, email, hashedPassword, role, role === 'INTERN' ? startDate : null, role === 'INTERN' ? endDate : null]
+      sql: `INSERT INTO users (
+              name, 
+              username, 
+              password, 
+              role, 
+              department, 
+              leader_sub_type, 
+              intern_start_date, 
+              intern_end_date
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        name, 
+        username, 
+        hashedPassword, 
+        role, 
+        department || null,
+        leaderSubType || null,
+        role === 'INTERN' ? startDate : null, 
+        role === 'INTERN' ? endDate : null
+      ]
     });
 
-    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: Number(result.lastInsertRowid) });
+    res.json({ 
+      message: 'Kullanıcı başarıyla oluşturuldu.', 
+      userId: Number(result.lastInsertRowid) 
+    });
+
   } catch (error) {
+    // Unique constraint hatasında e-posta yerine kullanıcı adı uyarısı verin
     if (error.message.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
+      return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış!' });
     }
+    console.error("Kayıt hatası:", error);
     res.status(500).json({ error: 'Veritabanı hatası: ' + error.message });
   }
 });
