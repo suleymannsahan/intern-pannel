@@ -151,6 +151,7 @@ app.post('/api/reset-password', async (req, res) => {
   }
 });
 
+
 // Kullanıcı Kendi Profil Bilgilerini Güncelleme (Tüm Kayıt Alanları Dahil)
 app.put('/api/users/profile', async (req, res) => {
   try {
@@ -318,12 +319,14 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// Görevleri Getirme Endpoint'i
+// Admin Yetki Kontrolü Fonksiyonu
+const isAdmin = (role) => role === 'ADMIN';
+
+// Görev Getirme Endpoint'ini Admin İçin Güncelleme
 app.get('/api/tasks', async (req, res) => {
   try {
     const { userId, role } = req.query;
 
-    // 1. Görevleri ve Atanan Kullanıcı Adını Çek (INNER JOIN yerine LEFT JOIN)
     let sql = `
       SELECT tasks.*, users.name as assignee_name 
       FROM tasks 
@@ -331,6 +334,7 @@ app.get('/api/tasks', async (req, res) => {
     `;
     let args = [];
 
+    // ADMIN veya LEADER tüm görevleri görebilir; INTERN sadece kendisine atananları görür.
     if (role === 'INTERN') {
       sql += ` WHERE tasks.assigned_to = ?`;
       args.push(userId);
@@ -339,15 +343,10 @@ app.get('/api/tasks', async (req, res) => {
     sql += ` ORDER BY tasks.id DESC`;
 
     const result = await db.execute({ sql, args });
-    
-    // Rows dizisini düz JavaScript objelerine dönüştür (Read-only engeli aşmak için)
     const tasks = result.rows.map(row => ({ ...row, revisions: [] }));
 
-    if (tasks.length === 0) {
-      return res.json([]);
-    }
+    if (tasks.length === 0) return res.json([]);
 
-    // 2. N+1 Problemini Çözme: Tüm revizyonları TEK SORGUMUZA çekiyoruz
     const taskIds = tasks.map(t => t.id);
     const placeholders = taskIds.map(() => '?').join(',');
 
@@ -356,16 +355,12 @@ app.get('/api/tasks', async (req, res) => {
       args: taskIds
     });
 
-    // 3. Revizyonları İlgili Görevlere Gruplayarak Dağıt
     const revisionsByTaskId = {};
     for (const rev of revisionsResult.rows) {
-      if (!revisionsByTaskId[rev.task_id]) {
-        revisionsByTaskId[rev.task_id] = [];
-      }
+      if (!revisionsByTaskId[rev.task_id]) revisionsByTaskId[rev.task_id] = [];
       revisionsByTaskId[rev.task_id].push(rev);
     }
 
-    // Görev objelerine revizyonlarını ekle
     const finalTasks = tasks.map(task => ({
       ...task,
       revisions: revisionsByTaskId[task.id] || []
@@ -373,8 +368,112 @@ app.get('/api/tasks', async (req, res) => {
 
     res.json(finalTasks);
   } catch (error) {
-    console.error('Görev getirme hatası:', error);
-    res.status(500).json({ error: 'Görevler yüklenirken hata oluştu: ' + error.message });
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// --- ADMIN ÖZEL ENDPOINT'LERİ ---
+
+// 1. Tüm Kullanıcıları Listele (Admin Paneli İçin)
+app.get('/api/admin/users', async (req, res) => {
+  try {
+    const { userRole } = req.query;
+    if (!isAdmin(userRole)) {
+      return res.status(403).json({ error: 'Bu alana erişim yetkiniz yok.' });
+    }
+
+    const result = await db.execute(`SELECT id, name, email, role, created_at FROM users ORDER BY id DESC`);
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. Yeni Kullanıcı Oluştur (Admin Paneli)
+app.post('/api/admin/users', async (req, res) => {
+  try {
+    const { name, email, password, role, adminRole } = req.body;
+
+    if (!isAdmin(adminRole)) {
+      return res.status(403).json({ error: 'Yetkisiz işlem.' });
+    }
+
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    await db.execute({
+      sql: `INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, ?, ?)`,
+      args: [name, email, password, role, now]
+    });
+
+    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Kullanıcı eklenirken hata: ' + error.message });
+  }
+});
+
+// 3. Kullanıcı Rolünü Güncelle
+app.put('/api/admin/users/:id/role', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { newRole, adminRole } = req.body;
+
+    if (!isAdmin(adminRole)) {
+      return res.status(403).json({ error: 'Yetkisiz işlem.' });
+    }
+
+    await db.execute({
+      sql: `UPDATE users SET role = ? WHERE id = ?`,
+      args: [newRole, userId]
+    });
+
+    res.json({ message: 'Kullanıcı rolü güncellendi.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. Kullanıcı Sil
+app.delete('/api/admin/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { adminRole } = req.body;
+
+    if (!isAdmin(adminRole)) {
+      return res.status(403).json({ error: 'Yetkisiz işlem.' });
+    }
+
+    await db.execute({
+      sql: `DELETE FROM users WHERE id = ?`,
+      args: [userId]
+    });
+
+    res.json({ message: 'Kullanıcı sistemden silindi.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 5. Sistem Genel İstatistikleri
+app.get('/api/admin/stats', async (req, res) => {
+  try {
+    const { userRole } = req.query;
+    if (!isAdmin(userRole)) {
+      return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    }
+
+    const userCount = await db.execute(`SELECT COUNT(*) as count FROM users`);
+    const taskCount = await db.execute(`SELECT COUNT(*) as count FROM tasks`);
+    const revisionCount = await db.execute(`SELECT COUNT(*) as count FROM task_revisions`);
+    const pendingTasks = await db.execute(`SELECT COUNT(*) as count FROM tasks WHERE status = 'COMPLETED'`);
+
+    res.json({
+      totalUsers: userCount.rows[0].count,
+      totalTasks: taskCount.rows[0].count,
+      totalRevisions: revisionCount.rows[0].count,
+      pendingApprovalTasks: pendingTasks.rows[0].count
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 

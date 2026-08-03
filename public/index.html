@@ -253,6 +253,68 @@
                 <span class="text-xs text-slate-500 dark:text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-cyan-600 dark:text-cyan-400 text-sm">0 gün</strong></span>
                 <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
               </div>
+              <!-- ADMIN PANELİ EKRANI -->
+              <div id="adminPanelSection" class="hidden space-y-6">
+                
+                <!-- Üst Bilgi Kartları (İstatistikler) -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-cyan-500/10 text-cyan-500 rounded-xl"><i class="fa-solid fa-users text-2xl"></i></div>
+                    <div>
+                      <div class="text-xs text-slate-400">Toplam Kullanıcı</div>
+                      <div id="statTotalUsers" class="text-xl font-bold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                  </div>
+                  <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl"><i class="fa-solid fa-list-check text-2xl"></i></div>
+                    <div>
+                      <div class="text-xs text-slate-400">Toplam Görev</div>
+                      <div id="statTotalTasks" class="text-xl font-bold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                  </div>
+                  <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-amber-500/10 text-amber-500 rounded-xl"><i class="fa-solid fa-clock-rotate-left text-2xl"></i></div>
+                    <div>
+                      <div class="text-xs text-slate-400">Onay Bekleyenler</div>
+                      <div id="statPendingTasks" class="text-xl font-bold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                  </div>
+                  <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
+                    <div class="p-3 bg-rose-500/10 text-rose-500 rounded-xl"><i class="fa-solid fa-rotate-left text-2xl"></i></div>
+                    <div>
+                      <div class="text-xs text-slate-400">Toplam Revizyon</div>
+                      <div id="statTotalRevisions" class="text-xl font-bold text-slate-800 dark:text-slate-100">0</div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Kullanıcı Yönetim Tablosu -->
+                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-4">
+                  <div class="flex justify-between items-center">
+                    <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100"><i class="fa-solid fa-user-shield me-2 text-cyan-500"></i>Kullanıcı Yönetimi</h3>
+                    <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2">
+                      <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı Ekle
+                    </button>
+                  </div>
+
+                  <div class="overflow-x-auto">
+                    <table class="w-full text-left border-collapse">
+                      <thead>
+                        <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
+                          <th class="py-3 px-2">ID</th>
+                          <th class="py-3 px-2">Ad Soyad</th>
+                          <th class="py-3 px-2">E-posta</th>
+                          <th class="py-3 px-2">Rol</th>
+                          <th class="py-3 px-2 text-right">İşlemler</th>
+                        </tr>
+                      </thead>
+                      <tbody id="adminUserTableBody" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                        <!-- Dinamik doldurulacak -->
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
             </form>
           </div>
         </section>
@@ -424,6 +486,40 @@
         <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
           <button type="button" onclick="closeManageUserModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl">İptal</button>
           <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- YENİ KULLANICI EKLEME MODALI -->
+  <div id="addUserModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl space-y-4">
+      <h3 class="font-bold text-lg text-cyan-500"><i class="fa-solid fa-user-plus me-2"></i>Yeni Kullanıcı Oluştur</h3>
+      <form onsubmit="handleCreateUser(event)" class="space-y-3">
+        <div>
+          <label class="block text-xs font-semibold mb-1">Ad Soyad</label>
+          <input type="text" id="newUserName" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">E-Posta</label>
+          <input type="email" id="newUserEmail" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Şifre</label>
+          <input type="password" id="newUserPassword" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">Rol</label>
+          <select id="newUserRole" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+            <option value="INTERN">Stajyer (INTERN)</option>
+            <option value="ENGINEER">Sorumlu Mühendis (ENGINEER)</option>
+            <option value="LEADER">Ekip Lideri (LEADER)</option>
+            <option value="ADMIN">Yönetici (ADMIN)</option>
+          </select>
+        </div>
+        <div class="flex justify-end gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+          <button type="button" onclick="closeAddUserModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white text-xs rounded-xl font-semibold">Kullanıcıyı Kaydet</button>
         </div>
       </form>
     </div>
@@ -648,6 +744,22 @@
       } else {
         internFields.classList.add('hidden');
         leaderFields.classList.add('hidden');
+      }
+    }
+
+    function showSection(sectionName) {
+      const tasksSection = document.getElementById('tasksSection');
+      const adminSection = document.getElementById('adminPanelSection');
+
+      if (sectionName === 'admin') {
+        if (tasksSection) tasksSection.classList.add('hidden');
+        if (adminSection) {
+          adminSection.classList.remove('hidden');
+          loadAdminPanel(); // Admin paneli verilerini çek
+        }
+      } else if (sectionName === 'tasks') {
+        if (adminSection) adminSection.classList.add('hidden');
+        if (tasksSection) tasksSection.classList.remove('hidden');
       }
     }
 
