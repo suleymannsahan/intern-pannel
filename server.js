@@ -11,6 +11,9 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Geçici doğrulama kodlarını tutmak için bellek içi depo
+const verificationCodes = new Map();
+
 // Turso Bulut Veritabanı Bağlantısı
 const db = createClient({
   url: process.env.TURSO_DATABASE_URL,
@@ -88,16 +91,48 @@ initDb();
 
 // --- API ENDPOINT'LERİ ---
 
+// Ekip Lideri Doğrulama Kodu Gönderme
+app.post('/api/send-verification-code', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: 'E-posta adresi gereklidir.' });
+    }
+
+    // 6 haneli rastgele kod oluştur
+    const code = Math.floor(100000 + Math.random() * 900000).toString();
+    verificationCodes.set(email.toLowerCase(), code);
+
+    // NOT: Üretim ortamında burada Nodemailer/Resend vb. ile e-posta gönderimi yapılır.
+    console.log(`[Lider Doğrulama Kodu] ${email}: ${code}`);
+
+    res.json({ message: 'Doğrulama kodu gönderildi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Kod gönderilirken hata oluştu: ' + error.message });
+  }
+});
+
 // Kayıt Ol
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, role, startDate, endDate } = req.body;
+    const { name, email, password, role, startDate, endDate, verificationCode } = req.body;
+    
     if (!name || !email || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
     if (role === 'INTERN' && (!startDate || !endDate)) {
       return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
+    }
+
+    // Ekip Lideri Doğrulama Kontrolü
+    if (role === 'LEADER') {
+      const savedCode = verificationCodes.get(email.toLowerCase());
+      if (!savedCode || savedCode !== verificationCode?.trim()) {
+        return res.status(400).json({ error: 'Geçersiz veya süresi dolmuş doğrulama kodu!' });
+      }
+      // Doğrulama başarılı ise kodu temizle
+      verificationCodes.delete(email.toLowerCase());
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -158,7 +193,7 @@ app.post('/api/reset-password', async (req, res) => {
 // Kullanıcı Kendi Profil Bilgilerini Güncelleme
 app.put('/api/users/profile', async (req, res) => {
   try {
-    const { userId, name, email, password, startDate, endDate, engineerId } = req.body;
+    const { userId, name, email, password, startDate, endDate } = req.body;
 
     if (!userId || !name || !email) {
       return res.status(400).json({ error: 'Zorunlu alanlar eksik!' });
@@ -183,6 +218,36 @@ app.put('/api/users/profile', async (req, res) => {
       return res.status(400).json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor!' });
     }
     res.status(500).json({ error: 'Profil güncellenirken hata oluştu: ' + error.message });
+  }
+});
+
+// Admin/Lider Tarafından Kullanıcı Bilgisi Güncelleme
+app.put('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { name, email, role } = req.body;
+
+    await db.execute({
+      sql: `UPDATE users SET name = ?, email = ?, role = ? WHERE id = ?`,
+      args: [name, email, role, userId]
+    });
+
+    res.json({ message: 'Kullanıcı güncellendi.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Admin/Lider Tarafından Kullanıcı Silme
+app.delete('/api/users/:id', async (req, res) => {
+  try {
+    const userId = req.params.id;
+    await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
+    res.json({ message: 'Kullanıcı başarıyla silindi.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -237,7 +302,7 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// Görev Bilgilerini ve Stajyerini / Tarihini Güncelleme (Ekip Lideri ve Mühendis İçin)
+// Görev Güncelleme
 app.put('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -258,7 +323,7 @@ app.put('/api/tasks/:id', async (req, res) => {
   }
 });
 
-// Görevi İnceleme / Revize Etme (Yazan Kişi ve Tarih Kaydıyla)
+// Görevi İnceleme / Revize Etme
 app.put('/api/tasks/:id/review', async (req, res) => {
   try {
     const taskId = req.params.id;
@@ -296,7 +361,7 @@ app.put('/api/tasks/:id/review', async (req, res) => {
   }
 });
 
-// Görevi Tamamlama (Stajyer için)
+// Görevi Tamamlama
 app.put('/api/tasks/:id/complete', async (req, res) => {
   try {
     const taskId = req.params.id;
