@@ -293,12 +293,13 @@
                   </div>
                 </div>
 
-                <!-- YENİ EKLENEN: ONAY BEKLEYEN KULLANICILAR TABLOSU -->
-                <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-4">
-                  <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
-                    <h3 class="font-bold text-lg text-amber-500 dark:text-amber-400 flex items-center gap-2">
-                      <i class="fa-solid fa-user-clock"></i> Yeni Kayıt Onayları (Müdür & Ekip Liderleri)
+                <!-- YENİ EKLENEN: ONAY BEKLEYEN KULLANICILAR TABLOSU (Varsayılan olarak 'hidden' yani gizli) -->
+                <div id="pendingUsersContainer" class="hidden bg-white dark:bg-slate-800 p-4 sm:p-6 rounded-2xl shadow-sm border border-slate-200/60 dark:border-slate-700/60 transition-colors">
+                  <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                      <i class="fa-solid fa-user-clock text-amber-500"></i> Yeni Kayıt Onayları
                     </h3>
+                    <span class="text-xs text-slate-500">Sadece Sistem Yöneticisi</span>
                   </div>
                   <div class="overflow-x-auto">
                     <table class="w-full text-left border-collapse">
@@ -1196,7 +1197,6 @@
       switch (currentUser.role) {
         case 'ADMIN':
           roleLabel = 'Sistem Yöneticisi (Admin)';
-          loadPendingUsers();
           break;
         case 'MUDUR':
           roleLabel = 'Müdür';
@@ -1240,9 +1240,24 @@
       await loadTasks();
       renderSidebarDirectory();
 
-      // Admin özel tablosu için onay bekleyenleri yükle
-      if (currentUser.role === 'ADMIN' && typeof loadPendingUsers === 'function') {
-        await loadPendingUsers();
+      // ----------------------------------------------------
+      // ADMIN Özel Tablosu Kontrolü (DÜZELTİLEN KISIM)
+      // ----------------------------------------------------
+      const pendingContainer = document.getElementById('pendingUsersContainer');
+
+      if (currentUser.role === 'ADMIN') {
+        // Admin ise tablo alanını göster ve veriyi çek
+        if (pendingContainer) {
+          pendingContainer.classList.remove('hidden');
+        }
+        if (typeof loadPendingUsers === 'function') {
+          await loadPendingUsers();
+        }
+      } else {
+        // Admin değilse (Müdür, Lider vb.) tablo alanını kesin olarak gizle
+        if (pendingContainer) {
+          pendingContainer.classList.add('hidden');
+        }
       }
 
       // 4. Arayüz Elemanlarının Yetkiye Göre Gösterilip/Gizlenmesi
