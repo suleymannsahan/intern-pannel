@@ -589,12 +589,29 @@
     }
 
     async function quickAdminLogin() {
+      // Input değerlerini doldur
       document.getElementById('loginEmail').value = 'admin@admin.com';
       document.getElementById('loginPassword').value = 'admin123';
       
-      // Giriş formunu otomatik tetikle
-      const loginForm = document.getElementById('loginForm');
-      loginForm.dispatchEvent(new Event('submit'));
+      // Giriş fonksiyonunu doğrudan çağır
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'admin@admin.com', password: 'admin123' })
+        });
+        
+        const data = await res.json();
+        if (res.ok) {
+          currentUser = data.user;
+          localStorage.setItem('currentUser', JSON.stringify(currentUser));
+          showDashboard();
+        } else {
+          alert(data.error || 'Giriş başarısız.');
+        }
+      } catch (err) {
+        console.error("Hızlı giriş hatası:", err);
+      }
     }
 
     async function handleSaveProfile(e) {
