@@ -26,7 +26,10 @@ async function initDb() {
         name TEXT NOT NULL,
         email TEXT UNIQUE NOT NULL,
         password TEXT NOT NULL,
-        role TEXT NOT NULL,
+        unit TEXT NOT NULL,             -- Birim (elektronik, mekanik, yazilim, ik, yonetim)
+        role TEXT NOT NULL,             -- Rol (mudur, ekip_lideri, muhendis, teknisyen, stajyer)
+        leader_sub_unit TEXT,           -- Ekip Lideri ekstra birimi (gomulu / test)
+        is_approved INTEGER DEFAULT 1,  -- Admin Onayı (0: Bekliyor, 1: Onaylı)
         intern_start_date TEXT,
         intern_end_date TEXT
       )
@@ -79,27 +82,47 @@ initDb();
 // Kayıt Ol
 app.post('/api/register', async (req, res) => {
   try {
-    const { name, email, password, role, startDate, endDate } = req.body;
-    if (!name || !email || !password || !role) {
+    const { name, email, password, unit, role, leaderSubUnit, startDate, endDate } = req.body;
+
+    if (!name || !email || !password || !unit || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
 
-    if (role === 'INTERN' && (!startDate || !endDate)) {
-      return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
+    // 1. Ekip Lideri özel kontrolü
+    if (role === 'ekip_lideri' && !leaderSubUnit) {
+      return res.status(400).json({ error: 'Ekip Liderleri için Test veya Gömülü birimi seçimi zorunludur!' });
     }
+
+    // 2. Onay Mekanizması: Müdür ve Ekip Liderleri onaya tabidir
+    const requiresApproval = (role === 'mudur' || role === 'ekip_lideri');
+    const isApproved = requiresApproval ? 0 : 1;
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
     const result = await db.execute({
-      sql: `INSERT INTO users (name, email, password, role, intern_start_date, intern_end_date) VALUES (?, ?, ?, ?, ?, ?)`,
-      args: [name, email, hashedPassword, role, role === 'INTERN' ? startDate : null, role === 'INTERN' ? endDate : null]
+      sql: `INSERT INTO users (name, email, password, unit, role, leader_sub_unit, is_approved, intern_start_date, intern_end_date) 
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      args: [
+        name, 
+        email, 
+        hashedPassword, 
+        unit, 
+        role, 
+        role === 'ekip_lideri' ? leaderSubUnit : null, 
+        isApproved, 
+        role === 'stajyer' ? startDate : null, 
+        role === 'stajyer' ? endDate : null
+      ]
     });
 
-    res.json({ message: 'Kullanıcı başarıyla oluşturuldu.', userId: Number(result.lastInsertRowid) });
+    res.json({ 
+      message: requiresApproval 
+        ? 'Kayıt başarılı! Hesabınız Admin onayı beklemektedir.' 
+        : 'Kullanıcı kaydı başarıyla tamamlandı.',
+      userId: Number(result.lastInsertRowid),
+      requiresApproval
+    });
   } catch (error) {
-    if (error.message.includes('UNIQUE constraint failed')) {
-      return res.status(400).json({ error: 'Bu e-posta zaten kayıtlı!' });
-    }
     res.status(500).json({ error: 'Veritabanı hatası: ' + error.message });
   }
 });
@@ -123,6 +146,34 @@ app.post('/api/login', async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
   }
+});
+
+// 1. Onay Bekleyen Lider/Müdür Listesi
+app.get('/api/admin/pending-users', async (req, res) => {
+  const result = await db.execute(`
+    SELECT id, name, email, unit, role, leader_sub_unit 
+    FROM users 
+    WHERE is_approved = 0 AND role IN ('mudur', 'ekip_lideri')
+  `);
+  res.json(result.rows);
+});
+
+// 2. Kullanıcı Onaylama
+app.put('/api/admin/approve-user/:id', async (req, res) => {
+  await db.execute({
+    sql: `UPDATE users SET is_approved = 1 WHERE id = ?`,
+    args: [req.params.id]
+  });
+  res.json({ message: 'Kullanıcı başarıyla onaylandı.' });
+});
+
+// 3. Kullanıcı Reddetme / Silme
+app.delete('/api/admin/reject-user/:id', async (req, res) => {
+  await db.execute({
+    sql: `DELETE FROM users WHERE id = ?`,
+    args: [req.params.id]
+  });
+  res.json({ message: 'Kullanıcı kaydı reddedildi.' });
 });
 
 // Şifre Sıfırlama

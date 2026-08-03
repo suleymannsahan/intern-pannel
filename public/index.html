@@ -67,55 +67,84 @@
       </form>
 
       <form id="registerForm" onsubmit="handleRegister(event)" class="space-y-4 hidden">
+        <!-- Ad Soyad -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Ad Soyad</label>
-          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <input type="text" id="regName" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
         </div>
+
+        <!-- E-Posta -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">E-Posta</label>
-          <input type="email" id="regEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <input type="email" id="regEmail" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
         </div>
+
+        <!-- Şifre -->
         <div>
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Şifre</label>
-          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
+          <input type="password" id="regPassword" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
         </div>
+
+        <!-- 1. BİRİM SEÇİMİ (YENİ EKLENDİ) -->
         <div>
-          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
-          <select id="regRole" onchange="handleRoleChange()" class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500">
-            <option value="INTERN">Stajyer</option>
-            <option value="ENGINEER">Mühendis</option>
-            <option value="LEADER">Ekip Lideri</option>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Birim Seçimi</label>
+          <select id="regUnit" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
+            <option value="">-- Birim Seçiniz --</option>
+            <option value="elektronik">Elektronik</option>
+            <option value="mekanik">Mekanik</option>
+            <option value="yazilim">Yazılım</option>
+            <option value="ik">İnsan Kaynakları</option>
+            <option value="yonetim">Yönetim</option>
           </select>
         </div>
 
-        <div id="internRegisterFields" class="space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
+        <!-- 2. ROL SEÇİMİ (GÜNCELLENDİ) -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
+          <select id="regRole" onchange="handleRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:outline-none focus:border-cyan-500">
+            <option value="">-- Rol Seçiniz --</option>
+            <option value="mudur">Müdür</option>
+            <option value="ekip_lideri">Ekip Lideri</option>
+            <option value="muhendis">Mühendis</option>
+            <option value="teknisyen">Teknisyen</option>
+            <option value="stajyer">Stajyer</option>
+          </select>
+        </div>
+
+        <!-- 3. EKİP LİDERİ EKSTRA BRANŞ / BİRİM ALANI (YENİ EKLENDİ - Sadece Ekip Lideri seçilince görünür) -->
+        <div id="leaderSubUnitFields" class="hidden p-3.5 bg-cyan-100/50 dark:bg-cyan-950/40 border border-cyan-300 dark:border-cyan-800/50 rounded-xl space-y-1.5">
+          <label class="block text-xs font-semibold text-cyan-800 dark:text-cyan-300">Ekip Lideri Branşı / Birimi</label>
+          <select id="regLeaderSubUnit" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
+            <option value="">-- Ekip Lideri Birimi Seçin --</option>
+            <option value="gomulu">Gömülü Birimi Ekip Lideri</option>
+            <option value="test">Test Birimi Ekip Lideri</option>
+          </select>
+        </div>
+
+        <!-- 4. STAJYER ALANLARI (GÜNCELLENDİ - Sadece Stajyer seçilince görünür) -->
+        <div id="internRegisterFields" class="hidden space-y-3 p-3.5 bg-slate-200/50 dark:bg-slate-950/70 rounded-xl border border-slate-300 dark:border-slate-800">
           <div>
             <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Sorumlu Mühendis Seçin</label>
-            <select id="regEngineer" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+            <select id="regEngineer" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
               <option value="">-- Mühendis Seçiniz --</option>
             </select>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Başlangıç</label>
-              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
             </div>
             <div>
               <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Staj Bitiş</label>
-              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
+              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-white">
             </div>
           </div>
         </div>
 
-        <div id="leaderVerificationFields" class="hidden space-y-2 p-3.5 bg-cyan-100/50 dark:bg-cyan-950/30 rounded-xl border border-cyan-300 dark:border-cyan-800/50">
-          <label class="block text-xs font-semibold text-cyan-700 dark:text-cyan-300">Ekip Lideri Doğrulama Kodu</label>
-          <div class="flex gap-2">
-            <input type="text" id="regVerificationCode" placeholder="Kodu Girin" class="flex-1 bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs">
-            <button type="button" id="btnSendCode" onclick="sendLeaderVerificationCode()" class="bg-cyan-600 hover:bg-cyan-500 text-white dark:text-slate-950 font-bold text-xs px-3 py-2 rounded-lg transition-all shadow-md">Kod Gönder</button>
-          </div>
-        </div>
-
-        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Hesap Oluştur</button>
+        <!-- Kayıt Butonu -->
+        <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20 mt-2">
+          Hesap Oluştur
+        </button>
       </form>
     </div>
   </div>
@@ -128,7 +157,7 @@
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
         <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
-        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
+        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme & Takip Paneli</span>
       </div>
 
       <div class="flex items-center gap-3">
@@ -614,19 +643,18 @@
 
     function handleRoleChange() {
       const role = document.getElementById('regRole').value;
+      const leaderSubFields = document.getElementById('leaderSubUnitFields');
       const internFields = document.getElementById('internRegisterFields');
-      const leaderFields = document.getElementById('leaderVerificationFields');
 
-      if (role === 'INTERN') {
+      if (role === 'ekip_lideri') {
+        leaderSubFields.classList.remove('hidden');
+        internFields.classList.add('hidden');
+      } else if (role === 'stajyer') {
+        leaderSubFields.classList.add('hidden');
         internFields.classList.remove('hidden');
-        leaderFields.classList.add('hidden');
-        populateEngineerDropdown();
-      } else if (role === 'LEADER') {
-        internFields.classList.add('hidden');
-        leaderFields.classList.remove('hidden');
       } else {
+        leaderSubFields.classList.add('hidden');
         internFields.classList.add('hidden');
-        leaderFields.classList.add('hidden');
       }
     }
 
@@ -885,28 +913,25 @@
       document.getElementById('authContainer').classList.add('hidden');
       document.getElementById('dashboardContainer').classList.remove('hidden');
 
-      document.getElementById('userInfoName').innerText = currentUser.name;
-      
-      let roleLabel = 'Stajyer';
-      if (currentUser.role === 'ENGINEER') roleLabel = 'Sorumlu Mühendis';
-      if (currentUser.role === 'LEADER') roleLabel = 'Ekip Lideri';
-      document.getElementById('userInfoRole').innerText = roleLabel;
+      // KONTROL: Ekip Lideri veya Müdür onaylı değilse ekranı kilitle
+      const isPendingApproval = (currentUser.role === 'mudur' || currentUser.role === 'ekip_lideri') && currentUser.is_approved === 0;
 
-      const isManager = currentUser.role === 'ENGINEER' || currentUser.role === 'LEADER';
-      
-      await loadUsers();
-      await loadLogs();
-      await loadTasks();
-      renderSidebarDirectory();
-
-      if (isManager) {
-        document.getElementById('leaderSection').classList.remove('hidden');
-        document.getElementById('dailyWarningBanner').classList.add('hidden');
-        populateAssigneeOptions();
-        renderInternStatusList();
+      if (isPendingApproval) {
+        document.getElementById('mainDashboardContent').classList.add('hidden');
+        document.getElementById('approvalPendingBanner').classList.remove('hidden');
+        return;
       } else {
-        document.getElementById('leaderSection').classList.add('hidden');
-        checkDailyLogWarning();
+        document.getElementById('mainDashboardContent').classList.remove('hidden');
+        document.getElementById('approvalPendingBanner').classList.add('hidden');
+      }
+
+      await loadUsers();
+      await loadTasks();
+
+      // Admin / Yönetim birimi ise onay paneli alanını göster
+      if (currentUser.unit === 'yonetim' || currentUser.role === 'mudur') {
+        document.getElementById('adminApprovalSection').classList.remove('hidden');
+        await loadPendingUsers();
       }
     }
 
