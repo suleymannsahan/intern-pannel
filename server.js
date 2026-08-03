@@ -595,7 +595,7 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     const { action, comment, userRole, revisedBy } = req.body;
 
     // Yetki Kontrolü
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+    if (userRole !== 'LEADER' && userRole !== 'ENGINEER' && userRole !== 'ADMIN') {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz bulunmamaktadır.' });
     }
 
