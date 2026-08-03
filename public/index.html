@@ -830,7 +830,14 @@
       }
     }
 
-
+    function loadAdminPanel() {
+      // Admin paneli bölümünü göster
+      showSection('adminPanelSection'); 
+        
+      // Varsa admin verilerini (kullanıcılar, istatistikler vb.) çek
+      if (typeof fetchAdminStats === 'function') fetchAdminStats();
+      if (typeof fetchUsers === 'function') fetchUsers();
+    }
 
     function populateEngineerDropdown() {
       const select = document.getElementById('regEngineer');
