@@ -1320,6 +1320,53 @@
       } catch (err) { console.error("Kullanıcılar alınamadı:", err); }
     }
 
+    async function loadPendingUsers() {
+      const pendingTableBody = document.getElementById('adminPendingUsersTable');
+      if (!pendingTableBody) return;
+
+      try {
+        // API'den onay bekleyen müdür ve ekip liderlerini çekiyoruz
+        const res = await fetch(`${API_BASE_URL}/api/users/pending`);
+        
+        if (!res.ok) {
+          pendingTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">Onay bekleyen kayıt bulunamadı.</td></tr>`;
+          return;
+        }
+
+        const pendingUsers = await res.json();
+
+        if (pendingUsers.length === 0) {
+          pendingTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">Onay bekleyen yönetici / lider kaydı yok.</td></tr>`;
+          return;
+        }
+
+        // Bekleyen kullanıcıları tabloya yazdırıyoruz
+        pendingTableBody.innerHTML = pendingUsers.map(user => {
+          let roleBadge = user.role === 'MUDUR' ? 'Müdür' : 'Ekip Lideri';
+          let subType = user.leaderType ? (user.leaderType === 'TEST_EKIP_LIDERI' ? 'Test Ekip Lideri' : 'Gömülü Ekip Lideri') : '-';
+
+          return `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <td class="py-3 px-2 font-semibold text-slate-800 dark:text-slate-200">${user.name}</td>
+              <td class="py-3 px-2 text-slate-500 dark:text-slate-400">${user.username}</td>
+              <td class="py-3 px-2">${user.department || '-'}</td>
+              <td class="py-3 px-2"><span class="px-2 py-0.5 text-xs rounded-md bg-amber-500/10 text-amber-500 font-bold border border-amber-500/30">${roleBadge}</span></td>
+              <td class="py-3 px-2 text-slate-400 text-xs">${subType}</td>
+              <td class="py-3 px-2 text-right">
+                <button onclick="approveUser(${user.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-all shadow-md flex items-center gap-1 ml-auto">
+                  <i class="fa-solid fa-check"></i> Onayla
+                </button>
+              </td>
+            </tr>
+          `;
+        }).join('');
+
+      } catch (err) {
+        console.error("Onay bekleyen kullanıcılar çekilirken hata:", err);
+        pendingTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-rose-500">Veriler yüklenirken hata oluştu.</td></tr>`;
+      }
+    }
+
     async function loadLogs() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/daily-logs`);
