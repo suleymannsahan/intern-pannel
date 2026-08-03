@@ -59,9 +59,13 @@ async function initDb() {
         log_date TEXT NOT NULL,
         note TEXT NOT NULL,
         FOREIGN KEY(task_id) REFERENCES tasks(id),
-        FOREIGN KEY(intern_id) REFERENCES users(id)
+        FOREIGN KEY(intern_id) REFERENCES users(id),
+        FOREIGN KEY (task_id) REFERENCES tasks(id) ON DELETE CASCADE
       )
     `);
+
+    // Veritabanı bağlantısı kurulduğunda çalıştırılmalı:
+    await db.execute("PRAGMA foreign_keys = ON;");
 
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
@@ -603,28 +607,28 @@ app.get('/api/daily-logs', async (req, res) => {
 
 // Görev Silme Endpoint'i
 app.delete('/api/tasks/:id', async (req, res) => {
-  try {
-    const taskId = req.params.id;
+  const taskId = req.params.id;
 
-    // Önce bu göreve bağlı günlük logları siliyoruz (Foreign Key hatası almamak için)
+  try {
+    // Önce göreve bağlı daily_logs kayıtlarını temizleyelim (Foreign key çakışması olmaması için)
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
       args: [taskId]
     });
 
-    // Ardından görevi siliyoruz
+    // Görevi sil
     const result = await db.execute({
       sql: `DELETE FROM tasks WHERE id = ?`,
       args: [taskId]
     });
 
     if (result.rowsAffected === 0) {
-      return res.status(404).json({ error: 'Görev bulunamadı.' });
+      return res.status(404).json({ error: 'Silinecek görev bulunamadı.' });
     }
 
-    res.json({ message: 'Görev ve ilişkili loglar başarıyla silindi.' });
+    res.json({ message: 'Görev başarıyla silindi.' });
   } catch (error) {
-    res.status(500).json({ error: 'Görev silinirken hata oluştu: ' + error.message });
+    res.status(500).json({ error: 'Veritabanı silme hatası: ' + error.message });
   }
 });
 

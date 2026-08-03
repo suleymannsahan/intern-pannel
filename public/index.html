@@ -1287,15 +1287,24 @@
     }
 
     async function deleteTask(taskId) {
-      if (!confirm('Bu görevi silmek istediğinize emin misiniz?')) return;
+      if (!confirm("Bu görevi silmek istediğinize emin misiniz?")) return;
+
       try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, { method: 'DELETE' });
+        const res = await fetch(`${API_BASE_URL}/api/tasks/${taskId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
         if (res.ok) {
-          alert('Görev silindi.');
-          await loadTasks();
-          renderInternStatusList();
+          alert("Görev başarıyla silindi.");
+          await loadTasks(); // Veriyi backend'den tazeleyip arayüzü yeniden çizer
+        } else {
+          const err = await res.json();
+          alert(err.error || "Görev silinemedi.");
         }
-      } catch (err) { console.error('Hata:', err); }
+      } catch (err) {
+        console.error("Silme hatası:", err);
+      }
     }
 
     function openRevisionModal(taskId) {
