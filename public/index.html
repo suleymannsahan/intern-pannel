@@ -2542,8 +2542,11 @@
 
       } else if (role === 'ADMIN' || role === 'HR') {
         // Admin ve İK: ana ekranda "Görevlerim" paneli gösterilmez.
-        // Admin, Ekip Gidişatı'nı (loadAdminPanel içinde) ve dilerse üstteki "Görevler" menüsünü kullanır.
-        // (Bu bölümlerin görünürlüğü handleUserNavigation / loadAdminPanel tarafından ayarlanır.)
+        // Admin, Ekip Gidişatı'nı doğrudan burada görür (yenilemede kaybolmaması için showDashboard yönetir).
+        if (role === 'ADMIN' && teamProgressSection) {
+          teamProgressSection.classList.remove('hidden');
+          if (typeof loadTeamProgress === 'function') loadTeamProgress();
+        }
 
       } else {
         // Stajyer / Teknisyen: görevleri direkt ana ekranda
