@@ -170,55 +170,16 @@
           Kullanıcı Yönetimi
           <span id="userMgmtBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-slate-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
         </button>
+        <button id="meetingsNavBtn" onclick="toggleMeetingsModal()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+          Toplantı
+          <span id="meetingsBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
+        </button>
       </nav>
 
       <div class="flex items-center gap-3 shrink-0">
         <div class="text-right">
           <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
           <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
-        </div>
-
-        <div class="relative">
-          <button id="meetingsBubbleBtn" onclick="toggleMeetingsDropdown()" class="hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none relative">
-            <i class="fa-solid fa-calendar-days text-lg"></i>
-            <span id="meetingsBadgeCount" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-          </button>
-
-          <div id="meetingsDropdown" class="hidden absolute right-0 mt-2 w-96 max-w-[90vw] max-h-[70vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-xl space-y-4">
-            <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-check text-cyan-500"></i> Toplantı Talepleri
-            </h3>
-
-            <div id="meetingRequestFormWrapper" class="hidden space-y-2.5 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-              <form onsubmit="handleCreateMeetingRequest(event)" class="space-y-2.5">
-                <div id="meetingTargetDeptWrapper" class="hidden">
-                  <label class="block text-[11px] font-semibold mb-1 text-slate-500 dark:text-slate-400">Birim</label>
-                  <select id="meetingTargetDepartment" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
-                    <option value="">-- Birim Seçiniz --</option>
-                    <option value="ELEKTRONIK">Elektronik</option>
-                    <option value="MEKANIK">Mekanik</option>
-                    <option value="YAZILIM">Yazılım</option>
-                    <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
-                  </select>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-semibold mb-1 text-slate-500 dark:text-slate-400">Konu</label>
-                  <input type="text" id="meetingSubject" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
-                </div>
-                <div>
-                  <label class="block text-[11px] font-semibold mb-1 text-slate-500 dark:text-slate-400">Açıklama</label>
-                  <textarea id="meetingDescription" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs"></textarea>
-                </div>
-                <div>
-                  <label class="block text-[11px] font-semibold mb-1 text-slate-500 dark:text-slate-400">Tercih Edilen Tarih</label>
-                  <input type="date" id="meetingPreferredDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs">
-                </div>
-                <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-1.5 rounded-lg text-xs transition-all">Talep Gönder</button>
-              </form>
-            </div>
-
-            <div id="meetingRequestsList" class="space-y-2"></div>
-          </div>
         </div>
 
         <div class="relative">
@@ -335,6 +296,63 @@
       </div>
     </div>
 
+    <!-- TOPLANTI TAM EKRAN MODAL -->
+    <div id="meetingsModal" onclick="if(event.target===this) toggleMeetingsModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-5">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-calendar-check text-cyan-500"></i> Toplantı Talepleri
+          </h3>
+          <button onclick="toggleMeetingsModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <!-- YENİ TOPLANTI TALEBİ OLUŞTURMA -->
+        <div id="meetingRequestFormWrapper" class="hidden bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+          <h4 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Toplantı Talebi</h4>
+          <form onsubmit="handleCreateMeetingRequest(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="meetingTargetDeptWrapper" class="hidden md:col-span-2">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim</label>
+              <select id="meetingTargetDepartment" onchange="if(currentUser.role==='ADMIN') populateMeetingTargetRoles();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="">-- Birim Seçiniz --</option>
+                <option value="ELEKTRONIK">Elektronik</option>
+                <option value="MEKANIK">Mekanik</option>
+                <option value="YAZILIM">Yazılım</option>
+                <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
+              </select>
+            </div>
+
+            <!-- Hedef roller: talep sahibinin rolüne göre JS ile doldurulur -->
+            <div id="meetingTargetRolesWrapper" class="md:col-span-2">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Toplantıya Çağrılacaklar (bildirim düşer)</label>
+              <div id="meetingTargetRolesOptions" class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5"></div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Konu</label>
+              <input type="text" id="meetingSubject" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Tercih Edilen Tarih</label>
+              <input type="date" id="meetingPreferredDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div class="md:col-span-2">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Açıklama</label>
+              <textarea id="meetingDescription" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+            </div>
+            <div class="md:col-span-2 flex justify-end">
+              <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Talep Gönder</button>
+            </div>
+          </form>
+        </div>
+
+        <!-- TALEP LİSTESİ -->
+        <div>
+          <h4 class="font-bold text-sm mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-list text-cyan-500"></i>Talepler</h4>
+          <div id="meetingRequestsList" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="flex-1 flex relative overflow-hidden">
       <!-- SOL SIDEBAR -->
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
@@ -366,24 +384,39 @@
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-            <div class="flex justify-between items-center mb-4">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
               <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-users text-cyan-500"></i> Stajyer / Mühendis Durum ve İş Yükü
+                <i class="fa-solid fa-users text-cyan-500"></i> <span id="statusListTitle">Durum ve İş Yükü</span>
               </h3>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
+              <div class="flex items-center gap-2">
+                <select id="statusRoleFilter" onchange="renderInternStatusList()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-cyan-500">
+                  <!-- Rol seçenekleri JS ile role göre doldurulur -->
+                </select>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa</span>
+              </div>
             </div>
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
 
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <h3 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama</h3>
+
+            <!-- Hedef tipi seçimi: görev stajyere mi yoksa mühendise mi atanacak -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Kime Atanacak?</label>
+              <div class="inline-flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+                <button type="button" id="taskTargetInternBtn" onclick="setTaskTargetType('INTERN')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600 text-white transition-all">Stajyer</button>
+                <button type="button" id="taskTargetEngineerBtn" onclick="setTaskTargetType('ENGINEER')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400 transition-all">Mühendis</button>
+              </div>
+            </div>
+
             <form onsubmit="handleCreateTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
+                <label id="taskTitleLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
                 <input type="text" id="taskTitle" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevi Atayacağınız Kişi</label>
+                <label id="taskAssigneeLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Atanacağı Stajyer</label>
                 <select id="taskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
               </div>
               <div class="md:col-span-2">
@@ -400,7 +433,7 @@
                 </select>
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Bitiş Tarihi</label>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Bitiş Tarihi</label>
                 <input type="date" id="taskEndDate" required onchange="updateCalculatedWorkDays()" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
               </div>
               <div class="md:col-span-2 flex justify-between items-center bg-slate-100 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-300 dark:border-slate-800">
@@ -445,7 +478,10 @@
           </div>
           <p class="text-xs text-slate-400 text-center">Yeni Kayıt Onayları ve Kullanıcı Yönetimi artık üst menüdeki ilgili ikonlardan erişilebilir.</p>
 
-          <!-- EKİP GİDİŞATI -->
+        </section>
+
+        <!-- EKİP GİDİŞATI (Admin + alt rolü olan herkes: kendi altındaki rolleri görür) -->
+        <section id="teamProgressSection" class="hidden space-y-6">
           <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-5">
             <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
               <i class="fa-solid fa-chart-line text-cyan-500"></i> Ekip Gidişatı
@@ -463,8 +499,107 @@
               <div id="teamProgressRoleGroups" class="space-y-4"></div>
             </div>
           </div>
+        </section>
 
-          <!-- ADIM 3: KİŞİ DETAY MODALI (Büyük, açılır-kapanır) -->
+        <!-- MÜHENDİS: KENDİ BİRİMİNDEKİ STAJYERLERİN DURUMU + STAJYERE GÖREV ATAMA -->
+        <section id="engineerSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <div class="flex justify-between items-center mb-4">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-graduation-cap text-cyan-500"></i> <span id="engineerStatusTitle">Stajyer Durum ve İş Yükü</span>
+              </h3>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
+            </div>
+            <div id="engineerInternStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
+
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <h3 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama (Stajyer)</h3>
+            <form onsubmit="handleCreateEngineerTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
+                <input type="text" id="engTaskTitle" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Atanacağı Stajyer</label>
+                <select id="engTaskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Açıklaması</label>
+                <textarea id="engTaskDescription" rows="2" placeholder="Görev detaylarını ve yönergeleri giriniz..." class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Alan / Departman</label>
+                <select id="engTaskCategory" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                  <option value="Yazılım">Yazılım</option>
+                  <option value="Donanım">Donanım</option>
+                  <option value="Ağ & Sistem">Ağ & Sistem</option>
+                  <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Bitiş Tarihi</label>
+                <input type="date" id="engTaskEndDate" required onchange="updateEngCalculatedWorkDays()" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+              </div>
+              <div class="md:col-span-2 flex justify-between items-center bg-slate-100 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-300 dark:border-slate-800">
+                <span class="text-xs text-slate-500 dark:text-slate-400">Hesaplanan Net İş Günü: <strong id="engCalculatedDaysText" class="text-cyan-600 dark:text-cyan-400 text-sm">0 gün</strong></span>
+                <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
+              </div>
+            </form>
+          </div>
+        </section>
+
+        <!-- MÜHENDİS / STAJYER ANA EKRAN GÖREV PANELİ -->
+        <section id="mainTasksSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-list-check text-cyan-500"></i> Görevlerim
+              </h3>
+              <div class="flex flex-wrap gap-2 items-center">
+                <div class="relative">
+                  <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                  <input type="text" id="mainSearchInput" oninput="renderMainTaskList()" placeholder="Görev ara..." class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg pl-8 pr-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                </div>
+                <select id="mainFilterStatus" onchange="renderMainTaskList()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                  <option value="">Tüm Durumlar</option>
+                  <option value="IN_PROGRESS">Devam Ediyor</option>
+                  <option value="COMPLETED">Tamamlandı</option>
+                  <option value="APPROVED">Onaylandı</option>
+                  <option value="REVISION_REQUESTED">Revize İstendi</option>
+                </select>
+              </div>
+            </div>
+
+            <section class="mb-5">
+              <h4 class="font-bold text-xs mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500"></i>Aktif Görevler</h4>
+              <div id="mainTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+
+            <section>
+              <h4 class="font-bold text-xs mb-3 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h4>
+              <div id="mainPastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+            </section>
+          </div>
+        </section>
+
+        <!-- İNSAN KAYNAKLARI PANELİ -->
+        <section id="hrPanelSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <h3 class="font-bold text-sm mb-4 text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-address-book text-cyan-500"></i> İnsan Kaynakları Paneli
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tüm birimlerdeki personel listesi. Bu panel adım adım genişletilecektir.</p>
+            <div id="hrPersonnelList" class="space-y-5"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+  </div>
+
+  <!-- MODALLAR -->
+
+  <!-- EKİP GİDİŞATI KİŞİ DETAY MODALI (Büyük, açılır-kapanır) -->
           <div id="personProgressModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="if(event.target===this) closePersonProgressModal();">
             <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-5">
               <div class="flex justify-between items-start">
@@ -503,23 +638,7 @@
               </div>
             </div>
           </div>
-        </section>
 
-        <!-- İNSAN KAYNAKLARI PANELİ -->
-        <section id="hrPanelSection" class="hidden space-y-6">
-          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-            <h3 class="font-bold text-sm mb-4 text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-address-book text-cyan-500"></i> İnsan Kaynakları Paneli
-            </h3>
-            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tüm birimlerdeki personel listesi. Bu panel adım adım genişletilecektir.</p>
-            <div id="hrPersonnelList" class="space-y-5"></div>
-          </div>
-        </section>
-      </main>
-    </div>
-  </div>
-
-  <!-- MODALLAR -->
 
   <!-- Revize Yorum Modalı -->
   <div id="revisionModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -784,12 +903,40 @@
       dropdown.classList.toggle('hidden');
     }
 
-    function toggleMeetingsDropdown() {
-      const dropdown = document.getElementById('meetingsDropdown');
-      dropdown.classList.toggle('hidden');
-      if (!dropdown.classList.contains('hidden') && typeof loadMeetings === 'function') {
-        loadMeetings();
+    function toggleMeetingsModal() {
+      const modal = document.getElementById('meetingsModal');
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        if (typeof populateMeetingTargetRoles === 'function') populateMeetingTargetRoles();
+        if (typeof loadMeetings === 'function') loadMeetings();
       }
+    }
+
+    // Talep sahibinin rolüne göre "toplantıya çağrılacaklar" rol seçeneklerini doldurur
+    function populateMeetingTargetRoles() {
+      const wrapper = document.getElementById('meetingTargetRolesWrapper');
+      const optionsEl = document.getElementById('meetingTargetRolesOptions');
+      if (!optionsEl || !currentUser) return;
+
+      // Her rolün davet edebileceği hedef roller (server.js ALLOWED_TARGETS ile uyumlu)
+      const ALLOWED_TARGETS = {
+        LEADER: ['ENGINEER'],
+        MANAGER: ['LEADER', 'ENGINEER'],
+        ADMIN: ['MANAGER', 'LEADER', 'ENGINEER'],
+        ENGINEER: ['INTERN']
+      };
+
+      const targets = ALLOWED_TARGETS[currentUser.role] || [];
+
+      // Hiç hedef yoksa alanı gizle
+      if (wrapper) wrapper.classList.toggle('hidden', targets.length === 0);
+
+      optionsEl.innerHTML = targets.map(role => `
+        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
+          <input type="checkbox" class="meetingTargetRole accent-cyan-600" value="${role}">
+          ${ROLE_LABELS_TR[role] || role}
+        </label>
+      `).join('');
     }
 
     function toggleTasksDropdown() {
@@ -843,7 +990,6 @@
     document.addEventListener('click', function(e) {
       const dropdownConfigs = [
         { dropdownId: 'settingsDropdown', buttonSelector: 'button[onclick="toggleSettingsDropdown()"]' },
-        { dropdownId: 'meetingsDropdown', buttonSelector: '#meetingsBubbleBtn' },
         { dropdownId: 'tasksDropdown', buttonSelector: '#tasksNavBtn' },
         { dropdownId: 'pendingDropdown', buttonSelector: '#pendingNavBtn' },
         { dropdownId: 'userMgmtDropdown', buttonSelector: '#userMgmtNavBtn' }
@@ -1188,6 +1334,10 @@
       fetchAdminStats();
       fetchAdminUsers();
 
+      // Admin için Ekip Gidişatı bölümünü görünür yap
+      const tps = document.getElementById('teamProgressSection');
+      if (tps) tps.classList.remove('hidden');
+
       // Ekip Gidişatı, usersList'e ihtiyaç duyduğu için önce onu tazeleyip sonra render ediyoruz
       await loadUsers();
       if (typeof loadTeamProgress === 'function') loadTeamProgress();
@@ -1218,9 +1368,18 @@
       deptListEl.classList.remove('hidden');
       if (peopleWrap) peopleWrap.classList.add('hidden');
 
+      // Admin değilse yalnızca kendi birimindeki ve kendi altındaki rollerdeki kişiler görünür
+      const isAdminViewer = currentUser.role === 'ADMIN';
+      const allowedRoles = isAdminViewer ? null : getSubordinateRoles(currentUser.role);
+
       const byDept = {};
       (usersList || []).forEach(u => {
         if (u.role === 'ADMIN' || u.role === 'HR') return;
+        if (!isAdminViewer) {
+          // Sadece kendi birimi ve kendi altındaki roller
+          if (currentUser.department && u.department !== currentUser.department) return;
+          if (allowedRoles && !allowedRoles.includes(u.role)) return;
+        }
         const key = u.department || 'BELİRTİLMEMİŞ';
         if (!byDept[key]) byDept[key] = [];
         byDept[key].push(u);
@@ -1255,7 +1414,15 @@
 
       document.getElementById('teamProgressDeptTitle').innerText = (DEPARTMENT_LABELS[dept] || dept) + ' Personeli';
 
-      const people = (usersList || []).filter(u => (u.department || 'BELİRTİLMEMİŞ') === dept && u.role !== 'ADMIN' && u.role !== 'HR');
+      const isAdminViewer = currentUser.role === 'ADMIN';
+      const allowedRoles = isAdminViewer ? null : getSubordinateRoles(currentUser.role);
+
+      const people = (usersList || []).filter(u => {
+        if ((u.department || 'BELİRTİLMEMİŞ') !== dept) return false;
+        if (u.role === 'ADMIN' || u.role === 'HR') return false;
+        if (!isAdminViewer && allowedRoles && !allowedRoles.includes(u.role)) return false;
+        return true;
+      });
 
       const byRole = {};
       people.forEach(u => {
@@ -1298,7 +1465,8 @@
     // ADIM 3: Kişi detay modalını aç
     async function openPersonProgress(userId) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/team-progress?userRole=${currentUser.role}&userId=${userId}`);
+        const viewerDept = currentUser.department ? `&viewerDepartment=${encodeURIComponent(currentUser.department)}` : '';
+        const res = await fetch(`${API_BASE_URL}/api/admin/team-progress?userRole=${currentUser.role}&userId=${userId}${viewerDept}`);
         const data = await res.json();
 
         if (!res.ok) {
@@ -1563,12 +1731,17 @@
         const pendingCount = meetings.filter(m => m.status === 'PENDING').length;
         updateMeetingsBadge(pendingCount);
 
-        container.innerHTML = meetings.map(m => `
+        container.innerHTML = meetings.map(m => {
+          const rolesText = m.target_roles
+            ? m.target_roles.split(',').map(r => ROLE_LABELS_TR[r.trim()] || r.trim()).join(', ')
+            : '';
+          return `
           <div class="bg-slate-100/70 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5">
             <div class="flex justify-between items-start gap-2 mb-1.5">
               <div>
                 <div class="font-semibold text-sm text-slate-900 dark:text-slate-100">${m.subject}</div>
                 <div class="text-[11px] text-slate-500 dark:text-slate-400">${m.requester_name || '-'}${m.department ? ' · ' + (DEPARTMENT_LABELS[m.department] || m.department) : ''}${m.preferred_date ? ' · Tercih edilen: ' + m.preferred_date : ''}</div>
+                ${rolesText ? `<div class="text-[11px] text-cyan-600 dark:text-cyan-400 mt-0.5"><i class="fa-solid fa-bell me-1"></i>Çağrılanlar: ${rolesText}</div>` : ''}
               </div>
               ${MEETING_STATUS_BADGES[m.status] || m.status}
             </div>
@@ -1581,7 +1754,8 @@
               </div>
             ` : ''}
           </div>
-        `).join('');
+        `;
+        }).join('');
       } catch (err) {
         console.error("Toplantı talepleri alınamadı:", err);
         container.innerHTML = `<p class="text-xs text-rose-500 text-center py-6">Veriler yüklenirken hata oluştu.</p>`;
@@ -1596,6 +1770,9 @@
       const targetDepartment = currentUser.role === 'ADMIN'
         ? document.getElementById('meetingTargetDepartment').value
         : null;
+
+      // Seçilen hedef rolleri (toplantıya çağrılacaklar / bildirim düşecekler) topla
+      const targetRoles = Array.from(document.querySelectorAll('.meetingTargetRole:checked')).map(cb => cb.value);
 
       if (currentUser.role === 'ADMIN' && !targetDepartment) {
         alert('Lütfen bir birim seçiniz.');
@@ -1612,7 +1789,8 @@
             description,
             preferredDate,
             userRole: currentUser.role,
-            targetDepartment
+            targetDepartment,
+            targetRoles
           })
         });
 
@@ -1680,6 +1858,16 @@
     }
 
     const ROLE_ORDER = ['MANAGER', 'MUDUR', 'LEADER', 'EKIP_LIDERI', 'ENGINEER', 'MUHENDIS', 'TECHNICIAN', 'TEKNISYEN', 'INTERN', 'STAJYER', 'HR', 'ADMIN'];
+
+    // Rol hiyerarşisi (yüksekten alçağa): Müdür > Ekip Lideri > Mühendis > Teknisyen > Stajyer
+    const ROLE_HIERARCHY = ['MANAGER', 'LEADER', 'ENGINEER', 'TECHNICIAN', 'INTERN'];
+
+    // Verilen rolün görebileceği (kendisinden düşük) roller
+    function getSubordinateRoles(role) {
+      const idx = ROLE_HIERARCHY.indexOf(role);
+      if (idx === -1) return [];
+      return ROLE_HIERARCHY.slice(idx + 1);
+    }
 
     async function fetchAdminUsers() {
       const container = document.getElementById('adminUsersByTeam');
@@ -2201,8 +2389,10 @@
       }
 
       // 2. Yetki Seviyelerini Tanımlama
-      // "Stajyer Durumu" ve "Görev Atama" sadece Müdür/Ekip Lideri'ne özel; Admin panelinde bu kısımlar gösterilmez
-      const isLeaderOrAbove = currentUser.role === 'MANAGER' || currentUser.role === 'LEADER';
+      const role = currentUser.role;
+      const isLeaderOrAbove = role === 'MANAGER' || role === 'LEADER'; // Müdür / Ekip Lideri
+      const isEngineer = role === 'ENGINEER';                          // Mühendis
+      const isInternOrTech = role === 'INTERN' || role === 'TECHNICIAN'; // Stajyer / Teknisyen
 
       // 3. Ortak Verileri Yükleme
       await loadUsers();
@@ -2211,42 +2401,64 @@
       renderSidebarDirectory();
 
       // ADMIN ise bekleyen kayıt onaylarını çek (Yeni Kayıt Onayı baloncuğu için)
-      if (currentUser.role === 'ADMIN' && typeof loadPendingUsers === 'function') {
+      if (role === 'ADMIN' && typeof loadPendingUsers === 'function') {
         await loadPendingUsers();
+      }
+
+      // İlgili bölümlere kısayol
+      const leaderSection = document.getElementById('leaderSection');
+      const engineerSection = document.getElementById('engineerSection');
+      const mainTasksSection = document.getElementById('mainTasksSection');
+      const teamProgressSection = document.getElementById('teamProgressSection');
+      const warningBanner = document.getElementById('dailyWarningBanner');
+
+      // Önce tüm dinamik bölümleri gizle
+      if (leaderSection) leaderSection.classList.add('hidden');
+      if (engineerSection) engineerSection.classList.add('hidden');
+      if (mainTasksSection) mainTasksSection.classList.add('hidden');
+      if (teamProgressSection) teamProgressSection.classList.add('hidden');
+
+      // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri, Mühendis).
+      // Admin kendi panelindeki (adminPanelSection içindeki modal) akışıyla görür; burada tekrar göstermeyiz.
+      const canSeeTeamProgress = getSubordinateRoles(role).length > 0 && role !== 'ADMIN';
+      if (teamProgressSection && canSeeTeamProgress) {
+        teamProgressSection.classList.remove('hidden');
+        if (typeof loadTeamProgress === 'function') loadTeamProgress();
       }
 
       // 4. Arayüz Elemanlarının Yetkiye Göre Gösterilip/Gizlenmesi
       if (isLeaderOrAbove) {
-        // Lider ve Üstü Yetkiler
-        if (document.getElementById('leaderSection')) {
-          document.getElementById('leaderSection').classList.remove('hidden');
-        }
-        if (document.getElementById('dailyWarningBanner')) {
-          document.getElementById('dailyWarningBanner').classList.add('hidden');
-        }
-        
-        // Select kutularını ve çalışan listelerini güncelle
-        populateAssigneeOptions();
-        if (typeof renderInternStatusList === 'function') {
-          renderInternStatusList();
-        }
+        // Müdür / Ekip Lideri: durum + görev atama paneli
+        if (leaderSection) leaderSection.classList.remove('hidden');
+        if (warningBanner) warningBanner.classList.add('hidden');
+
+        setTaskTargetType('INTERN');       // görev atama formunu varsayılan olarak stajyere ayarla
+        populateStatusRoleFilter();        // durum listesi rol seçicisini doldur
+        if (typeof renderInternStatusList === 'function') renderInternStatusList();
+
+      } else if (isEngineer) {
+        // Mühendis: kendi stajyerlerinin durumu + stajyere görev atama + kendi görevleri ana ekranda
+        if (engineerSection) engineerSection.classList.remove('hidden');
+        if (mainTasksSection) mainTasksSection.classList.remove('hidden');
+
+        populateEngineerAssigneeOptions();       // stajyer seçim kutusunu doldur
+        if (typeof renderEngineerInternStatusList === 'function') renderEngineerInternStatusList();
+        if (typeof renderMainTaskList === 'function') renderMainTaskList();
+
+        if (typeof checkDailyLogWarning === 'function') checkDailyLogWarning();
+
       } else {
-        // Mühendis, Teknisyen ve Stajyer Yetkileri
-        if (document.getElementById('leaderSection')) {
-          document.getElementById('leaderSection').classList.add('hidden');
-        }
-        
-        // Günlük log doldurma uyarısını kontrol et
-        if (typeof checkDailyLogWarning === 'function') {
-          checkDailyLogWarning();
-        }
+        // Stajyer / Teknisyen: görevleri direkt ana ekranda
+        if (mainTasksSection) mainTasksSection.classList.remove('hidden');
+        if (typeof renderMainTaskList === 'function') renderMainTaskList();
+        if (typeof checkDailyLogWarning === 'function') checkDailyLogWarning();
       }
 
-      // 5. Toplantı Talepleri Baloncuğu (Mühendis, Ekip Lideri, Müdür, Admin görebilir)
+      // 5. Toplantı Menü Yazısı (Mühendis, Ekip Lideri, Müdür, Admin görebilir)
       const canAccessMeetings = ['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(currentUser.role);
-      const meetingsBubbleBtn = document.getElementById('meetingsBubbleBtn');
-      if (meetingsBubbleBtn) {
-        meetingsBubbleBtn.classList.toggle('hidden', !canAccessMeetings);
+      const meetingsNavBtn = document.getElementById('meetingsNavBtn');
+      if (meetingsNavBtn) {
+        meetingsNavBtn.classList.toggle('hidden', !canAccessMeetings);
       }
 
       // Toplantı talebi oluşturma formu Mühendis ve üstü roller ile Admin için görünür
@@ -2266,8 +2478,9 @@
         loadMeetings();
       }
 
-      // 6. Görevler Menü Yazısı (İK hariç herkes görebilir)
-      const canAccessTasks = currentUser.role !== 'HR';
+      // 6. Görevler Menü Yazısı: Müdür/Ekip Lideri/Admin üst menüden büyük görev panelini kullanır.
+      // Mühendis, Stajyer ve Teknisyen görevleri doğrudan ana ekranda gördüğü için bu buton onlarda gizli.
+      const canAccessTasks = ['MANAGER', 'LEADER', 'ADMIN'].includes(currentUser.role);
       const tasksNavBtn = document.getElementById('tasksNavBtn');
       if (tasksNavBtn) {
         tasksNavBtn.classList.toggle('hidden', !canAccessTasks);
@@ -2489,6 +2702,7 @@
         const res = await fetch(url);
         tasksList = await res.json();
         renderTaskList();
+        if (typeof renderMainTaskList === 'function') renderMainTaskList();
         updateTasksBadge();
       } catch (err) { console.error("Görevler alınamadı:", err); }
     }
@@ -2508,51 +2722,95 @@
       }
     }
 
-    function populateAssigneeOptions() {
-      const select = document.getElementById('taskAssignee');
-      select.innerHTML = '';
+    // Görev atama hedef tipi (INTERN / ENGINEER) - Müdür/Ekip Lideri formu için
+    let taskTargetType = 'INTERN';
 
-      const interns = usersList.filter(u => u.role === 'INTERN');
-      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+    // Müdür / Ekip Lideri görev atama formunda hedef tipini değiştirir (stajyer/mühendis)
+    function setTaskTargetType(type) {
+      taskTargetType = type;
 
-      if (interns.length > 0) {
-        const internGroup = document.createElement('optgroup');
-        internGroup.label = 'Stajyerler';
-        interns.forEach(intern => {
-          const opt = document.createElement('option');
-          opt.value = intern.id;
-          opt.innerText = intern.name;
-          internGroup.appendChild(opt);
-        });
-        select.appendChild(internGroup);
+      const internBtn = document.getElementById('taskTargetInternBtn');
+      const engBtn = document.getElementById('taskTargetEngineerBtn');
+      const titleLabel = document.getElementById('taskTitleLabel');
+      const assigneeLabel = document.getElementById('taskAssigneeLabel');
+
+      const activeCls = ['bg-cyan-600', 'text-white'];
+      const passiveCls = ['text-slate-500', 'dark:text-slate-400'];
+
+      if (internBtn && engBtn) {
+        if (type === 'INTERN') {
+          internBtn.classList.add(...activeCls); internBtn.classList.remove(...passiveCls);
+          engBtn.classList.remove(...activeCls); engBtn.classList.add(...passiveCls);
+        } else {
+          engBtn.classList.add(...activeCls); engBtn.classList.remove(...passiveCls);
+          internBtn.classList.remove(...activeCls); internBtn.classList.add(...passiveCls);
+        }
       }
 
-      if (engineers.length > 0) {
-        const engineerGroup = document.createElement('optgroup');
-        engineerGroup.label = 'Mühendisler';
-        engineers.forEach(eng => {
-          const opt = document.createElement('option');
-          opt.value = eng.id;
-          opt.innerText = eng.name;
-          engineerGroup.appendChild(opt);
-        });
-        select.appendChild(engineerGroup);
-      }
+      // Etiketleri hedefe göre değiştir: stajyer -> "Görev Tanımı", mühendis -> "Kart Adı"
+      if (titleLabel) titleLabel.innerText = (type === 'INTERN') ? 'Görev Tanımı' : 'Kart Adı';
+      if (assigneeLabel) assigneeLabel.innerText = (type === 'INTERN') ? 'Görevin Atanacağı Stajyer' : 'Görevin Atanacağı Mühendis';
+
+      populateAssigneeOptions();
     }
 
-    function renderInternStatusList() {
-      const listEl = document.getElementById('internStatusList');
-      listEl.innerHTML = '';
-      let interns = usersList.filter(u => u.role === 'INTERN' || u.role === 'ENGINEER');
+    // Müdür / Ekip Lideri görev atama seçim kutusunu hedef tipe göre doldurur
+    function populateAssigneeOptions() {
+      const select = document.getElementById('taskAssignee');
+      if (!select) return;
+      select.innerHTML = '';
 
-      const internData = interns.map(intern => {
-        const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'APPROVED');
-        return { intern, activeCount: activeTasks.length };
+      const wantedRole = (taskTargetType === 'ENGINEER') ? 'ENGINEER' : 'INTERN';
+      const people = usersList.filter(u => u.role === wantedRole);
+
+      if (people.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.innerText = (wantedRole === 'ENGINEER') ? 'Uygun mühendis yok' : 'Uygun stajyer yok';
+        select.appendChild(opt);
+        return;
+      }
+
+      people.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.innerText = p.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // "Durum ve İş Yükü" rol seçicisini, mevcut kullanıcının görebileceği alt rollerle doldurur
+    function populateStatusRoleFilter() {
+      const select = document.getElementById('statusRoleFilter');
+      if (!select || !currentUser) return;
+
+      // Görüntülenebilir alt roller (durum/iş yükü için stajyer ve mühendisle sınırlı tutuyoruz)
+      let roles = getSubordinateRoles(currentUser.role).filter(r => ['ENGINEER', 'INTERN'].includes(r));
+      if (roles.length === 0) roles = ['INTERN'];
+
+      select.innerHTML = roles.map(r => `<option value="${r}">${ROLE_LABELS_TR[r] || r}</option>`).join('');
+    }
+
+    // Ortak durum kartı oluşturucu (verilen role göre listeyi bir konteynere basar)
+    function renderStatusCards(listEl, wantedRole) {
+      if (!listEl) return;
+      listEl.innerHTML = '';
+
+      const people = usersList.filter(u => u.role === wantedRole);
+
+      const data = people.map(person => {
+        const activeTasks = tasksList.filter(t => (t.assigned_to == person.id) && t.status !== 'APPROVED');
+        return { person, activeCount: activeTasks.length };
       });
 
-      internData.sort((a, b) => a.activeCount - b.activeCount);
+      data.sort((a, b) => a.activeCount - b.activeCount);
 
-      internData.forEach(({ intern, activeCount }) => {
+      if (data.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Bu rolde kişi bulunamadı.</p>`;
+        return;
+      }
+
+      data.forEach(({ person, activeCount }) => {
         let cardStyle = "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400";
         let badgeStyle = "bg-emerald-500 text-white";
         let statusText = "Müsait / Düşük Yoğunluk";
@@ -2568,17 +2826,20 @@
         }
 
         let remainingDaysText = "";
-        if (intern.intern_end_date) {
-          const remDays = calculateRemainingWorkDays(intern.intern_end_date);
+        if (person.intern_end_date) {
+          const remDays = calculateRemainingWorkDays(person.intern_end_date);
           remainingDaysText = remDays !== null ? `<div class="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5"><i class="fa-solid fa-clock me-1"></i>Kalan Staj: <b>${remDays} iş günü</b></div>` : '';
         }
+
+        // Stajyerler için detay modalı açılabilir
+        const clickable = person.role === 'INTERN';
 
         const card = document.createElement('div');
         card.className = `p-3.5 rounded-xl border flex items-center justify-between shadow-sm transition-all hover:scale-[1.01] ${cardStyle}`;
         card.innerHTML = `
-          <div class="flex-1 cursor-pointer" onclick="openInternProfileModal(${intern.id})">
-            <div class="font-bold text-sm text-slate-900 dark:text-slate-100 hover:underline flex items-center gap-1.5">
-              ${intern.name}
+          <div class="flex-1 ${clickable ? 'cursor-pointer' : ''}" ${clickable ? `onclick="openInternProfileModal(${person.id})"` : ''}>
+            <div class="font-bold text-sm text-slate-900 dark:text-slate-100 ${clickable ? 'hover:underline' : ''} flex items-center gap-1.5">
+              ${person.name}
               <span class="text-[10px] px-1.5 py-0.5 rounded-full font-bold ${badgeStyle}">${activeCount} Görev</span>
             </div>
             <div class="text-xs opacity-90 mt-0.5">${statusText}</div>
@@ -2587,6 +2848,132 @@
         `;
         listEl.appendChild(card);
       });
+    }
+
+    // Müdür / Ekip Lideri durum listesi (seçili role göre başlık değişir)
+    function renderInternStatusList() {
+      const listEl = document.getElementById('internStatusList');
+      const titleEl = document.getElementById('statusListTitle');
+      const roleSelect = document.getElementById('statusRoleFilter');
+      if (!listEl) return;
+
+      const wantedRole = (roleSelect && roleSelect.value) ? roleSelect.value : 'INTERN';
+
+      // Seçilen role göre başlığı güncelle
+      if (titleEl) titleEl.innerText = `${ROLE_LABELS_TR[wantedRole] || wantedRole} Durum ve İş Yükü`;
+
+      renderStatusCards(listEl, wantedRole);
+    }
+
+    // Mühendis: kendi birimindeki stajyerlerin durum listesi
+    function renderEngineerInternStatusList() {
+      const listEl = document.getElementById('engineerInternStatusList');
+      const titleEl = document.getElementById('engineerStatusTitle');
+      if (titleEl) titleEl.innerText = 'Stajyer Durum ve İş Yükü';
+      renderStatusCards(listEl, 'INTERN');
+    }
+
+    // Mühendisin stajyer görev atama kutusunu doldurur
+    function populateEngineerAssigneeOptions() {
+      const select = document.getElementById('engTaskAssignee');
+      if (!select) return;
+      select.innerHTML = '';
+
+      const interns = usersList.filter(u => u.role === 'INTERN');
+      if (interns.length === 0) {
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.innerText = 'Uygun stajyer yok';
+        select.appendChild(opt);
+        return;
+      }
+      interns.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        opt.innerText = i.name;
+        select.appendChild(opt);
+      });
+    }
+
+    // Mühendisin stajyere görev atama formu gönderimi
+    async function handleCreateEngineerTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('engTaskTitle').value;
+      const description = document.getElementById('engTaskDescription').value;
+      const assignedTo = document.getElementById('engTaskAssignee').value;
+      const category = document.getElementById('engTaskCategory').value;
+      const endDate = document.getElementById('engTaskEndDate').value;
+
+      if (!assignedTo) { alert('Lütfen bir stajyer seçiniz.'); return; }
+
+      const today = new Date().toISOString().split('T')[0];
+      const workDays = calculateWorkDays(today, endDate);
+
+      const res = await fetch(`${API_BASE_URL}/api/tasks`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title, description, assignedTo, category, endDate, workDays, createdBy: currentUser.name, userRole: currentUser.role })
+      });
+
+      if (res.ok) {
+        alert("Görev atandı!");
+        document.getElementById('engTaskTitle').value = '';
+        document.getElementById('engTaskDescription').value = '';
+        await loadTasks();
+        renderEngineerInternStatusList();
+        renderMainTaskList();
+      } else {
+        const data = await res.json();
+        alert('Hata: ' + (data.error || 'Görev atanamadı.'));
+      }
+    }
+
+    // Mühendis görev atama formunda net iş günü hesabı
+    function updateEngCalculatedWorkDays() {
+      const endDateVal = document.getElementById('engTaskEndDate').value;
+      if (!endDateVal) return;
+      const today = new Date().toISOString().split('T')[0];
+      const days = calculateWorkDays(today, endDateVal);
+      document.getElementById('engCalculatedDaysText').innerText = `${days} iş günü`;
+    }
+
+    // Ana ekran görev listesi (mühendis / stajyer / teknisyen için)
+    function renderMainTaskList() {
+      const container = document.getElementById('mainTaskList');
+      const pastContainer = document.getElementById('mainPastTaskList');
+      if (!container || !pastContainer) return;
+
+      container.innerHTML = '';
+      pastContainer.innerHTML = '';
+
+      const searchVal = (document.getElementById('mainSearchInput')?.value || '').toLowerCase();
+      const filterStat = document.getElementById('mainFilterStatus')?.value || '';
+
+      const filtered = tasksList.filter(t => {
+        const matchesSearch = t.title.toLowerCase().includes(searchVal) ||
+                              (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
+                              (t.created_by && t.created_by.toLowerCase().includes(searchVal));
+        const matchesStatus = filterStat === '' || t.status === filterStat;
+        return matchesSearch && matchesStatus;
+      });
+
+      const activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
+      const pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
+
+      // Mühendis, kendi stajyerlerinin görevlerini yönetebilir (onay/revize/düzenle/sil)
+      const isManager = currentUser.role === 'ENGINEER';
+
+      if (activeTasks.length === 0) {
+        container.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Görev bulunmamaktadır.</div>`;
+      } else {
+        activeTasks.forEach(task => container.appendChild(createTaskCard(task, false, isManager)));
+      }
+
+      if (pastTasks.length === 0) {
+        pastContainer.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Geçmiş/Tamamlanan görev kaydı bulunmuyor.</div>`;
+      } else {
+        pastTasks.forEach(task => pastContainer.appendChild(createTaskCard(task, true, isManager)));
+      }
     }
 
     async function handleCreateTask(e) {

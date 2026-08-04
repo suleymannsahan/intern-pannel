@@ -111,9 +111,13 @@ async function initDb() {
         reviewed_by TEXT,
         review_comment TEXT,
         created_at TEXT NOT NULL,
+        target_roles TEXT,
         FOREIGN KEY(requested_by) REFERENCES users(id)
       )
     `);
+
+    // target_roles: toplantının bildirileceği/hedef rol listesi (virgülle ayrık). Eski kayıtlar için güvenli ekleme.
+    try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN target_roles TEXT`); } catch (e) {}
 
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
@@ -1065,7 +1069,7 @@ app.post('/api/send-verification-code', async (req, res) => {
 // Yeni Toplantı Talebi Oluşturma (Sadece Mühendis ve üstü roller: ENGINEER, LEADER, MANAGER)
 app.post('/api/meetings', async (req, res) => {
   try {
-    const { requestedBy, subject, description, preferredDate, userRole, targetDepartment } = req.body;
+    const { requestedBy, subject, description, preferredDate, userRole, targetDepartment, targetRoles } = req.body;
 
     if (!['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(userRole)) {
       return res.status(403).json({ error: 'Toplantı talebi oluşturmak için yetkiniz yok.' });
@@ -1074,6 +1078,23 @@ app.post('/api/meetings', async (req, res) => {
     if (!requestedBy || !subject) {
       return res.status(400).json({ error: 'Talep eden kullanıcı ve konu alanı zorunludur.' });
     }
+
+    // Her rolün toplantıya davet edebileceği (bildirim düşürebileceği) hedef roller
+    const ALLOWED_TARGETS = {
+      LEADER: ['ENGINEER'],                          // Ekip lideri -> mühendisler
+      MANAGER: ['LEADER', 'ENGINEER'],               // Müdür -> ekip lideri ve mühendisler
+      ADMIN: ['MANAGER', 'LEADER', 'ENGINEER'],      // Admin -> müdür, ekip lideri, mühendisler
+      ENGINEER: ['INTERN']                           // Mühendis -> stajyerler
+    };
+
+    // Gelen hedef rolleri normalize et ve yetkiye göre filtrele
+    let rolesArr = Array.isArray(targetRoles)
+      ? targetRoles
+      : (targetRoles ? String(targetRoles).split(',') : []);
+    rolesArr = rolesArr.map(r => r.trim()).filter(Boolean);
+
+    const allowedForRole = ALLOWED_TARGETS[userRole] || [];
+    rolesArr = rolesArr.filter(r => allowedForRole.includes(r));
 
     let department;
 
@@ -1097,11 +1118,12 @@ app.post('/api/meetings', async (req, res) => {
       department = userResult.rows[0].department;
     }
 
+    const targetRolesStr = rolesArr.length > 0 ? rolesArr.join(',') : null;
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const result = await db.execute({
-      sql: `INSERT INTO meeting_requests (requested_by, department, subject, description, preferred_date, status, created_at) VALUES (?, ?, ?, ?, ?, 'PENDING', ?)`,
-      args: [requestedBy, department || null, subject, description || null, preferredDate || null, now]
+      sql: `INSERT INTO meeting_requests (requested_by, department, subject, description, preferred_date, status, created_at, target_roles) VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?)`,
+      args: [requestedBy, department || null, subject, description || null, preferredDate || null, now, targetRolesStr]
     });
 
     res.json({ id: Number(result.lastInsertRowid), message: 'Toplantı talebiniz iletildi.' });
@@ -1124,15 +1146,15 @@ app.get('/api/meetings', async (req, res) => {
     let args = [];
 
     if (['MANAGER', 'LEADER'].includes(role)) {
-      // Müdür/Ekip Lideri sadece kendi biriminden gelen talepleri görür
-      conditions.push(`meeting_requests.department = ?`);
-      args.push(department);
+      // Müdür/Ekip Lideri: kendi biriminden gelen talepleri VEYA kendisine (rolüne) yönlendirilen talepleri görür
+      conditions.push(`(meeting_requests.department = ? OR meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ?)`);
+      args.push(department, userId, `%${role}%`);
     } else if (role === 'ADMIN') {
       // Admin tüm talepleri görebilir, ek filtre yok
     } else {
-      // Diğer roller (ör. Mühendis) sadece kendi taleplerini görür
-      conditions.push(`meeting_requests.requested_by = ?`);
-      args.push(userId);
+      // Diğer roller (ör. Mühendis): kendi oluşturdukları talepleri VEYA kendilerine yönlendirilen (bildirim düşen) talepleri görür
+      conditions.push(`(meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ?)`);
+      args.push(userId, `%${role}%`);
     }
 
     if (conditions.length > 0) {
@@ -1148,13 +1170,26 @@ app.get('/api/meetings', async (req, res) => {
   }
 });
 
-// --- EKİP GİDİŞATI (Admin) ---
+// --- EKİP GİDİŞATI ---
+// Rol hiyerarşisi (yüksekten alçağa): MANAGER > LEADER > ENGINEER > TECHNICIAN > INTERN
+// Her rol yalnızca kendi altındaki rolleri görebilir. ADMIN herkesi görür.
+const ROLE_HIERARCHY = ['MANAGER', 'LEADER', 'ENGINEER', 'TECHNICIAN', 'INTERN'];
+
+// Verilen rolün görebileceği (kendisinden düşük) rollerin listesini döndürür
+function getSubordinateRoles(role) {
+  const idx = ROLE_HIERARCHY.indexOf(role);
+  if (idx === -1) return [];
+  return ROLE_HIERARCHY.slice(idx + 1);
+}
+
 // Seçilen birim(ler)/rol(ler) için kişi listesi + görev + günlük log verisi
 app.get('/api/admin/team-progress', async (req, res) => {
   try {
-    const { userRole, departments, roles, userId } = req.query;
+    const { userRole, departments, roles, userId, viewerDepartment } = req.query;
 
-    if (!isAdmin(userRole)) {
+    // ADMIN veya rol hiyerarşisinde yer alan (alt rolleri olan) roller erişebilir
+    const canView = isAdmin(userRole) || getSubordinateRoles(userRole).length > 0;
+    if (!canView) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1168,6 +1203,17 @@ app.get('/api/admin/team-progress', async (req, res) => {
 
       if (people.length === 0) {
         return res.json({ people: [], tasks: [], logs: [] });
+      }
+
+      // ADMIN değilse: hedef kişi kendi altındaki bir rolde ve kendi biriminde olmalı
+      if (!isAdmin(userRole)) {
+        const target = people[0];
+        const allowedRoles = getSubordinateRoles(userRole);
+        const roleAllowed = allowedRoles.includes(target.role);
+        const deptAllowed = !viewerDepartment || target.department === viewerDepartment;
+        if (!roleAllowed || !deptAllowed) {
+          return res.status(403).json({ error: 'Bu kişinin verilerine erişim yetkiniz yok.' });
+        }
       }
 
       const tasksResult = await db.execute({
@@ -1193,7 +1239,25 @@ app.get('/api/admin/team-progress', async (req, res) => {
     const conditions = [];
 
     const deptList = (departments || '').split(',').map(d => d.trim()).filter(Boolean);
-    const roleList = (roles || '').split(',').map(r => r.trim()).filter(Boolean);
+    let roleList = (roles || '').split(',').map(r => r.trim()).filter(Boolean);
+
+    // ADMIN değilse: sadece kendi biriminden ve yalnızca kendi altındaki rolleri görebilir
+    if (!isAdmin(userRole)) {
+      const allowedRoles = getSubordinateRoles(userRole);
+
+      // Talep edilen roller varsa, izin verilenlerle kesişimini al; yoksa tüm izin verilenleri kullan
+      if (roleList.length > 0) {
+        roleList = roleList.filter(r => allowedRoles.includes(r));
+      } else {
+        roleList = allowedRoles;
+      }
+
+      // Görünürlük kendi birimiyle sınırlı
+      if (viewerDepartment) {
+        conditions.push(`department = ?`);
+        userArgs.push(viewerDepartment);
+      }
+    }
 
     if (deptList.length > 0) {
       conditions.push(`department IN (${deptList.map(() => '?').join(',')})`);
