@@ -328,7 +328,18 @@ app.put('/api/users/profile', async (req, res) => {
 // Kullanıcı Listesi
 app.get('/api/users', async (req, res) => {
   try {
-    const result = await db.execute(`SELECT id, name, email, username, department, role, status, intern_start_date, intern_end_date FROM users`);
+    const { department, role } = req.query;
+
+    let sql = `SELECT id, name, email, username, department, role, status, intern_start_date, intern_end_date FROM users`;
+    let args = [];
+
+    // Departman bazlı görünürlük: ADMIN ve HR hariç herkes sadece kendi biriminin personelini görür
+    if (role && role !== 'ADMIN' && role !== 'HR' && department) {
+      sql += ` WHERE department = ?`;
+      args.push(department);
+    }
+
+    const result = await db.execute({ sql, args });
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -467,19 +478,28 @@ const isAdmin = (role) => role === 'ADMIN';
 // Görev Getirme Endpoint'ini Admin İçin Güncelleme
 app.get('/api/tasks', async (req, res) => {
   try {
-    const { userId, role } = req.query;
+    const { userId, role, department } = req.query;
 
     let sql = `
       SELECT tasks.*, users.name as assignee_name 
       FROM tasks 
       LEFT JOIN users ON tasks.assigned_to = users.id
     `;
+    let conditions = [];
     let args = [];
 
-    // ADMIN veya LEADER tüm görevleri görebilir; INTERN sadece kendisine atananları görür.
+    // ADMIN tüm görevleri görebilir; INTERN sadece kendisine atananları görür;
+    // diğer roller (Müdür, Ekip Lideri, Mühendis, Teknisyen) sadece kendi biriminin görevlerini görür.
     if (role === 'INTERN') {
-      sql += ` WHERE tasks.assigned_to = ?`;
+      conditions.push(`tasks.assigned_to = ?`);
       args.push(userId);
+    } else if (role !== 'ADMIN' && department) {
+      conditions.push(`users.department = ?`);
+      args.push(department);
+    }
+
+    if (conditions.length > 0) {
+      sql += ` WHERE ` + conditions.join(' AND ');
     }
 
     sql += ` ORDER BY tasks.id DESC`;
@@ -534,7 +554,7 @@ app.get('/api/admin/users', async (req, res) => {
 // 2. Yeni Kullanıcı Oluştur (Admin Paneli)
 app.post('/api/admin/users', async (req, res) => {
   try {
-    const { name, username, email, password, role, adminRole } = req.body;
+    const { name, username, email, password, role, department, adminRole } = req.body;
 
     if (!isAdmin(adminRole)) {
       return res.status(403).json({ error: 'Yetkisiz işlem.' });
@@ -548,8 +568,8 @@ app.post('/api/admin/users', async (req, res) => {
     const finalEmail = email && email.trim() !== '' ? email : `${username}@system.local`;
 
     await db.execute({
-      sql: `INSERT INTO users (name, username, email, password, role, status) VALUES (?, ?, ?, ?, ?, 'APPROVED')`,
-      args: [name, username, finalEmail, hashedPassword, role]
+      sql: `INSERT INTO users (name, username, email, password, role, department, status) VALUES (?, ?, ?, ?, ?, ?, 'APPROVED')`,
+      args: [name, username, finalEmail, hashedPassword, role, department || null]
     });
 
     res.json({ message: 'Kullanıcı başarıyla oluşturuldu.' });

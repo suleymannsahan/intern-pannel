@@ -579,6 +579,16 @@
           <input type="password" id="newUserPassword" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
+          <label class="block text-xs font-semibold mb-1">Birim</label>
+          <select id="newUserDepartment" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+            <option value="">-- Birim Seçiniz --</option>
+            <option value="ELEKTRONIK">Elektronik</option>
+            <option value="MEKANIK">Mekanik</option>
+            <option value="YAZILIM">Yazılım</option>
+            <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
+          </select>
+        </div>
+        <div>
           <label class="block text-xs font-semibold mb-1">Rol</label>
           <select id="newUserRole" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
             <option value="INTERN">Stajyer (INTERN)</option>
@@ -1161,12 +1171,13 @@
       const email = document.getElementById('newUserEmail').value;
       const password = document.getElementById('newUserPassword').value;
       const role = document.getElementById('newUserRole').value;
+      const department = document.getElementById('newUserDepartment').value;
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name, username, email, password, role, adminRole: currentUser.role })
+          body: JSON.stringify({ name, username, email, password, role, department, adminRole: currentUser.role })
         });
 
         const data = await res.json();
@@ -1626,7 +1637,12 @@
 
     async function loadUsers() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/users`);
+        let url = `${API_BASE_URL}/api/users`;
+        // ADMIN ve HR dışındaki roller sadece kendi birimlerinin personelini görür
+        if (currentUser && currentUser.role && currentUser.role !== 'ADMIN' && currentUser.role !== 'HR' && currentUser.department) {
+          url += `?department=${encodeURIComponent(currentUser.department)}&role=${encodeURIComponent(currentUser.role)}`;
+        }
+        const res = await fetch(url);
         usersList = await res.json();
       } catch (err) { console.error("Kullanıcılar alınamadı:", err); }
     }
@@ -1690,7 +1706,11 @@
 
     async function loadTasks() {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`);
+        let url = `${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`;
+        if (currentUser.department) {
+          url += `&department=${encodeURIComponent(currentUser.department)}`;
+        }
+        const res = await fetch(url);
         tasksList = await res.json();
         renderTaskList();
       } catch (err) { console.error("Görevler alınamadı:", err); }
