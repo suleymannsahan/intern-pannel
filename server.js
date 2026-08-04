@@ -1320,6 +1320,31 @@ app.put('/api/meetings/:id/review', async (req, res) => {
       return res.status(400).json({ error: 'Geçersiz işlem.' });
     }
 
+    // Rol seviyesi kontrolü: İnceleyen kişi, talep edenden DAHA DÜŞÜK roldeyse yetkisi yoktur.
+    // (Örn. bir ekip lideri, müdürün oluşturduğu talebi onaylayamaz/reddedemez.) ADMIN hiyerarşi dışıdır.
+    if (userRole !== 'ADMIN') {
+      const reqRes = await db.execute({
+        sql: `SELECT users.role AS requester_role FROM meeting_requests
+              LEFT JOIN users ON meeting_requests.requested_by = users.id
+              WHERE meeting_requests.id = ?`,
+        args: [meetingId]
+      });
+
+      if (reqRes.rows.length === 0) {
+        return res.status(404).json({ error: 'Talep bulunamadı.' });
+      }
+
+      const requesterRole = reqRes.rows[0].requester_role;
+      const reqIdx = ROLE_HIERARCHY.indexOf(requesterRole);
+      const myIdx = ROLE_HIERARCHY.indexOf(userRole);
+
+      // Index küçük = daha yüksek rol. İnceleyen (myIdx) talep edene (reqIdx) eşit veya daha yüksek
+      // rolde olmalı => myIdx <= reqIdx. Aksi halde (inceleyen daha düşük rolde) yetki yok.
+      if (reqIdx === -1 || myIdx === -1 || myIdx > reqIdx) {
+        return res.status(403).json({ error: 'Bu talebi onaylama/reddetme yetkiniz yok.' });
+      }
+    }
+
     // Müdür/Ekip Lideri sadece kendi biriminin talebini onaylayabilir
     let sql = `UPDATE meeting_requests SET status = ?, reviewed_by = ?, review_comment = ? WHERE id = ?`;
     let args = [action, reviewerName || null, reviewComment || null, meetingId];
