@@ -1138,9 +1138,9 @@ app.post('/api/send-verification-code', async (req, res) => {
 // Yeni Toplantı Talebi Oluşturma (Sadece Mühendis ve üstü roller: ENGINEER, LEADER, MANAGER)
 app.post('/api/meetings', async (req, res) => {
   try {
-    const { requestedBy, subject, description, preferredDate, userRole } = req.body;
+    const { requestedBy, subject, description, preferredDate, userRole, targetDepartment } = req.body;
 
-    if (!['ENGINEER', 'LEADER', 'MANAGER'].includes(userRole)) {
+    if (!['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(userRole)) {
       return res.status(403).json({ error: 'Toplantı talebi oluşturmak için yetkiniz yok.' });
     }
 
@@ -1148,17 +1148,28 @@ app.post('/api/meetings', async (req, res) => {
       return res.status(400).json({ error: 'Talep eden kullanıcı ve konu alanı zorunludur.' });
     }
 
-    // Talep edenin birimini güvenlik için veritabanından doğrula
-    const userResult = await db.execute({
-      sql: `SELECT department FROM users WHERE id = ?`,
-      args: [requestedBy]
-    });
+    let department;
 
-    if (userResult.rows.length === 0) {
-      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    if (userRole === 'ADMIN') {
+      // Admin istediği ekipten toplantı isteyebilir; birim seçimi zorunludur
+      if (!targetDepartment) {
+        return res.status(400).json({ error: 'Lütfen bir birim seçiniz.' });
+      }
+      department = targetDepartment;
+    } else {
+      // Diğer roller için talep edenin birimini güvenlik amacıyla veritabanından doğrula
+      const userResult = await db.execute({
+        sql: `SELECT department FROM users WHERE id = ?`,
+        args: [requestedBy]
+      });
+
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+      }
+
+      department = userResult.rows[0].department;
     }
 
-    const department = userResult.rows[0].department;
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const result = await db.execute({
