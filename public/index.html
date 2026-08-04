@@ -98,7 +98,7 @@
         </div>
 
         <!-- 5. Rol Seçimi -->
-        <div>
+        <div id="roleSelectionWrapper">
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
           <select id="regRole" onchange="handleDepartmentOrRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
             <option value="">-- Rol Seçiniz --</option>
@@ -108,6 +108,26 @@
             <option value="TECHNICIAN">Teknisyen</option>
             <option value="INTERN">Stajyer</option>
           </select>
+        </div>
+
+        <!-- İNSAN KAYNAKLARI BİLGİ NOTU (Sadece İK birimi seçilince görünür, rol seçimi gerekmez) -->
+        <div id="hrNotice" class="hidden p-3 bg-cyan-950/30 rounded-xl border border-cyan-800/50 text-xs text-cyan-300">
+          <i class="fa-solid fa-circle-info me-1"></i> İnsan Kaynakları birimi için ayrı bir rol seçimi gerekmez. Hesabınız Admin onayından sonra doğrudan İnsan Kaynakları paneline yönlendirilecektir.
+        </div>
+
+        <!-- STAJYER BİLGİLERİ (Sadece Stajyer rolü seçilince görünür) -->
+        <div id="internRegisterFields" class="hidden space-y-3 p-3 bg-amber-950/20 rounded-xl border border-amber-800/40">
+          <label class="block text-xs font-semibold text-amber-400">Stajyer Bilgileri</label>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] mb-1 text-slate-400">Başlangıç Tarihi</label>
+              <input type="date" id="regStartDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100">
+            </div>
+            <div>
+              <label class="block text-[11px] mb-1 text-slate-400">Bitiş Tarihi</label>
+              <input type="date" id="regEndDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs text-slate-900 dark:text-slate-100">
+            </div>
+          </div>
         </div>
 
         <!-- EKİP LİDERİ İÇİN DİNAMİK TÜRF SEÇİMİ (EKSTRA) -->
@@ -189,7 +209,7 @@
           </div>
         </div>
 
-        <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-md backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
+        <div id="taskFilterBar" class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-md backdrop-blur-md flex flex-wrap gap-3 items-center justify-between">
           <div class="flex-1 min-w-[200px] relative">
             <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
             <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya stajyer adı ara..." class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
@@ -355,15 +375,26 @@
         </section>
 
         <!-- AKTİF GÖREVLER -->
-        <section class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+        <section id="activeTasksSection" class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
           <h3 class="font-bold text-sm mb-4 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500 animate-spin"></i>Aktif Görevler</h3>
           <div id="taskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
 
         <!-- GEÇMİŞ GÖREVLER -->
-        <section class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5">
+        <section id="pastTasksSection" class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-2xl p-5">
           <h3 class="font-bold text-sm mb-4 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h3>
           <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <!-- İNSAN KAYNAKLARI PANELİ -->
+        <section id="hrPanelSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <h3 class="font-bold text-sm mb-4 text-slate-900 dark:text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-address-book text-cyan-500"></i> İnsan Kaynakları Paneli
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tüm birimlerdeki personel listesi. Bu panel adım adım genişletilecektir.</p>
+            <div id="hrPersonnelList" class="space-y-5"></div>
+          </div>
         </section>
       </main>
     </div>
@@ -551,8 +582,11 @@
           <label class="block text-xs font-semibold mb-1">Rol</label>
           <select id="newUserRole" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
             <option value="INTERN">Stajyer (INTERN)</option>
+            <option value="TECHNICIAN">Teknisyen (TECHNICIAN)</option>
             <option value="ENGINEER">Sorumlu Mühendis (ENGINEER)</option>
             <option value="LEADER">Ekip Lideri (LEADER)</option>
+            <option value="MANAGER">Müdür (MANAGER)</option>
+            <option value="HR">İnsan Kaynakları (HR)</option>
             <option value="ADMIN">Yönetici (ADMIN)</option>
           </select>
         </div>
@@ -782,35 +816,8 @@
     }
 
     function handleRoleChange() {
-      const roleSelect = document.getElementById('regRole');
-      if (!roleSelect) return; // Dropdown bulunamazsa dur
-
-      const selectedRole = roleSelect.value;
-      const internFields = document.getElementById('internRegisterFields');
-      const leaderFields = document.getElementById('leaderSubTypeFields');
-
-      // Stajyer Alanları Mantığı
-      if (internFields) {
-        if (selectedRole === 'INTERN') {
-          internFields.classList.remove('hidden');
-          
-          // Mühendis listesi dolduran fonksiyon tanımlıysa çağır
-          if (typeof populateEngineerDropdown === 'function') {
-            populateEngineerDropdown();
-          }
-        } else {
-          internFields.classList.add('hidden');
-        }
-      }
-
-      // Takım Lideri / Yönetici Alanları Mantığı
-      if (leaderFields) {
-        if (selectedRole === 'LEADER') {
-          leaderFields.classList.remove('hidden');
-        } else {
-          leaderFields.classList.add('hidden');
-        }
-      }
+      // Eski/yedek fonksiyon: gerçek mantık artık handleDepartmentOrRoleChange() içinde.
+      handleDepartmentOrRoleChange();
     }
 
     // Kullanıcı Giriş Yaptıktan Sonra Çalışacak Ana Yönlendirme Fonksiyonu
@@ -833,26 +840,38 @@
         if (typeof loadAdminPanel === 'function') {
           loadAdminPanel();
         }
+      } else if (currentUser.role === 'HR') {
+        // İnsan Kaynakları ise doğrudan İK paneline yönlendir
+        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        showSection('hr');
+
+        if (typeof loadHRPanel === 'function') {
+          loadHRPanel();
+        }
       } else {
-        // 3. Admin değilse Admin butonunu gizle ve normal Görevler panelini göster
+        // 3. Admin/İK değilse Admin butonunu gizle ve normal Görevler panelini göster
         if (adminNavBtn) adminNavBtn.classList.add('hidden');
         showSection('tasks');
       }
 
-      // Tüm roller için görev listesini yükle (Fonksiyon kontrolü ile)
-      if (typeof loadTasks === 'function') {
+      // Görev odaklı roller için görev listesini yükle (İK panelinde göreve ihtiyaç yok)
+      if (currentUser.role !== 'HR' && typeof loadTasks === 'function') {
         loadTasks();
       }
     }
 
     function showSection(sectionName) {
-      const tasksSection = document.getElementById('tasksSection');
+      const taskFilterBar = document.getElementById('taskFilterBar');
+      const activeTasksSection = document.getElementById('activeTasksSection');
+      const pastTasksSection = document.getElementById('pastTasksSection');
       const adminSection = document.getElementById('adminPanelSection');
+      const hrSection = document.getElementById('hrPanelSection');
+      const isHR = sectionName === 'hr';
 
-      // Geçiş mantığını basitleştirme ve guard ekleme
-      if (tasksSection) {
-        tasksSection.classList.toggle('hidden', sectionName !== 'tasks');
-      }
+      if (taskFilterBar) taskFilterBar.classList.toggle('hidden', isHR);
+      if (activeTasksSection) activeTasksSection.classList.toggle('hidden', isHR);
+      if (pastTasksSection) pastTasksSection.classList.toggle('hidden', isHR);
+      if (hrSection) hrSection.classList.toggle('hidden', !isHR);
 
       if (adminSection) {
         adminSection.classList.toggle('hidden', sectionName !== 'admin');
@@ -867,10 +886,29 @@
       const username = document.getElementById('regUsername').value;
       const password = document.getElementById('regPassword').value;
       const department = document.getElementById('regDepartment').value;
-      const role = document.getElementById('regRole').value;
+      const isHR = department === 'INSAN_KAYNAKLARI';
+
+      // İnsan Kaynakları birimi seçildiyse rol otomatik 'HR' olur, rol menüsü kullanılmaz
+      const role = isHR ? 'HR' : document.getElementById('regRole').value;
+
+      if (!isHR && !role) {
+        alert('Lütfen bir rol seçiniz.');
+        return;
+      }
 
       // Ekip Lideri seçilmişse özel türünü al, seçilmemişse null gönder
       const leaderType = (role === 'LEADER') ? document.getElementById('regLeaderType').value : null;
+
+      // Stajyer seçilmişse başlangıç/bitiş tarihlerini al ve doğrula
+      let startDate = null, endDate = null;
+      if (role === 'INTERN') {
+        startDate = document.getElementById('regStartDate').value;
+        endDate = document.getElementById('regEndDate').value;
+        if (!startDate || !endDate) {
+          alert('Stajyerler için başlangıç ve bitiş tarihleri zorunludur!');
+          return;
+        }
+      }
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/register`, {
@@ -882,7 +920,9 @@
             password, 
             department, 
             role, 
-            leaderType 
+            leaderType,
+            startDate,
+            endDate
           })
         });
 
@@ -911,6 +951,22 @@
       const roleSelect = document.getElementById('regRole');
       const optLeader = document.getElementById('optLeader');
       const leaderSubTypeFields = document.getElementById('leaderSubTypeFields');
+      const internRegisterFields = document.getElementById('internRegisterFields');
+      const roleSelectionWrapper = document.getElementById('roleSelectionWrapper');
+      const hrNotice = document.getElementById('hrNotice');
+      const isHR = dept === 'INSAN_KAYNAKLARI';
+
+      // İnsan Kaynakları birimi seçilirse rol seçim menüsünü tamamen kaldır
+      if (roleSelectionWrapper) roleSelectionWrapper.classList.toggle('hidden', isHR);
+      if (hrNotice) hrNotice.classList.toggle('hidden', !isHR);
+      roleSelect.required = !isHR;
+
+      if (isHR) {
+        roleSelect.value = '';
+        if (leaderSubTypeFields) leaderSubTypeFields.classList.add('hidden');
+        if (internRegisterFields) internRegisterFields.classList.add('hidden');
+        return;
+      }
 
       // Ekip Lideri rolü sadece ELEKTRONIK biriminde görünür
       if (dept === 'ELEKTRONIK') {
@@ -928,6 +984,11 @@
       } else {
         leaderSubTypeFields.classList.add('hidden');
       }
+
+      // Stajyer seçilirse staj başlangıç/bitiş tarihi alanlarını göster
+      if (internRegisterFields) {
+        internRegisterFields.classList.toggle('hidden', roleSelect.value !== 'INTERN');
+      }
     }
 
     function loadAdminPanel() {
@@ -942,6 +1003,84 @@
       loadPendingUsers();
       fetchAdminStats();
       fetchAdminUsers();
+    }
+
+    const DEPARTMENT_LABELS = {
+      ELEKTRONIK: 'Elektronik',
+      MEKANIK: 'Mekanik',
+      YAZILIM: 'Yazılım',
+      INSAN_KAYNAKLARI: 'İnsan Kaynakları'
+    };
+
+    const ROLE_LABELS_TR = {
+      MANAGER: 'Müdür',
+      LEADER: 'Ekip Lideri',
+      ENGINEER: 'Mühendis',
+      TECHNICIAN: 'Teknisyen',
+      INTERN: 'Stajyer',
+      HR: 'İnsan Kaynakları',
+      ADMIN: 'Sistem Yöneticisi'
+    };
+
+    async function loadHRPanel() {
+      const container = document.getElementById('hrPersonnelList');
+      if (!container) return;
+
+      try {
+        // Güncel personel verisini çek
+        await loadUsers();
+
+        const approvedUsers = usersList.filter(u => u.status === 'APPROVED' || !u.status);
+
+        if (approvedUsers.length === 0) {
+          container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Kayıtlı personel bulunamadı.</p>`;
+          return;
+        }
+
+        // Personeli birimlere göre grupla
+        const byDepartment = {};
+        approvedUsers.forEach(u => {
+          const key = u.department || 'BELİRTİLMEMİŞ';
+          if (!byDepartment[key]) byDepartment[key] = [];
+          byDepartment[key].push(u);
+        });
+
+        container.innerHTML = Object.keys(byDepartment).map(dept => {
+          const label = DEPARTMENT_LABELS[dept] || dept;
+          const rows = byDepartment[dept].map(u => `
+            <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+              <td class="py-2.5 px-2 font-semibold text-slate-800 dark:text-slate-200">${u.name}</td>
+              <td class="py-2.5 px-2 text-slate-500 dark:text-slate-400">${u.username || '-'}</td>
+              <td class="py-2.5 px-2">${ROLE_LABELS_TR[u.role] || u.role}</td>
+              <td class="py-2.5 px-2 text-slate-500 dark:text-slate-400">${u.email || '-'}</td>
+            </tr>
+          `).join('');
+
+          return `
+            <div>
+              <h4 class="font-bold text-xs uppercase tracking-wider text-cyan-600 dark:text-cyan-400 mb-2 border-b border-slate-200 dark:border-slate-800 pb-1.5">${label} (${byDepartment[dept].length})</h4>
+              <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                  <thead>
+                    <tr class="text-[11px] text-slate-400 border-b border-slate-200 dark:border-slate-800">
+                      <th class="py-2 px-2">Ad Soyad</th>
+                      <th class="py-2 px-2">Kullanıcı Adı</th>
+                      <th class="py-2 px-2">Rol</th>
+                      <th class="py-2 px-2">E-Posta</th>
+                    </tr>
+                  </thead>
+                  <tbody class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                    ${rows}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error("İK personel listesi alınamadı:", err);
+        container.innerHTML = `<p class="text-xs text-rose-500 text-center py-6">Veriler yüklenirken hata oluştu.</p>`;
+      }
     }
 
     async function fetchAdminStats() {
@@ -988,7 +1127,7 @@
             <td class="py-3 px-2 font-semibold text-slate-800 dark:text-slate-200">${u.name}</td>
             <td class="py-3 px-2 text-slate-500 dark:text-slate-400">${u.username || '-'}</td>
             <td class="py-3 px-2">${u.department || '-'}</td>
-            <td class="py-3 px-2">${u.role}</td>
+            <td class="py-3 px-2">${ROLE_LABELS_TR[u.role] || u.role}</td>
             <td class="py-3 px-2">${u.status || '-'}</td>
             <td class="py-3 px-2 text-right space-x-1">
               <button onclick="handleChangeUserRole(${u.id}, '${u.role}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Rol Değiştir</button>
@@ -1372,6 +1511,9 @@
         case 'INTERN':
           roleLabel = 'Stajyer';
           break;
+        case 'HR':
+          roleLabel = 'İnsan Kaynakları';
+          break;
       }
 
       // Rol bilgisini ekrana yaz
@@ -1511,14 +1653,7 @@
 
         // Bekleyen kullanıcıları tabloya yazdırıyoruz
         pendingTableBody.innerHTML = pendingUsers.map(user => {
-          const roleLabels = {
-            MANAGER: 'Müdür',
-            LEADER: 'Ekip Lideri',
-            ENGINEER: 'Mühendis',
-            TECHNICIAN: 'Teknisyen',
-            INTERN: 'Stajyer'
-          };
-          let roleBadge = roleLabels[user.role] || user.role;
+          let roleBadge = ROLE_LABELS_TR[user.role] || user.role;
           let subType = user.leaderType ? (user.leaderType === 'TEST_EKIP_LIDERI' ? 'Test Ekip Lideri' : 'Gömülü Ekip Lideri') : '-';
 
           return `

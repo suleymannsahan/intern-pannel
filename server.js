@@ -328,7 +328,7 @@ app.put('/api/users/profile', async (req, res) => {
 // Kullanıcı Listesi
 app.get('/api/users', async (req, res) => {
   try {
-    const result = await db.execute(`SELECT id, name, email, role, intern_start_date, intern_end_date FROM users`);
+    const result = await db.execute(`SELECT id, name, email, username, department, role, status, intern_start_date, intern_end_date FROM users`);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
