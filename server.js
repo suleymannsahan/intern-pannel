@@ -22,7 +22,8 @@ async function initDbMigration() {
   const columnsToAdd = [
     { name: 'username', type: 'TEXT' },
     { name: 'department', type: 'TEXT' },
-    { name: 'leader_sub_type', type: 'TEXT' }
+    { name: 'leader_sub_type', type: 'TEXT' },
+    { name: 'status', type: "TEXT DEFAULT 'PENDING'" }
   ];
 
   for (const col of columnsToAdd) {
@@ -108,7 +109,7 @@ initDb();
 
 // --- API ENDPOINT'LERİ ---
 
-// Kayıt Ol Endpoint'i
+// Kayıt Ol Endpoint'i (Onay Mekanizmalı)
 app.post('/api/register', async (req, res) => {
   try {
     const { 
@@ -131,9 +132,12 @@ app.post('/api/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-
-    // email alanına kullanıcı adından türetilen dummy bir email veya boş metin veriyoruz
     const dummyEmail = `${username}@system.local`;
+
+    // 💡 ONAY MANTIĞI: Yönetici roller onay beklemeye alınır (PENDING), diğerleri direkt onaylanır (APPROVED)
+    // Kendi proendeki rol isimlerine göre burayı güncelleyebilirsin (Örn: 'MUDUR', 'EKIP_LIDERI')
+    const isManagerRole = ['MANAGER', 'TEAM_LEADER', 'MUDUR', 'EKIP_LIDERI'].includes(role);
+    const initialStatus = isManagerRole ? 'PENDING' : 'APPROVED';
 
     const result = await db.execute({
       sql: `INSERT INTO users (
@@ -145,24 +149,31 @@ app.post('/api/register', async (req, res) => {
               department, 
               leader_sub_type, 
               intern_start_date, 
-              intern_end_date
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+              intern_end_date,
+              status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name, 
         username, 
-        dummyEmail, // NOT NULL hatasını önlemek için eklendi
+        dummyEmail,
         hashedPassword, 
         role, 
         department || null,
         leaderSubType || null,
         role === 'INTERN' ? startDate : null, 
-        role === 'INTERN' ? endDate : null
+        role === 'INTERN' ? endDate : null,
+        initialStatus
       ]
     });
 
+    const successMessage = initialStatus === 'PENDING'
+      ? 'Kayıt başarılı! Hesabınız yönetici onayından sonra aktif olacaktır.'
+      : 'Kullanıcı başarıyla oluşturuldu.';
+
     res.json({ 
-      message: 'Kullanıcı başarıyla oluşturuldu.', 
-      userId: Number(result.lastInsertRowid) 
+      message: successMessage, 
+      userId: Number(result.lastInsertRowid),
+      status: initialStatus
     });
 
   } catch (error) {
@@ -174,24 +185,86 @@ app.post('/api/register', async (req, res) => {
   }
 });
 
-// Giriş Yap
+// Giriş Yap Endpoint'i (Status Kontrollü)
 app.post('/api/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
-    const result = await db.execute({
-      sql: `SELECT * FROM users WHERE email = ?`,
-      args: [email]
-    });
+    const { username, password } = req.body;
+
+    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+    if (result.rows.length === 0) {
+      return res.status(400).json({ error: 'Kullanıcı adı veya şifre hatalı.' });
+    }
 
     const user = result.rows[0];
-    if (!user) return res.status(400).json({ error: 'Kullanıcı bulunamadı.' });
 
-    const isValid = await bcrypt.compare(password, user.password);
-    if (!isValid) return res.status(400).json({ error: 'Hatalı şifre!' });
+    // Şifre Kontrolü
+    const validPassword = await bcrypt.compare(password, user.password);
+    if (!validPassword) {
+      return res.status(400).json({ error: 'Kullanıcı adı veya şifre hatalı.' });
+    }
 
-    res.json({ id: user.id, name: user.name, email: user.email, role: user.role });
-  } catch (error) {
-    res.status(500).json({ error: 'Sunucu hatası: ' + error.message });
+    // ONAY KONTROLÜ (status === 'PENDING' durumu)
+    if (user.status === 'PENDING') {
+      return res.status(403).json({ 
+        error: 'Hesabınız henüz Admin tarafından onaylanmamıştır. Lütfen onay bekleyiniz.' 
+      });
+    }
+
+    // Başarılı Giriş
+    res.json({
+      id: user.id,
+      name: user.name,
+      username: user.username,
+      email: user.email,
+      role: user.role,
+      department: user.department,
+      leaderType: user.leader_type,
+      status: user.status
+    });
+  } catch (err) {
+    console.error('Giriş Hatası:', err);
+    res.status(500).json({ error: 'Sunucu hatası oluştu.' });
+  }
+});
+
+// GET /api/users/pending - Onay Bekleyen Yönetici / Liderleri Getir
+app.get('/api/users/pending', async (req, res) => {
+  try {
+    const result = await db.query(
+      `SELECT id, name, username, department, role, leader_type AS "leaderType", status 
+       FROM users 
+       WHERE status = 'PENDING' 
+       ORDER BY id DESC`
+    );
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Pending kullanıcı getirme hatası:', err);
+    res.status(500).json({ error: 'Veriler alınırken bir sorun oluştu.' });
+  }
+});
+
+// PATCH /api/users/:id/approve - Kullanıcıyı Onayla
+app.patch('/api/users/:id/approve', async (req, res) => {
+  try {
+    const userId = req.params.id;
+
+    const result = await db.query(
+      `UPDATE users SET status = 'APPROVED' WHERE id = $1 RETURNING id, name, status`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    }
+
+    res.json({
+      message: 'Kullanıcı başarıyla onaylandı.',
+      user: result.rows[0]
+    });
+  } catch (err) {
+    console.error('Kullanıcı onaylama hatası:', err);
+    res.status(500).json({ error: 'Onaylama işlemi başarısız.' });
   }
 });
 
