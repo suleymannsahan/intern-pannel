@@ -1342,7 +1342,7 @@
 
       try {
         // API'den onay bekleyen müdür ve ekip liderlerini çekiyoruz
-        const res = await fetch(`${API_BASE_URL}/api/users/pending`);
+        const res = await fetch(`${API_BASE_URL}/api/users`);
         
         if (!res.ok) {
           pendingTableBody.innerHTML = `<tr><td colspan="6" class="py-4 text-center text-slate-400">Onay bekleyen kayıt bulunamadı.</td></tr>`;
