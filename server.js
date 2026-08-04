@@ -639,14 +639,33 @@ app.delete('/api/admin/users/:id', async (req, res) => {
       return res.status(403).json({ error: 'Yetkisiz işlem.' });
     }
 
-    await db.execute({
+    // Kullanıcıya ait görevlerin ID'lerini bul (revizyon kayıtlarını temizlemek için gerekli)
+    const tasksResult = await db.execute({
+      sql: `SELECT id FROM tasks WHERE assigned_to = ?`,
+      args: [userId]
+    });
+    const taskIds = tasksResult.rows.map(r => r.id);
+
+    // İlişkili tüm kayıtları sırasıyla temizle (foreign key hatası almamak için)
+    for (const taskId of taskIds) {
+      await db.execute({ sql: `DELETE FROM task_revisions WHERE task_id = ?`, args: [taskId] });
+    }
+    await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM meeting_requests WHERE requested_by = ?`, args: [userId] });
+
+    const result = await db.execute({
       sql: `DELETE FROM users WHERE id = ?`,
       args: [userId]
     });
 
-    res.json({ message: 'Kullanıcı sistemden silindi.' });
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Silinecek kullanıcı bulunamadı.' });
+    }
+
+    res.json({ message: 'Kullanıcı ve ilişkili tüm verileri başarıyla silindi.' });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    res.status(500).json({ error: 'Kullanıcı silinirken hata oluştu: ' + error.message });
   }
 });
 
@@ -902,8 +921,18 @@ app.delete('/api/users/:id', async (req, res) => {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
+    const tasksResult = await db.execute({
+      sql: `SELECT id FROM tasks WHERE assigned_to = ?`,
+      args: [userId]
+    });
+    const taskIds = tasksResult.rows.map(r => r.id);
+
+    for (const taskId of taskIds) {
+      await db.execute({ sql: `DELETE FROM task_revisions WHERE task_id = ?`, args: [taskId] });
+    }
     await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
     await db.execute({ sql: `DELETE FROM tasks WHERE assigned_to = ?`, args: [userId] });
+    await db.execute({ sql: `DELETE FROM meeting_requests WHERE requested_by = ?`, args: [userId] });
     const result = await db.execute({ sql: `DELETE FROM users WHERE id = ?`, args: [userId] });
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Silinecek kullanıcı bulunamadı.' });

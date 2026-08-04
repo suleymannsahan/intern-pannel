@@ -2250,7 +2250,7 @@
       }
 
       // Toplantı talebi oluşturma formu Mühendis ve üstü roller ile Admin için görünür
-      const canRequestMeeting = [/*'ENGINEER', */'LEADER', 'MANAGER', 'ADMIN'].includes(currentUser.role);
+      const canRequestMeeting = ['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(currentUser.role);
       const meetingRequestForm = document.getElementById('meetingRequestFormWrapper');
       if (meetingRequestForm) {
         meetingRequestForm.classList.toggle('hidden', !canRequestMeeting);
