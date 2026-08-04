@@ -601,18 +601,25 @@ app.post('/api/admin/users', async (req, res) => {
 app.put('/api/admin/users/:id/role', async (req, res) => {
   try {
     const userId = req.params.id;
-    const { newRole, adminRole } = req.body;
+    const { newRole, department, adminRole } = req.body;
 
     if (!isAdmin(adminRole)) {
       return res.status(403).json({ error: 'Yetkisiz işlem.' });
     }
 
-    await db.execute({
-      sql: `UPDATE users SET role = ? WHERE id = ?`,
-      args: [newRole, userId]
-    });
+    if (department !== undefined) {
+      await db.execute({
+        sql: `UPDATE users SET role = ?, department = ? WHERE id = ?`,
+        args: [newRole, department || null, userId]
+      });
+    } else {
+      await db.execute({
+        sql: `UPDATE users SET role = ? WHERE id = ?`,
+        args: [newRole, userId]
+      });
+    }
 
-    res.json({ message: 'Kullanıcı rolü güncellendi.' });
+    res.json({ message: 'Kullanıcı bilgileri güncellendi.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

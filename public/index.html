@@ -1305,6 +1305,7 @@
                 <td class="py-2.5 px-2">${u.status || '-'}</td>
                 <td class="py-2.5 px-2 text-right space-x-1">
                   <button onclick="handleChangeUserRole(${u.id}, '${u.role}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Rol Değiştir</button>
+                  <button onclick="handleChangeUserDepartment(${u.id}, '${u.role}', '${u.department || ''}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Birim Değiştir</button>
                   <button onclick="handleDeleteAdminUser(${u.id})" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold">Sil</button>
                 </td>
               </tr>
@@ -1394,7 +1395,7 @@
     }
 
     async function handleChangeUserRole(userId, currentRole) {
-      const newRole = prompt('Yeni rolü girin (INTERN, ENGINEER, LEADER, ADMIN):', currentRole);
+      const newRole = prompt('Yeni rolü girin (INTERN, TECHNICIAN, ENGINEER, LEADER, MANAGER, HR, ADMIN):', currentRole);
       if (!newRole || newRole === currentRole) return;
 
       try {
@@ -1412,6 +1413,29 @@
         }
       } catch (err) {
         console.error("Rol güncelleme hatası:", err);
+      }
+    }
+
+    async function handleChangeUserDepartment(userId, currentRole, currentDepartment) {
+      const options = ['ELEKTRONIK', 'MEKANIK', 'YAZILIM', 'INSAN_KAYNAKLARI'];
+      const newDepartment = prompt(`Yeni birimi girin (${options.join(', ')}):`, currentDepartment || '');
+      if (newDepartment === null || newDepartment === currentDepartment) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newRole: currentRole, department: newDepartment.toUpperCase(), adminRole: currentUser.role })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          await fetchAdminUsers();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error("Birim güncelleme hatası:", err);
       }
     }
 
@@ -1816,8 +1840,10 @@
 
     function renderSidebarDirectory() {
       const container = document.getElementById('sidebarDirectory');
+      const managers = usersList.filter(u => u.role === 'MANAGER');
       const leaders = usersList.filter(u => u.role === 'LEADER');
       const engineers = usersList.filter(u => u.role === 'ENGINEER');
+      const technicians = usersList.filter(u => u.role === 'TECHNICIAN');
       const interns = usersList.filter(u => u.role === 'INTERN');
       const isLeader = currentUser && ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(currentUser.role);
 
@@ -1841,12 +1867,20 @@
 
       container.innerHTML = `
         <div class="space-y-2">
+          <div class="font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid fa-user-shield text-indigo-500 me-1"></i> Müdürler (${managers.length})</div>
+          ${managers.map(m => renderUserItem(m)).join('')}
+        </div>
+        <div class="space-y-2 pt-2">
           <div class="font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid fa-user-tie text-cyan-500 me-1"></i> Liderler (${leaders.length})</div>
           ${leaders.map(l => renderUserItem(l)).join('')}
         </div>
         <div class="space-y-2 pt-2">
           <div class="font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid fa-user-gear text-emerald-500 me-1"></i> Mühendisler (${engineers.length})</div>
           ${engineers.map(e => renderUserItem(e)).join('')}
+        </div>
+        <div class="space-y-2 pt-2">
+          <div class="font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid fa-screwdriver-wrench text-slate-500 me-1"></i> Teknisyenler (${technicians.length})</div>
+          ${technicians.map(t => renderUserItem(t)).join('')}
         </div>
         <div class="space-y-2 pt-2">
           <div class="font-bold text-slate-500 dark:text-slate-400 text-xs uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid fa-graduation-cap text-amber-500 me-1"></i> Stajyerler (${interns.length})</div>
