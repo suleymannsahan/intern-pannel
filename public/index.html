@@ -147,8 +147,8 @@
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
     <!-- HEADER -->
-    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex justify-between items-center z-20 backdrop-blur-xl sticky top-0 shadow-md">
-      <div class="flex items-center gap-3">
+    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex items-center justify-between gap-3 z-20 backdrop-blur-xl sticky top-0 shadow-md">
+      <div class="flex items-center gap-3 shrink-0">
         <button onclick="toggleSidebar()" class="text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
@@ -156,105 +156,26 @@
         <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
       </div>
 
-      <div class="flex items-center gap-3">
+      <!-- ORTA MENÜ: Görevler / Yeni Kayıt Onayı / Kullanıcı Yönetimi -->
+      <nav class="flex-1 flex items-center justify-center gap-2 sm:gap-6 flex-wrap">
+        <button id="tasksNavBtn" onclick="toggleTasksDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+          Görevler
+          <span id="tasksBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
+        </button>
+        <button id="pendingNavBtn" onclick="togglePendingDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+          Yeni Kayıt Onayı
+          <span id="pendingBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
+        </button>
+        <button id="userMgmtNavBtn" onclick="toggleUserMgmtDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+          Kullanıcı Yönetimi
+          <span id="userMgmtBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-slate-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
+        </button>
+      </nav>
+
+      <div class="flex items-center gap-3 shrink-0">
         <div class="text-right">
           <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
           <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
-        </div>
-
-        <div class="relative">
-          <button id="tasksBubbleBtn" onclick="toggleTasksDropdown()" class="hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none relative">
-            <i class="fa-solid fa-list-check text-lg"></i>
-            <span id="tasksBadgeCount" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-          </button>
-
-          <div id="tasksDropdown" class="hidden absolute right-0 mt-2 w-[28rem] max-w-[90vw] max-h-[75vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-xl space-y-4">
-            <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-list-check text-cyan-500"></i> Görevler
-            </h3>
-
-            <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-              <div class="flex-1 min-w-[140px] relative">
-                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-                <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya stajyer adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-8 pr-2 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-              </div>
-              <select id="filterCategory" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-                <option value="">Tüm Kategoriler</option>
-                <option value="Yazılım">Yazılım</option>
-                <option value="Donanım">Donanım</option>
-                <option value="Ağ & Sistem">Ağ & Sistem</option>
-                <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
-              </select>
-              <select id="filterStatus" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-                <option value="">Tüm Durumlar</option>
-                <option value="IN_PROGRESS">Devam Ediyor</option>
-                <option value="COMPLETED">Tamamlandı</option>
-                <option value="APPROVED">Onaylandı</option>
-                <option value="REVISION_REQUESTED">Revize İstendi</option>
-              </select>
-            </div>
-
-            <section id="activeTasksSection" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5">
-              <h4 class="font-bold text-xs mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500 animate-spin"></i>Aktif Görevler</h4>
-              <div id="taskList" class="grid grid-cols-1 gap-3"></div>
-            </section>
-
-            <section id="pastTasksSection" class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-3.5">
-              <h4 class="font-bold text-xs mb-3 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h4>
-              <div id="pastTaskList" class="grid grid-cols-1 gap-3"></div>
-            </section>
-          </div>
-        </div>
-
-        <div class="relative">
-          <button id="pendingBubbleBtn" onclick="togglePendingDropdown()" class="hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none relative">
-            <i class="fa-solid fa-user-clock text-lg"></i>
-            <span id="pendingBadgeCount" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-          </button>
-
-          <div id="pendingDropdown" class="hidden absolute right-0 mt-2 w-[30rem] max-w-[90vw] max-h-[75vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-xl space-y-3">
-            <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-user-clock text-amber-500"></i> Yeni Kayıt Onayları
-            </h3>
-            <div class="overflow-x-auto">
-              <table class="w-full text-left border-collapse">
-                <thead>
-                  <tr class="border-b border-slate-200 dark:border-slate-700 text-[11px] text-slate-400">
-                    <th class="py-2 px-2">Ad Soyad</th>
-                    <th class="py-2 px-2">Kullanıcı Adı</th>
-                    <th class="py-2 px-2">Birim</th>
-                    <th class="py-2 px-2">Rol</th>
-                    <th class="py-2 px-2">Detay / Tür</th>
-                    <th class="py-2 px-2 text-right">İşlem</th>
-                  </tr>
-                </thead>
-                <tbody id="adminPendingUsersTable" class="text-xs divide-y divide-slate-100 dark:divide-slate-800">
-                  <!-- JS tarafında onay bekleyenler buraya render edilecek -->
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-
-        <div class="relative">
-          <button id="userMgmtBubbleBtn" onclick="toggleUserMgmtDropdown()" class="hidden p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all focus:outline-none relative">
-            <i class="fa-solid fa-user-shield text-lg"></i>
-            <span id="userMgmtBadgeCount" class="hidden absolute -top-1 -right-1 bg-slate-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-          </button>
-
-          <div id="userMgmtDropdown" class="hidden absolute right-0 mt-2 w-[32rem] max-w-[90vw] max-h-[75vh] overflow-y-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-4 z-50 backdrop-blur-xl space-y-4">
-            <div class="flex justify-between items-center">
-              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-user-shield text-cyan-500"></i> Kullanıcı Yönetimi
-              </h3>
-              <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-[11px] px-3 py-1.5 rounded-lg transition-all font-semibold flex items-center gap-1.5 shadow-md">
-                <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı
-              </button>
-            </div>
-            <div id="adminUsersByTeam" class="space-y-5">
-              <!-- Dinamik doldurulacak: ekip (birim) ve rol bazında gruplandırılmış kullanıcı listesi -->
-            </div>
-          </div>
         </div>
 
         <div class="relative">
@@ -321,6 +242,98 @@
         </div>
       </div>
     </header>
+
+    <!-- GÖREVLER TAM EKRAN MODAL -->
+    <div id="tasksDropdown" onclick="if(event.target===this) toggleTasksDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-list-check text-cyan-500"></i> Görevler
+          </h3>
+          <button onclick="toggleTasksDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+
+        <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex flex-wrap gap-2 items-center">
+          <div class="flex-1 min-w-[200px] relative">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya stajyer adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+          </div>
+          <select id="filterCategory" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Kategoriler</option>
+            <option value="Yazılım">Yazılım</option>
+            <option value="Donanım">Donanım</option>
+            <option value="Ağ & Sistem">Ağ & Sistem</option>
+            <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
+          </select>
+          <select id="filterStatus" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Durumlar</option>
+            <option value="IN_PROGRESS">Devam Ediyor</option>
+            <option value="COMPLETED">Tamamlandı</option>
+            <option value="APPROVED">Onaylandı</option>
+            <option value="REVISION_REQUESTED">Revize İstendi</option>
+          </select>
+        </div>
+
+        <section id="activeTasksSection" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+          <h4 class="font-bold text-sm mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500 animate-spin"></i>Aktif Görevler</h4>
+          <div id="taskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+
+        <section id="pastTasksSection" class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
+          <h4 class="font-bold text-sm mb-3 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h4>
+          <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- YENİ KAYIT ONAYLARI TAM EKRAN MODAL -->
+    <div id="pendingDropdown" onclick="if(event.target===this) togglePendingDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-user-clock text-amber-500"></i> Yeni Kayıt Onayları
+          </h3>
+          <button onclick="togglePendingDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
+                <th class="py-3 px-2">Ad Soyad</th>
+                <th class="py-3 px-2">Kullanıcı Adı</th>
+                <th class="py-3 px-2">Birim</th>
+                <th class="py-3 px-2">Rol</th>
+                <th class="py-3 px-2">Detay / Tür</th>
+                <th class="py-3 px-2 text-right">İşlem</th>
+              </tr>
+            </thead>
+            <tbody id="adminPendingUsersTable" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+              <!-- JS tarafında onay bekleyenler buraya render edilecek -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- KULLANICI YÖNETİMİ TAM EKRAN MODAL -->
+    <div id="userMgmtDropdown" onclick="if(event.target===this) toggleUserMgmtDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <i class="fa-solid fa-user-shield text-cyan-500"></i> Kullanıcı Yönetimi
+          </h3>
+          <div class="flex items-center gap-2">
+            <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
+              <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı Ekle
+            </button>
+            <button onclick="toggleUserMgmtDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+          </div>
+        </div>
+        <div id="adminUsersByTeam" class="space-y-6">
+          <!-- Dinamik doldurulacak: ekip (birim) ve rol bazında gruplandırılmış kullanıcı listesi -->
+        </div>
+      </div>
+    </div>
 
     <div class="flex-1 flex relative overflow-hidden">
       <!-- SOL SIDEBAR -->
@@ -772,9 +785,9 @@
       const dropdownConfigs = [
         { dropdownId: 'settingsDropdown', buttonSelector: 'button[onclick="toggleSettingsDropdown()"]' },
         { dropdownId: 'meetingsDropdown', buttonSelector: '#meetingsBubbleBtn' },
-        { dropdownId: 'tasksDropdown', buttonSelector: '#tasksBubbleBtn' },
-        { dropdownId: 'pendingDropdown', buttonSelector: '#pendingBubbleBtn' },
-        { dropdownId: 'userMgmtDropdown', buttonSelector: '#userMgmtBubbleBtn' }
+        { dropdownId: 'tasksDropdown', buttonSelector: '#tasksNavBtn' },
+        { dropdownId: 'pendingDropdown', buttonSelector: '#pendingNavBtn' },
+        { dropdownId: 'userMgmtDropdown', buttonSelector: '#userMgmtNavBtn' }
       ];
 
       dropdownConfigs.forEach(({ dropdownId, buttonSelector }) => {
@@ -1943,20 +1956,20 @@
         loadMeetings();
       }
 
-      // 6. Görevler Baloncuğu (İK hariç herkes görebilir)
+      // 6. Görevler Menü Yazısı (İK hariç herkes görebilir)
       const canAccessTasks = currentUser.role !== 'HR';
-      const tasksBubbleBtn = document.getElementById('tasksBubbleBtn');
-      if (tasksBubbleBtn) {
-        tasksBubbleBtn.classList.toggle('hidden', !canAccessTasks);
+      const tasksNavBtn = document.getElementById('tasksNavBtn');
+      if (tasksNavBtn) {
+        tasksNavBtn.classList.toggle('hidden', !canAccessTasks);
       }
       updateTasksBadge();
 
-      // 7. Yeni Kayıt Onayı ve Kullanıcı Yönetimi Baloncukları (Sadece Admin)
+      // 7. Yeni Kayıt Onayı ve Kullanıcı Yönetimi Menü Yazıları (Sadece Admin)
       const isAdmin = currentUser.role === 'ADMIN';
-      const pendingBubbleBtn = document.getElementById('pendingBubbleBtn');
-      const userMgmtBubbleBtn = document.getElementById('userMgmtBubbleBtn');
-      if (pendingBubbleBtn) pendingBubbleBtn.classList.toggle('hidden', !isAdmin);
-      if (userMgmtBubbleBtn) userMgmtBubbleBtn.classList.toggle('hidden', !isAdmin);
+      const pendingNavBtn = document.getElementById('pendingNavBtn');
+      const userMgmtNavBtn = document.getElementById('userMgmtNavBtn');
+      if (pendingNavBtn) pendingNavBtn.classList.toggle('hidden', !isAdmin);
+      if (userMgmtNavBtn) userMgmtNavBtn.classList.toggle('hidden', !isAdmin);
 
       if (isAdmin) {
         fetchAdminUsers();
