@@ -1403,14 +1403,14 @@
           if (currentUser.department && u.department !== currentUser.department) return;
           if (allowedRoles && !allowedRoles.includes(u.role)) return;
         }
-        const key = u.department || 'BELİRTİLMEMİŞ';
+        const key = u.department || 'Belirtilmemiş';
         if (!byDept[key]) byDept[key] = [];
         byDept[key].push(u);
       });
 
       const deptKeys = Object.keys(byDept).sort((a, b) => {
-        if (a === 'BELİRTİLMEMİŞ') return 1;
-        if (b === 'BELİRTİLMEMİŞ') return -1;
+        if (a === 'Belirtilmemiş') return 1;
+        if (b === 'Belirtilmemiş') return -1;
         return (DEPARTMENT_LABELS[a] || a).localeCompare(DEPARTMENT_LABELS[b] || b);
       });
 
@@ -1441,7 +1441,7 @@
       const allowedRoles = isAdminViewer ? null : getSubordinateRoles(currentUser.role);
 
       const people = (usersList || []).filter(u => {
-        if ((u.department || 'BELİRTİLMEMİŞ') !== dept) return false;
+        if ((u.department || 'Belirtilmemiş') !== dept) return false;
         if (u.role === 'ADMIN' || u.role === 'HR') return false;
         if (!isAdminViewer && allowedRoles && !allowedRoles.includes(u.role)) return false;
         return true;
@@ -1672,7 +1672,7 @@
         // Personeli birimlere göre grupla
         const byDepartment = {};
         approvedUsers.forEach(u => {
-          const key = u.department || 'BELİRTİLMEMİŞ';
+          const key = u.department || 'Belirtilmemiş';
           if (!byDepartment[key]) byDepartment[key] = [];
           byDepartment[key].push(u);
         });
@@ -1985,14 +1985,14 @@
         // 1. Ekip (birim) bazında grupla
         const byDepartment = {};
         users.forEach(u => {
-          const key = u.department || 'BELİRTİLMEMİŞ';
+          const key = u.department || 'Belirtilmemiş';
           if (!byDepartment[key]) byDepartment[key] = [];
           byDepartment[key].push(u);
         });
 
         const deptKeys = Object.keys(byDepartment).sort((a, b) => {
-          if (a === 'BELİRTİLMEMİŞ') return 1;
-          if (b === 'BELİRTİLMEMİŞ') return -1;
+          if (a === 'Belirtilmemiş') return 1;
+          if (b === 'Belirtilmemiş') return -1;
           return (DEPARTMENT_LABELS[a] || a).localeCompare(DEPARTMENT_LABELS[b] || b);
         });
 
@@ -2644,14 +2644,14 @@
       // Ekip (birim) bazında grupla
       const byDepartment = {};
       usersList.forEach(u => {
-        const key = u.department || 'BELİRTİLMEMİŞ';
+        const key = u.department || 'Belirtilmemiş';
         if (!byDepartment[key]) byDepartment[key] = [];
         byDepartment[key].push(u);
       });
 
       const deptKeys = Object.keys(byDepartment).sort((a, b) => {
-        if (a === 'BELİRTİLMEMİŞ') return 1;
-        if (b === 'BELİRTİLMEMİŞ') return -1;
+        if (a === 'Belirtilmemiş') return 1;
+        if (b === 'Belirtilmemiş') return -1;
         return (DEPARTMENT_LABELS[a] || a).localeCompare(DEPARTMENT_LABELS[b] || b);
       });
 
