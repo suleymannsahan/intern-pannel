@@ -536,8 +536,12 @@
           <input type="text" id="newUserName" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
-          <label class="block text-xs font-semibold mb-1">E-Posta</label>
-          <input type="email" id="newUserEmail" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+          <label class="block text-xs font-semibold mb-1">Kullanıcı Adı</label>
+          <input type="text" id="newUserUsername" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1">E-Posta (opsiyonel)</label>
+          <input type="email" id="newUserEmail" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1">Şifre</label>
@@ -783,7 +787,7 @@
 
       const selectedRole = roleSelect.value;
       const internFields = document.getElementById('internRegisterFields');
-      const leaderFields = document.getElementById('leaderVerificationFields');
+      const leaderFields = document.getElementById('leaderSubTypeFields');
 
       // Stajyer Alanları Mantığı
       if (internFields) {
@@ -928,11 +932,160 @@
 
     function loadAdminPanel() {
       // Admin paneli bölümünü göster
-      showSection('adminPanelSection'); 
-        
-      // Varsa admin verilerini (kullanıcılar, istatistikler vb.) çek
-      if (typeof fetchAdminStats === 'function') fetchAdminStats();
-      if (typeof fetchUsers === 'function') fetchUsers();
+      showSection('admin');
+
+      // Onay bekleyen kayıtlar kutusunu görünür yap
+      const pendingContainer = document.getElementById('pendingUsersContainer');
+      if (pendingContainer) pendingContainer.classList.remove('hidden');
+
+      // Admin verilerini (bekleyen onaylar, istatistikler, kullanıcı listesi) çek
+      loadPendingUsers();
+      fetchAdminStats();
+      fetchAdminUsers();
+    }
+
+    async function fetchAdminStats() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/stats?userRole=${currentUser.role}`);
+        if (!res.ok) return;
+        const stats = await res.json();
+
+        const elTotalUsers = document.getElementById('statTotalUsers');
+        const elTotalTasks = document.getElementById('statTotalTasks');
+        const elPendingTasks = document.getElementById('statPendingTasks');
+        const elTotalRevisions = document.getElementById('statTotalRevisions');
+
+        if (elTotalUsers) elTotalUsers.innerText = stats.totalUsers ?? 0;
+        if (elTotalTasks) elTotalTasks.innerText = stats.totalTasks ?? 0;
+        if (elPendingTasks) elPendingTasks.innerText = stats.pendingApprovalTasks ?? 0;
+        if (elTotalRevisions) elTotalRevisions.innerText = stats.totalRevisions ?? 0;
+      } catch (err) {
+        console.error("Admin istatistikleri alınamadı:", err);
+      }
+    }
+
+    async function fetchAdminUsers() {
+      const tableBody = document.getElementById('adminUserTableBody');
+      if (!tableBody) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users?userRole=${currentUser.role}`);
+        if (!res.ok) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-400">Kullanıcılar yüklenemedi.</td></tr>`;
+          return;
+        }
+
+        const users = await res.json();
+
+        if (users.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-slate-400">Kayıtlı kullanıcı yok.</td></tr>`;
+          return;
+        }
+
+        tableBody.innerHTML = users.map(u => `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
+            <td class="py-3 px-2 text-slate-400">${u.id}</td>
+            <td class="py-3 px-2 font-semibold text-slate-800 dark:text-slate-200">${u.name}</td>
+            <td class="py-3 px-2 text-slate-500 dark:text-slate-400">${u.username || '-'}</td>
+            <td class="py-3 px-2">${u.department || '-'}</td>
+            <td class="py-3 px-2">${u.role}</td>
+            <td class="py-3 px-2">${u.status || '-'}</td>
+            <td class="py-3 px-2 text-right space-x-1">
+              <button onclick="handleChangeUserRole(${u.id}, '${u.role}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Rol Değiştir</button>
+              <button onclick="handleDeleteAdminUser(${u.id})" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold">Sil</button>
+            </td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error("Kullanıcı listesi alınamadı:", err);
+        tableBody.innerHTML = `<tr><td colspan="7" class="py-4 text-center text-rose-500">Veriler yüklenirken hata oluştu.</td></tr>`;
+      }
+    }
+
+    function openAddUserModal() {
+      const modal = document.getElementById('addUserModal');
+      if (modal) modal.classList.remove('hidden');
+    }
+
+    function closeAddUserModal() {
+      const modal = document.getElementById('addUserModal');
+      if (modal) modal.classList.add('hidden');
+      const form = modal ? modal.querySelector('form') : null;
+      if (form) form.reset();
+    }
+
+    async function handleCreateUser(e) {
+      e.preventDefault();
+
+      const name = document.getElementById('newUserName').value;
+      const username = document.getElementById('newUserUsername').value;
+      const email = document.getElementById('newUserEmail').value;
+      const password = document.getElementById('newUserPassword').value;
+      const role = document.getElementById('newUserRole').value;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, username, email, password, role, adminRole: currentUser.role })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          alert('Kullanıcı başarıyla oluşturuldu.');
+          closeAddUserModal();
+          await fetchAdminUsers();
+          await fetchAdminStats();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error("Kullanıcı oluşturma hatası:", err);
+      }
+    }
+
+    async function handleChangeUserRole(userId, currentRole) {
+      const newRole = prompt('Yeni rolü girin (INTERN, ENGINEER, LEADER, ADMIN):', currentRole);
+      if (!newRole || newRole === currentRole) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newRole: newRole.toUpperCase(), adminRole: currentUser.role })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          await fetchAdminUsers();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error("Rol güncelleme hatası:", err);
+      }
+    }
+
+    async function handleDeleteAdminUser(userId) {
+      if (!confirm('Bu kullanıcıyı silmek istediğinizden emin misiniz?')) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminRole: currentUser.role })
+        });
+
+        const data = await res.json();
+        if (res.ok) {
+          await fetchAdminUsers();
+          await fetchAdminStats();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error("Kullanıcı silme hatası:", err);
+      }
     }
 
     function populateEngineerDropdown() {

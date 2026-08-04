@@ -118,7 +118,7 @@ app.post('/api/register', async (req, res) => {
       password, 
       role, 
       department, 
-      leaderSubType, 
+      leaderType, 
       startDate, 
       endDate 
     } = req.body;
@@ -159,7 +159,7 @@ app.post('/api/register', async (req, res) => {
         hashedPassword, 
         role, 
         department || null,
-        leaderSubType || null,
+        leaderType || null,
         role === 'INTERN' ? startDate : null, 
         role === 'INTERN' ? endDate : null,
         initialStatus
@@ -190,7 +190,10 @@ app.post('/api/login', async (req, res) => {
   try {
     const { username, password } = req.body;
 
-    const result = await db.query('SELECT * FROM users WHERE username = $1', [username]);
+    const result = await db.execute({
+      sql: 'SELECT * FROM users WHERE username = ?',
+      args: [username]
+    });
     if (result.rows.length === 0) {
       return res.status(400).json({ error: 'Kullanıcı adı veya şifre hatalı.' });
     }
@@ -218,7 +221,7 @@ app.post('/api/login', async (req, res) => {
       email: user.email,
       role: user.role,
       department: user.department,
-      leaderType: user.leader_type,
+      leaderType: user.leader_sub_type,
       status: user.status
     });
   } catch (err) {
@@ -230,8 +233,8 @@ app.post('/api/login', async (req, res) => {
 // GET /api/users/pending - Onay Bekleyen Yönetici / Liderleri Getir
 app.get('/api/users/pending', async (req, res) => {
   try {
-    const result = await db.query(
-      `SELECT id, name, username, department, role, leader_type AS "leaderType", status 
+    const result = await db.execute(
+      `SELECT id, name, username, department, role, leader_sub_type AS leaderType, status 
        FROM users 
        WHERE status = 'PENDING' 
        ORDER BY id DESC`
@@ -249,18 +252,23 @@ app.patch('/api/users/:id/approve', async (req, res) => {
   try {
     const userId = req.params.id;
 
-    const result = await db.query(
-      `UPDATE users SET status = 'APPROVED' WHERE id = $1 RETURNING id, name, status`,
-      [userId]
-    );
+    const result = await db.execute({
+      sql: `UPDATE users SET status = 'APPROVED' WHERE id = ?`,
+      args: [userId]
+    });
 
-    if (result.rows.length === 0) {
+    if (result.rowsAffected === 0) {
       return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
     }
 
+    const updated = await db.execute({
+      sql: `SELECT id, name, status FROM users WHERE id = ?`,
+      args: [userId]
+    });
+
     res.json({
       message: 'Kullanıcı başarıyla onaylandı.',
-      user: result.rows[0]
+      user: updated.rows[0]
     });
   } catch (err) {
     console.error('Kullanıcı onaylama hatası:', err);
@@ -517,7 +525,7 @@ app.get('/api/admin/users', async (req, res) => {
       return res.status(403).json({ error: 'Bu alana erişim yetkiniz yok.' });
     }
 
-    const result = await db.execute(`SELECT id, name, email, role, created_at FROM users ORDER BY id DESC`);
+    const result = await db.execute(`SELECT id, name, username, email, department, role, status FROM users ORDER BY id DESC`);
     res.json(result.rows);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -527,21 +535,29 @@ app.get('/api/admin/users', async (req, res) => {
 // 2. Yeni Kullanıcı Oluştur (Admin Paneli)
 app.post('/api/admin/users', async (req, res) => {
   try {
-    const { name, email, password, role, adminRole } = req.body;
+    const { name, username, email, password, role, adminRole } = req.body;
 
     if (!isAdmin(adminRole)) {
       return res.status(403).json({ error: 'Yetkisiz işlem.' });
     }
 
-    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+    if (!name || !username || !password || !role) {
+      return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const finalEmail = email && email.trim() !== '' ? email : `${username}@system.local`;
 
     await db.execute({
-      sql: `INSERT INTO users (name, email, password, role, created_at) VALUES (?, ?, ?, ?, ?)`,
-      args: [name, email, password, role, now]
+      sql: `INSERT INTO users (name, username, email, password, role, status) VALUES (?, ?, ?, ?, ?, 'APPROVED')`,
+      args: [name, username, finalEmail, hashedPassword, role]
     });
 
     res.json({ message: 'Kullanıcı başarıyla oluşturuldu.' });
   } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu kullanıcı adı veya e-posta zaten kullanılıyor!' });
+    }
     res.status(500).json({ error: 'Kullanıcı eklenirken hata: ' + error.message });
   }
 });
