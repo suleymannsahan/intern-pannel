@@ -99,6 +99,22 @@ async function initDb() {
       )
     `);
 
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS meeting_requests (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        requested_by INTEGER NOT NULL,
+        department TEXT NOT NULL,
+        subject TEXT NOT NULL,
+        description TEXT,
+        preferred_date TEXT,
+        status TEXT DEFAULT 'PENDING',
+        reviewed_by TEXT,
+        review_comment TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(requested_by) REFERENCES users(id)
+      )
+    `);
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -765,7 +781,8 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     const { action, comment, userRole, revisedBy } = req.body;
 
     // Yetki Kontrolü
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER' && userRole !== 'ADMIN') {
+    const canReview = ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole);
+    if (!canReview) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz bulunmamaktadır.' });
     }
 
@@ -937,6 +954,11 @@ app.get('/api/daily-logs', async (req, res) => {
 app.delete('/api/tasks/:id', async (req, res) => {
   try {
     const taskId = req.params.id;
+    const userRole = (req.headers['user-role'] || '').toUpperCase();
+
+    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
 
     // Göreve ait logları ve revizyonları temizle
     await db.execute({
@@ -971,7 +993,7 @@ app.delete('/api/users/:id', async (req, res) => {
     const userId = req.params.id;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -992,7 +1014,7 @@ app.put('/api/tasks/:id', async (req, res) => {
     const taskId = req.params.id;
     const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
 
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1035,7 +1057,7 @@ app.put('/api/users/:id', async (req, res) => {
     const { name, email, role, startDate, endDate } = req.body;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    if (userRole !== 'LEADER' && userRole !== 'ENGINEER') {
+    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1101,6 +1123,118 @@ app.post('/api/send-verification-code', async (req, res) => {
   } catch (error) {
     console.error('Brevo Mail Gönderme Hatası:', error);
     return res.status(500).json({ error: 'Mail gönderilirken sunucu hatası oluştu: ' + error.message });
+  }
+});
+
+// --- TOPLANTI TALEBİ ENDPOINT'LERİ ---
+
+// Yeni Toplantı Talebi Oluşturma (Sadece Mühendis ve üstü roller: ENGINEER, LEADER, MANAGER)
+app.post('/api/meetings', async (req, res) => {
+  try {
+    const { requestedBy, subject, description, preferredDate, userRole } = req.body;
+
+    if (!['ENGINEER', 'LEADER', 'MANAGER'].includes(userRole)) {
+      return res.status(403).json({ error: 'Toplantı talebi oluşturmak için yetkiniz yok.' });
+    }
+
+    if (!requestedBy || !subject) {
+      return res.status(400).json({ error: 'Talep eden kullanıcı ve konu alanı zorunludur.' });
+    }
+
+    // Talep edenin birimini güvenlik için veritabanından doğrula
+    const userResult = await db.execute({
+      sql: `SELECT department FROM users WHERE id = ?`,
+      args: [requestedBy]
+    });
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    }
+
+    const department = userResult.rows[0].department;
+    const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
+
+    const result = await db.execute({
+      sql: `INSERT INTO meeting_requests (requested_by, department, subject, description, preferred_date, status, created_at) VALUES (?, ?, ?, ?, ?, 'PENDING', ?)`,
+      args: [requestedBy, department || null, subject, description || null, preferredDate || null, now]
+    });
+
+    res.json({ id: Number(result.lastInsertRowid), message: 'Toplantı talebiniz iletildi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Toplantı talebi oluşturulurken hata: ' + error.message });
+  }
+});
+
+// Toplantı Taleplerini Listeleme
+app.get('/api/meetings', async (req, res) => {
+  try {
+    const { userId, role, department } = req.query;
+
+    let sql = `
+      SELECT meeting_requests.*, users.name as requester_name, users.role as requester_role
+      FROM meeting_requests
+      LEFT JOIN users ON meeting_requests.requested_by = users.id
+    `;
+    let conditions = [];
+    let args = [];
+
+    if (['MANAGER', 'LEADER'].includes(role)) {
+      // Müdür/Ekip Lideri sadece kendi biriminden gelen talepleri görür
+      conditions.push(`meeting_requests.department = ?`);
+      args.push(department);
+    } else if (role === 'ADMIN') {
+      // Admin tüm talepleri görebilir, ek filtre yok
+    } else {
+      // Diğer roller (ör. Mühendis) sadece kendi taleplerini görür
+      conditions.push(`meeting_requests.requested_by = ?`);
+      args.push(userId);
+    }
+
+    if (conditions.length > 0) {
+      sql += ` WHERE ` + conditions.join(' AND ');
+    }
+
+    sql += ` ORDER BY meeting_requests.id DESC`;
+
+    const result = await db.execute({ sql, args });
+    res.json(result.rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Toplantı Talebini Onaylama / Reddetme (Sadece Müdür/Ekip Lideri kendi birimi, veya Admin)
+app.put('/api/meetings/:id/review', async (req, res) => {
+  try {
+    const meetingId = req.params.id;
+    const { action, reviewComment, userRole, reviewerName, department } = req.body;
+
+    if (!['MANAGER', 'LEADER', 'ADMIN'].includes(userRole)) {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+
+    if (!['APPROVED', 'REJECTED'].includes(action)) {
+      return res.status(400).json({ error: 'Geçersiz işlem.' });
+    }
+
+    // Müdür/Ekip Lideri sadece kendi biriminin talebini onaylayabilir
+    let sql = `UPDATE meeting_requests SET status = ?, reviewed_by = ?, review_comment = ? WHERE id = ?`;
+    let args = [action, reviewerName || null, reviewComment || null, meetingId];
+
+    if (userRole !== 'ADMIN') {
+      sql = `UPDATE meeting_requests SET status = ?, reviewed_by = ?, review_comment = ? WHERE id = ? AND department = ?`;
+      args = [action, reviewerName || null, reviewComment || null, meetingId, department];
+    }
+
+    const result = await db.execute({ sql, args });
+
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Talep bulunamadı veya bu talebe erişim yetkiniz yok.' });
+    }
+
+    res.json({ message: action === 'APPROVED' ? 'Toplantı talebi onaylandı.' : 'Toplantı talebi reddedildi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Talep güncellenirken hata: ' + error.message });
   }
 });
 
