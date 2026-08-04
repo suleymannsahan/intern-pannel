@@ -102,11 +102,11 @@
           <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1.5">Rol Seçimi</label>
           <select id="regRole" onchange="handleDepartmentOrRoleChange()" required class="w-full bg-slate-100 dark:bg-slate-800/80 border border-slate-300 dark:border-slate-700 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
             <option value="">-- Rol Seçiniz --</option>
-            <option value="MUDUR">Müdür</option>
-            <option value="EKIP_LIDERI" id="optLeader" class="hidden">Ekip Lideri</option>
-            <option value="MUHENDIS">Mühendis</option>
-            <option value="TEKNISYEN">Teknisyen</option>
-            <option value="STAJYER">Stajyer</option>
+            <option value="MANAGER">Müdür</option>
+            <option value="LEADER" id="optLeader" class="hidden">Ekip Lideri</option>
+            <option value="ENGINEER">Mühendis</option>
+            <option value="TECHNICIAN">Teknisyen</option>
+            <option value="INTERN">Stajyer</option>
           </select>
         </div>
 
@@ -805,7 +805,7 @@
 
       // Takım Lideri / Yönetici Alanları Mantığı
       if (leaderFields) {
-        if (selectedRole === 'LEADER' || selectedRole === 'EKIP_LIDERI') {
+        if (selectedRole === 'LEADER') {
           leaderFields.classList.remove('hidden');
         } else {
           leaderFields.classList.add('hidden');
@@ -870,7 +870,7 @@
       const role = document.getElementById('regRole').value;
 
       // Ekip Lideri seçilmişse özel türünü al, seçilmemişse null gönder
-      const leaderType = (role === 'EKIP_LIDERI') ? document.getElementById('regLeaderType').value : null;
+      const leaderType = (role === 'LEADER') ? document.getElementById('regLeaderType').value : null;
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/register`, {
@@ -889,7 +889,7 @@
         const data = await res.json();
         if (res.ok) {
           // Müdür veya Ekip Lideri onay bekleyeceğinden kullanıcıya bilgi mesajı verebilirsiniz
-          if (role === 'MUDUR' || role === 'EKIP_LIDERI') {
+          if (role === 'MANAGER' || role === 'LEADER') {
             alert("Hesabınız oluşturuldu! Müdür / Ekip Lideri hesapları Admin onayından sonra aktifleşmektedir.");
           } else {
             alert("Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.");
@@ -917,13 +917,13 @@
         optLeader.classList.remove('hidden');
       } else {
         optLeader.classList.add('hidden');
-        if (roleSelect.value === 'EKIP_LIDERI') {
+        if (roleSelect.value === 'LEADER') {
           roleSelect.value = '';
         }
       }
 
       // Ekip Lideri seçilirse Test / Gömülü türü alanını göster
-      if (roleSelect.value === 'EKIP_LIDERI') {
+      if (roleSelect.value === 'LEADER') {
         leaderSubTypeFields.classList.remove('hidden');
       } else {
         leaderSubTypeFields.classList.add('hidden');
@@ -1351,10 +1351,10 @@
         case 'ADMIN':
           roleLabel = 'Sistem Yöneticisi (Admin)';
           break;
-        case 'MUDUR':
+        case 'MANAGER':
           roleLabel = 'Müdür';
           break;
-        case 'EKIP_LIDERI':
+        case 'LEADER':
           if (currentUser.leaderType === 'TEST_EKIP_LIDERI') {
             roleLabel = 'Test Ekip Lideri';
           } else if (currentUser.leaderType === 'GOMULU_EKIP_LIDERI') {
@@ -1363,13 +1363,13 @@
             roleLabel = 'Ekip Lideri';
           }
           break;
-        case 'MUHENDIS':
+        case 'ENGINEER':
           roleLabel = 'Mühendis';
           break;
-        case 'TEKNISYEN':
+        case 'TECHNICIAN':
           roleLabel = 'Teknisyen';
           break;
-        case 'STAJYER':
+        case 'INTERN':
           roleLabel = 'Stajyer';
           break;
       }
@@ -1384,8 +1384,8 @@
       }
 
       // 2. Yetki Seviyelerini Tanımlama
-      const isAdminOrManager = currentUser.role === 'ADMIN' || currentUser.role === 'MUDUR';
-      const isLeaderOrAbove = isAdminOrManager || currentUser.role === 'EKIP_LIDERI';
+      const isAdminOrManager = currentUser.role === 'ADMIN' || currentUser.role === 'MANAGER';
+      const isLeaderOrAbove = isAdminOrManager || currentUser.role === 'LEADER';
 
       // 3. Ortak Verileri Yükleme
       await loadUsers();
@@ -1511,7 +1511,7 @@
 
         // Bekleyen kullanıcıları tabloya yazdırıyoruz
         pendingTableBody.innerHTML = pendingUsers.map(user => {
-          let roleBadge = user.role === 'MUDUR' ? 'Müdür' : 'Ekip Lideri';
+          let roleBadge = user.role === 'MANAGER' ? 'Müdür' : 'Ekip Lideri';
           let subType = user.leaderType ? (user.leaderType === 'TEST_EKIP_LIDERI' ? 'Test Ekip Lideri' : 'Gömülü Ekip Lideri') : '-';
 
           return `

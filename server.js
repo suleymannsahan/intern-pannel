@@ -135,8 +135,7 @@ app.post('/api/register', async (req, res) => {
     const dummyEmail = `${username}@system.local`;
 
     // 💡 ONAY MANTIĞI: Yönetici roller onay beklemeye alınır (PENDING), diğerleri direkt onaylanır (APPROVED)
-    // Kendi proendeki rol isimlerine göre burayı güncelleyebilirsin (Örn: 'MUDUR', 'EKIP_LIDERI')
-    const isManagerRole = ['MANAGER', 'TEAM_LEADER', 'MUDUR', 'EKIP_LIDERI'].includes(role);
+    const isManagerRole = ['MANAGER', 'LEADER'].includes(role);
     const initialStatus = isManagerRole ? 'PENDING' : 'APPROVED';
 
     const result = await db.execute({
