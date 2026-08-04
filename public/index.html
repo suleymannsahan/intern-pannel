@@ -774,7 +774,7 @@
     window.onload = async function() {
       await loadUsers();
       if (currentUser) {
-        showDashboard();
+        await showDashboard();
       }
       handleRoleChange();
     };
@@ -859,13 +859,13 @@
     });
 
     // 2. Sayfa Yenilendiğinde (F5) Oturumu ve Ekranı Koru
-    document.addEventListener('DOMContentLoaded', () => {
+    document.addEventListener('DOMContentLoaded', async () => {
       const savedUser = localStorage.getItem('currentUser');
       if (savedUser) {
         currentUser = JSON.parse(savedUser);
         
-        // Paneli göster ve role göre yönlendir
-        if (typeof showDashboard === 'function') showDashboard();
+        // Paneli göster ve role göre yönlendir (showDashboard bitmeden handleUserNavigation çalışmasın)
+        if (typeof showDashboard === 'function') await showDashboard();
         if (typeof handleUserNavigation === 'function') handleUserNavigation(currentUser);
       }
     });
@@ -977,7 +977,7 @@
           }
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
           closeEditProfileModal();
-          showDashboard();
+          await showDashboard();
         } else {
           alert("Hata: " + data.error);
         }
@@ -1179,7 +1179,7 @@
       }
     }
 
-    function loadAdminPanel() {
+    async function loadAdminPanel() {
       // Admin paneli bölümünü (istatistikler) göster
       showSection('admin');
 
@@ -1187,6 +1187,9 @@
       loadPendingUsers();
       fetchAdminStats();
       fetchAdminUsers();
+
+      // Ekip Gidişatı, usersList'e ihtiyaç duyduğu için önce onu tazeleyip sonra render ediyoruz
+      await loadUsers();
       if (typeof loadTeamProgress === 'function') loadTeamProgress();
     }
 
@@ -2110,8 +2113,8 @@
           currentUser = data;
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
           
-          // 1. Ana paneli / ekranı görünür yap
-          showDashboard();
+          // 1. Ana paneli / ekranı görünür yap (bitmeden yönlendirme yapılmasın)
+          await showDashboard();
           
           // 2. Kullanıcının rolüne göre (ADMIN vs.) sayfa yönlendirmesini yap
           handleUserNavigation(currentUser);
