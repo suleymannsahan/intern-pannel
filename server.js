@@ -134,9 +134,9 @@ app.post('/api/register', async (req, res) => {
     const hashedPassword = await bcrypt.hash(password, 10);
     const dummyEmail = `${username}@system.local`;
 
-    // 💡 ONAY MANTIĞI: Yönetici roller onay beklemeye alınır (PENDING), diğerleri direkt onaylanır (APPROVED)
-    const isManagerRole = ['MANAGER', 'LEADER'].includes(role);
-    const initialStatus = isManagerRole ? 'PENDING' : 'APPROVED';
+    // 💡 ONAY MANTIĞI: Ekip Lideri, Müdür veya İnsan Kaynakları departmanı onay beklemeye alınır (PENDING), diğerleri direkt onaylanır (APPROVED)
+    const requiresApproval = ['MANAGER', 'LEADER'].includes(role) || department === 'INSAN_KAYNAKLARI';
+    const initialStatus = requiresApproval ? 'PENDING' : 'APPROVED';
 
     const result = await db.execute({
       sql: `INSERT INTO users (

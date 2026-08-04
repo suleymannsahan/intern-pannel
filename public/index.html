@@ -888,9 +888,9 @@
 
         const data = await res.json();
         if (res.ok) {
-          // Müdür veya Ekip Lideri onay bekleyeceğinden kullanıcıya bilgi mesajı verebilirsiniz
-          if (role === 'MANAGER' || role === 'LEADER') {
-            alert("Hesabınız oluşturuldu! Müdür / Ekip Lideri hesapları Admin onayından sonra aktifleşmektedir.");
+          // Sunucunun döndürdüğü statüye göre bilgi mesajı göster (Ekip Lideri, Müdür veya İnsan Kaynakları onay bekler)
+          if (data.status === 'PENDING') {
+            alert("Hesabınız oluşturuldu! Bu rol/departman için hesabınız Admin onayından sonra aktifleşecektir.");
           } else {
             alert("Hesabınız başarıyla oluşturuldu! Giriş yapabilirsiniz.");
           }
@@ -1511,7 +1511,14 @@
 
         // Bekleyen kullanıcıları tabloya yazdırıyoruz
         pendingTableBody.innerHTML = pendingUsers.map(user => {
-          let roleBadge = user.role === 'MANAGER' ? 'Müdür' : 'Ekip Lideri';
+          const roleLabels = {
+            MANAGER: 'Müdür',
+            LEADER: 'Ekip Lideri',
+            ENGINEER: 'Mühendis',
+            TECHNICIAN: 'Teknisyen',
+            INTERN: 'Stajyer'
+          };
+          let roleBadge = roleLabels[user.role] || user.role;
           let subType = user.leaderType ? (user.leaderType === 'TEST_EKIP_LIDERI' ? 'Test Ekip Lideri' : 'Gömülü Ekip Lideri') : '-';
 
           return `
@@ -1521,9 +1528,12 @@
               <td class="py-3 px-2">${user.department || '-'}</td>
               <td class="py-3 px-2"><span class="px-2 py-0.5 text-xs rounded-md bg-amber-500/10 text-amber-500 font-bold border border-amber-500/30">${roleBadge}</span></td>
               <td class="py-3 px-2 text-slate-400 text-xs">${subType}</td>
-              <td class="py-3 px-2 text-right">
-                <button onclick="approveUser(${user.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-all shadow-md flex items-center gap-1 ml-auto">
+              <td class="py-3 px-2 text-right space-x-1 flex items-center justify-end">
+                <button onclick="approveUser(${user.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-all shadow-md flex items-center gap-1">
                   <i class="fa-solid fa-check"></i> Onayla
+                </button>
+                <button onclick="rejectPendingUser(${user.id})" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-3 py-1.5 rounded-lg font-semibold transition-all shadow-md flex items-center gap-1">
+                  <i class="fa-solid fa-trash"></i> Sil
                 </button>
               </td>
             </tr>
@@ -1948,6 +1958,29 @@
         }
       } catch(err) {
         console.error("Onaylama hatası:", err);
+      }
+    }
+
+    async function rejectPendingUser(userId) {
+      if (!confirm("Bu kayıt onay talebini silmek istediğinizden emin misiniz? Bu işlem geri alınamaz!")) return;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}`, {
+          method: 'DELETE',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adminRole: currentUser.role })
+        });
+
+        if (res.ok) {
+          alert("Kayıt talebi silindi.");
+          if (typeof loadPendingUsers === 'function') await loadPendingUsers();
+          if (typeof fetchAdminStats === 'function') await fetchAdminStats();
+        } else {
+          const data = await res.json();
+          alert("Hata: " + data.error);
+        }
+      } catch (err) {
+        console.error("Kayıt silme hatası:", err);
       }
     }
 
