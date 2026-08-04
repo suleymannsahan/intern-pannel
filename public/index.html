@@ -451,57 +451,56 @@
               <i class="fa-solid fa-chart-line text-cyan-500"></i> Ekip Gidişatı
             </h3>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label class="block text-xs font-semibold mb-2 text-slate-500 dark:text-slate-400">Birimler</label>
-                <div id="progressDeptFilters" class="flex flex-wrap gap-2">
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="ELEKTRONIK" class="progress-dept-checkbox" checked> Elektronik
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="MEKANIK" class="progress-dept-checkbox" checked> Mekanik
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="YAZILIM" class="progress-dept-checkbox" checked> Yazılım
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="INSAN_KAYNAKLARI" class="progress-dept-checkbox"> İnsan Kaynakları
-                  </label>
+            <!-- ADIM 1: BİRİM LİSTESİ -->
+            <div id="teamProgressDeptList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3"></div>
+
+            <!-- ADIM 2: SEÇİLEN BİRİMDEKİ ROL/KİŞİ LİSTESİ -->
+            <div id="teamProgressPeopleList" class="hidden space-y-4">
+              <button onclick="backToDeptProgressList()" class="text-xs text-cyan-600 dark:text-cyan-400 font-semibold flex items-center gap-1.5 hover:underline">
+                <i class="fa-solid fa-arrow-left"></i> Birimlere Dön
+              </button>
+              <h4 id="teamProgressDeptTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100"></h4>
+              <div id="teamProgressRoleGroups" class="space-y-4"></div>
+            </div>
+          </div>
+
+          <!-- ADIM 3: KİŞİ DETAY MODALI (Büyük, açılır-kapanır) -->
+          <div id="personProgressModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="if(event.target===this) closePersonProgressModal();">
+            <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-5">
+              <div class="flex justify-between items-start">
+                <div>
+                  <h3 id="personProgressName" class="font-bold text-lg text-slate-900 dark:text-slate-100"></h3>
+                  <p id="personProgressMeta" class="text-xs text-slate-500 dark:text-slate-400"></p>
+                </div>
+                <button onclick="closePersonProgressModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+              </div>
+
+              <div class="grid grid-cols-2 gap-4">
+                <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
+                  <div class="text-xs text-amber-600 dark:text-amber-400">Üstünde Bulunan (Aktif) Görev</div>
+                  <div id="personActiveTaskCount" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</div>
+                </div>
+                <div class="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4">
+                  <div class="text-xs text-emerald-600 dark:text-emerald-400">Tamamlanmış (Onaylı) Görev</div>
+                  <div id="personCompletedTaskCount" class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">0</div>
                 </div>
               </div>
-              <div>
-                <label class="block text-xs font-semibold mb-2 text-slate-500 dark:text-slate-400">Roller</label>
-                <div id="progressRoleFilters" class="flex flex-wrap gap-2">
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="MANAGER" class="progress-role-checkbox"> Müdür
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="LEADER" class="progress-role-checkbox"> Ekip Lideri
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="ENGINEER" class="progress-role-checkbox" checked> Mühendis
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="TECHNICIAN" class="progress-role-checkbox"> Teknisyen
-                  </label>
-                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
-                    <input type="checkbox" value="INTERN" class="progress-role-checkbox" checked> Stajyer
-                  </label>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <h4 class="font-bold text-xs mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-list-check text-cyan-500"></i>Görevler <span class="text-slate-400 font-normal">(seçince logları görünür)</span></h4>
+                  <div id="personTaskListContainer" class="space-y-2 max-h-72 overflow-y-auto"></div>
+                </div>
+                <div>
+                  <h4 id="personTaskLogsTitle" class="font-bold text-xs mb-2 text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-cyan-500"></i>Tüm Loglar</h4>
+                  <div id="personTaskLogsContainer" class="space-y-2 max-h-72 overflow-y-auto"></div>
                 </div>
               </div>
-            </div>
 
-            <button onclick="loadTeamProgress()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
-              <i class="fa-solid fa-filter"></i> Filtrele / Göster
-            </button>
-
-            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
-              <canvas id="teamProgressChart" height="90"></canvas>
-            </div>
-
-            <div>
-              <h4 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-cyan-500"></i>Günlük Loglar</h4>
-              <div id="teamProgressLogs" class="space-y-2 max-h-96 overflow-y-auto"></div>
+              <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+                <h4 class="font-bold text-xs mb-2 text-slate-800 dark:text-slate-200">Zaman İçinde Gidişat</h4>
+                <canvas id="personProgressChart" height="80"></canvas>
+              </div>
             </div>
           </div>
         </section>
@@ -1191,120 +1190,251 @@
       if (typeof loadTeamProgress === 'function') loadTeamProgress();
     }
 
-    let teamProgressChartInstance = null;
+    let progressCurrentPersonTasks = [];
+    let progressCurrentPersonLogs = [];
+    let progressSelectedTaskId = null;
+    let personProgressChartInstance = null;
 
-    async function loadTeamProgress() {
-      const deptCheckboxes = document.querySelectorAll('.progress-dept-checkbox:checked');
-      const roleCheckboxes = document.querySelectorAll('.progress-role-checkbox:checked');
-      const logsContainer = document.getElementById('teamProgressLogs');
+    const TASK_STATUS_LABELS_TR = {
+      IN_PROGRESS: 'Devam Ediyor',
+      COMPLETED: 'Tamamlandı (Onay Bekliyor)',
+      APPROVED: 'Onaylandı',
+      REVISION_REQUESTED: 'Revize İstendi'
+    };
 
-      if (deptCheckboxes.length === 0 || roleCheckboxes.length === 0) {
-        if (logsContainer) logsContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Görüntülemek için en az bir birim ve bir rol seçiniz.</p>`;
-        if (teamProgressChartInstance) { teamProgressChartInstance.destroy(); teamProgressChartInstance = null; }
+    function loadTeamProgress() {
+      renderProgressDeptList();
+    }
+
+    // ADIM 1: Birim kartlarını göster
+    function renderProgressDeptList() {
+      const deptListEl = document.getElementById('teamProgressDeptList');
+      const peopleWrap = document.getElementById('teamProgressPeopleList');
+      if (!deptListEl) return;
+
+      deptListEl.classList.remove('hidden');
+      if (peopleWrap) peopleWrap.classList.add('hidden');
+
+      const byDept = {};
+      (usersList || []).forEach(u => {
+        if (u.role === 'ADMIN' || u.role === 'HR') return;
+        const key = u.department || 'BELİRTİLMEMİŞ';
+        if (!byDept[key]) byDept[key] = [];
+        byDept[key].push(u);
+      });
+
+      const deptKeys = Object.keys(byDept).sort((a, b) => {
+        if (a === 'BELİRTİLMEMİŞ') return 1;
+        if (b === 'BELİRTİLMEMİŞ') return -1;
+        return (DEPARTMENT_LABELS[a] || a).localeCompare(DEPARTMENT_LABELS[b] || b);
+      });
+
+      if (deptKeys.length === 0) {
+        deptListEl.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-6">Personel bulunamadı.</p>`;
         return;
       }
 
-      const departments = Array.from(deptCheckboxes).map(cb => cb.value).join(',');
-      const roles = Array.from(roleCheckboxes).map(cb => cb.value).join(',');
+      deptListEl.innerHTML = deptKeys.map(dept => `
+        <button onclick="selectProgressDepartment('${dept}')" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 rounded-2xl p-5 text-left transition-all">
+          <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">${byDept[dept].length}</div>
+          <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">${DEPARTMENT_LABELS[dept] || dept}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Kişi <i class="fa-solid fa-chevron-right ms-1"></i></div>
+        </button>
+      `).join('');
+    }
 
+    // ADIM 2: Seçilen birimdeki rol/kişi listesi
+    function selectProgressDepartment(dept) {
+      const deptListEl = document.getElementById('teamProgressDeptList');
+      const peopleWrap = document.getElementById('teamProgressPeopleList');
+      if (deptListEl) deptListEl.classList.add('hidden');
+      if (peopleWrap) peopleWrap.classList.remove('hidden');
+
+      document.getElementById('teamProgressDeptTitle').innerText = (DEPARTMENT_LABELS[dept] || dept) + ' Personeli';
+
+      const people = (usersList || []).filter(u => (u.department || 'BELİRTİLMEMİŞ') === dept && u.role !== 'ADMIN' && u.role !== 'HR');
+
+      const byRole = {};
+      people.forEach(u => {
+        const key = u.role || 'DİĞER';
+        if (!byRole[key]) byRole[key] = [];
+        byRole[key].push(u);
+      });
+
+      const roleKeys = Object.keys(byRole).sort((a, b) => {
+        const ia = ROLE_ORDER.indexOf(a);
+        const ib = ROLE_ORDER.indexOf(b);
+        return (ia === -1 ? 99 : ia) - (ib === -1 ? 99 : ib);
+      });
+
+      const container = document.getElementById('teamProgressRoleGroups');
+      if (roleKeys.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6">Bu birimde personel bulunamadı.</p>`;
+        return;
+      }
+
+      container.innerHTML = roleKeys.map(role => `
+        <div>
+          <h5 class="font-semibold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">${ROLE_LABELS_TR[role] || role} (${byRole[role].length})</h5>
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
+            ${byRole[role].map(u => `
+              <button onclick="openPersonProgress(${u.id})" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 rounded-xl p-3 text-left transition-all flex items-center justify-between gap-2">
+                <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">${u.name}</span>
+                <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
+              </button>
+            `).join('')}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function backToDeptProgressList() {
+      renderProgressDeptList();
+    }
+
+    // ADIM 3: Kişi detay modalını aç
+    async function openPersonProgress(userId) {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/admin/team-progress?userRole=${currentUser.role}&departments=${encodeURIComponent(departments)}&roles=${encodeURIComponent(roles)}`);
+        const res = await fetch(`${API_BASE_URL}/api/admin/team-progress?userRole=${currentUser.role}&userId=${userId}`);
         const data = await res.json();
 
         if (!res.ok) {
-          if (logsContainer) logsContainer.innerHTML = `<p class="text-xs text-rose-500 text-center py-4">${data.error || 'Veri alınamadı.'}</p>`;
+          alert(data.error || 'Veri alınamadı.');
           return;
         }
 
-        renderTeamProgressChart(data.people, data.logs);
-        renderTeamProgressLogs(data.logs);
-      } catch (err) {
-        console.error("Ekip gidişatı verisi alınamadı:", err);
-      }
-    }
-
-    function renderTeamProgressChart(people, logs) {
-      const canvas = document.getElementById('teamProgressChart');
-      if (!canvas) return;
-      const ctx = canvas.getContext('2d');
-      if (teamProgressChartInstance) { teamProgressChartInstance.destroy(); teamProgressChartInstance = null; }
-
-      if (!people || people.length === 0) return;
-
-      // Tüm log tarihlerini topla (kronolojik, tekilleştirilmiş)
-      const allDates = Array.from(new Set((logs || []).map(l => l.log_date))).sort();
-
-      if (allDates.length === 0) {
-        return;
-      }
-
-      const colors = ['#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#3b82f6', '#84cc16', '#f97316', '#14b8a6'];
-
-      const datasets = people
-        .filter(person => (logs || []).some(l => l.intern_id === person.id))
-        .map((person, idx) => {
-          const personLogs = (logs || []).filter(l => l.intern_id === person.id).sort((a, b) => a.log_date.localeCompare(b.log_date));
-          const dateToCumulative = {};
-          let cumulative = 0;
-          personLogs.forEach(l => {
-            cumulative++;
-            dateToCumulative[l.log_date] = cumulative;
-          });
-
-          let running = 0;
-          const dataPoints = allDates.map(date => {
-            if (dateToCumulative[date] !== undefined) running = dateToCumulative[date];
-            return running;
-          });
-
-          const color = colors[idx % colors.length];
-          return {
-            label: person.name,
-            data: dataPoints,
-            borderColor: color,
-            backgroundColor: color + '20',
-            tension: 0.3,
-            fill: false,
-            pointRadius: 2
-          };
-        });
-
-      teamProgressChartInstance = new Chart(ctx, {
-        type: 'line',
-        data: { labels: allDates, datasets },
-        options: {
-          responsive: true,
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
-          },
-          scales: {
-            y: { beginAtZero: true, ticks: { precision: 0 } }
-          }
+        const person = data.people && data.people[0];
+        if (!person) {
+          alert('Kullanıcı bulunamadı.');
+          return;
         }
-      });
+
+        progressCurrentPersonTasks = data.tasks || [];
+        progressCurrentPersonLogs = data.logs || [];
+        progressSelectedTaskId = null;
+
+        document.getElementById('personProgressName').innerText = person.name;
+        document.getElementById('personProgressMeta').innerText = `${ROLE_LABELS_TR[person.role] || person.role} · ${DEPARTMENT_LABELS[person.department] || person.department || '-'}`;
+
+        const activeCount = progressCurrentPersonTasks.filter(t => t.status !== 'APPROVED').length;
+        const completedCount = progressCurrentPersonTasks.filter(t => t.status === 'APPROVED').length;
+        document.getElementById('personActiveTaskCount').innerText = activeCount;
+        document.getElementById('personCompletedTaskCount').innerText = completedCount;
+
+        renderPersonTaskList();
+        renderPersonTaskLogs(null);
+        renderPersonProgressChart();
+
+        document.getElementById('personProgressModal').classList.remove('hidden');
+      } catch (err) {
+        console.error("Kişi verisi alınamadı:", err);
+      }
     }
 
-    function renderTeamProgressLogs(logs) {
-      const container = document.getElementById('teamProgressLogs');
+    function closePersonProgressModal() {
+      document.getElementById('personProgressModal').classList.add('hidden');
+      if (personProgressChartInstance) { personProgressChartInstance.destroy(); personProgressChartInstance = null; }
+    }
+
+    function renderPersonTaskList() {
+      const container = document.getElementById('personTaskListContainer');
       if (!container) return;
 
-      if (!logs || logs.length === 0) {
-        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Seçilen kriterlere ait log kaydı bulunamadı.</p>`;
+      if (progressCurrentPersonTasks.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Görev bulunamadı.</p>`;
         return;
+      }
+
+      container.innerHTML = progressCurrentPersonTasks.map(t => `
+        <button onclick="selectPersonTask(${t.id})" class="w-full text-left bg-slate-100 dark:bg-slate-900 border ${progressSelectedTaskId === t.id ? 'border-cyan-500' : 'border-slate-200 dark:border-slate-700'} rounded-xl p-3 text-xs transition-all">
+          <div class="flex justify-between items-center gap-2">
+            <span class="font-semibold text-slate-800 dark:text-slate-200">${t.title}</span>
+            <span class="px-2 py-0.5 rounded-md text-[10px] font-bold ${t.status === 'APPROVED' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}">${TASK_STATUS_LABELS_TR[t.status] || t.status}</span>
+          </div>
+          <div class="text-[11px] text-slate-400 mt-1">${t.category || ''} · Son tarih: ${t.end_date || '-'}</div>
+        </button>
+      `).join('');
+    }
+
+    function selectPersonTask(taskId) {
+      progressSelectedTaskId = (progressSelectedTaskId === taskId) ? null : taskId;
+      renderPersonTaskList();
+      renderPersonTaskLogs(progressSelectedTaskId);
+    }
+
+    function renderPersonTaskLogs(taskId) {
+      const container = document.getElementById('personTaskLogsContainer');
+      const titleEl = document.getElementById('personTaskLogsTitle');
+      if (!container) return;
+
+      const logs = taskId ? progressCurrentPersonLogs.filter(l => l.task_id === taskId) : progressCurrentPersonLogs;
+      if (titleEl) {
+        titleEl.innerHTML = taskId
+          ? `<i class="fa-solid fa-clipboard-list text-cyan-500"></i> Seçili Görevin Logları`
+          : `<i class="fa-solid fa-clipboard-list text-cyan-500"></i> Tüm Loglar`;
       }
 
       const sorted = [...logs].sort((a, b) => b.log_date.localeCompare(a.log_date));
 
+      if (sorted.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Log kaydı bulunamadı.</p>`;
+        return;
+      }
+
       container.innerHTML = sorted.map(log => `
         <div class="bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs">
           <div class="flex justify-between items-center mb-1">
-            <span class="font-bold text-slate-800 dark:text-slate-200">${log.intern_name || '-'}</span>
+            <span class="font-semibold text-slate-700 dark:text-slate-300">${log.task_title || 'Görev silinmiş'}</span>
             <span class="text-slate-400">${log.log_date}</span>
           </div>
-          <div class="text-slate-500 dark:text-slate-400 text-[11px] mb-1">${log.task_title || 'Görev silinmiş'}</div>
-          <div class="text-slate-700 dark:text-slate-300">${log.note}</div>
+          <div class="text-slate-600 dark:text-slate-300">${log.note}</div>
         </div>
       `).join('');
+    }
+
+    function renderPersonProgressChart() {
+      const canvas = document.getElementById('personProgressChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (personProgressChartInstance) { personProgressChartInstance.destroy(); personProgressChartInstance = null; }
+
+      const sortedLogs = [...progressCurrentPersonLogs].sort((a, b) => a.log_date.localeCompare(b.log_date));
+      if (sortedLogs.length === 0) return;
+
+      const allDates = Array.from(new Set(sortedLogs.map(l => l.log_date))).sort();
+      const dateToCumulative = {};
+      let cumulative = 0;
+      sortedLogs.forEach(l => {
+        cumulative++;
+        dateToCumulative[l.log_date] = cumulative;
+      });
+
+      let running = 0;
+      const dataPoints = allDates.map(d => {
+        if (dateToCumulative[d] !== undefined) running = dateToCumulative[d];
+        return running;
+      });
+
+      personProgressChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: allDates,
+          datasets: [{
+            label: 'Kümülatif Log Girişi',
+            data: dataPoints,
+            borderColor: '#06b6d4',
+            backgroundColor: '#06b6d420',
+            tension: 0.3,
+            fill: true,
+            pointRadius: 3
+          }]
+        },
+        options: {
+          responsive: true,
+          plugins: { legend: { display: false } },
+          scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+        }
+      });
     }
 
     const DEPARTMENT_LABELS = {

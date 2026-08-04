@@ -1123,10 +1123,40 @@ app.get('/api/meetings', async (req, res) => {
 // Seçilen birim(ler)/rol(ler) için kişi listesi + görev + günlük log verisi
 app.get('/api/admin/team-progress', async (req, res) => {
   try {
-    const { userRole, departments, roles } = req.query;
+    const { userRole, departments, roles, userId } = req.query;
 
     if (!isAdmin(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+
+    // Tek bir kişi için sorgu (kişi detay ekranı)
+    if (userId) {
+      const userResult = await db.execute({
+        sql: `SELECT id, name, role, department FROM users WHERE id = ?`,
+        args: [userId]
+      });
+      const people = userResult.rows;
+
+      if (people.length === 0) {
+        return res.json({ people: [], tasks: [], logs: [] });
+      }
+
+      const tasksResult = await db.execute({
+        sql: `SELECT id, title, assigned_to, category, end_date, status FROM tasks WHERE assigned_to = ?`,
+        args: [userId]
+      });
+
+      const logsResult = await db.execute({
+        sql: `SELECT daily_logs.id, daily_logs.intern_id, users.name as intern_name, daily_logs.task_id, tasks.title as task_title, daily_logs.log_date, daily_logs.note
+              FROM daily_logs
+              LEFT JOIN users ON daily_logs.intern_id = users.id
+              LEFT JOIN tasks ON daily_logs.task_id = tasks.id
+              WHERE daily_logs.intern_id = ?
+              ORDER BY daily_logs.log_date ASC`,
+        args: [userId]
+      });
+
+      return res.json({ people, tasks: tasksResult.rows, logs: logsResult.rows });
     }
 
     let userSql = `SELECT id, name, role, department FROM users WHERE status = 'APPROVED'`;
