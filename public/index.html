@@ -368,7 +368,7 @@
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <div class="flex justify-between items-center mb-4">
               <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-users text-cyan-500"></i> Stajyer Durum ve İş Yükü
+                <i class="fa-solid fa-users text-cyan-500"></i> Stajyer / Mühendis Durum ve İş Yükü
               </h3>
               <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
             </div>
@@ -383,7 +383,7 @@
                 <input type="text" id="taskTitle" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
               </div>
               <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Stajyer Seç</label>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevi Atayacağınız Kişi</label>
                 <select id="taskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
               </div>
               <div class="md:col-span-2">
@@ -444,6 +444,66 @@
             </div>
           </div>
           <p class="text-xs text-slate-400 text-center">Yeni Kayıt Onayları ve Kullanıcı Yönetimi artık üst menüdeki ilgili ikonlardan erişilebilir.</p>
+
+          <!-- EKİP GİDİŞATI -->
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-md space-y-5">
+            <h3 class="font-bold text-lg text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <i class="fa-solid fa-chart-line text-cyan-500"></i> Ekip Gidişatı
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold mb-2 text-slate-500 dark:text-slate-400">Birimler</label>
+                <div id="progressDeptFilters" class="flex flex-wrap gap-2">
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="ELEKTRONIK" class="progress-dept-checkbox" checked> Elektronik
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="MEKANIK" class="progress-dept-checkbox" checked> Mekanik
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="YAZILIM" class="progress-dept-checkbox" checked> Yazılım
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="INSAN_KAYNAKLARI" class="progress-dept-checkbox"> İnsan Kaynakları
+                  </label>
+                </div>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-2 text-slate-500 dark:text-slate-400">Roller</label>
+                <div id="progressRoleFilters" class="flex flex-wrap gap-2">
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="MANAGER" class="progress-role-checkbox"> Müdür
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="LEADER" class="progress-role-checkbox"> Ekip Lideri
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="ENGINEER" class="progress-role-checkbox" checked> Mühendis
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="TECHNICIAN" class="progress-role-checkbox"> Teknisyen
+                  </label>
+                  <label class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-3 py-1.5 rounded-lg text-xs cursor-pointer">
+                    <input type="checkbox" value="INTERN" class="progress-role-checkbox" checked> Stajyer
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <button onclick="loadTeamProgress()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
+              <i class="fa-solid fa-filter"></i> Filtrele / Göster
+            </button>
+
+            <div class="bg-slate-50 dark:bg-slate-900/50 rounded-xl p-4 border border-slate-200 dark:border-slate-700">
+              <canvas id="teamProgressChart" height="90"></canvas>
+            </div>
+
+            <div>
+              <h4 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-200 flex items-center gap-2"><i class="fa-solid fa-clipboard-list text-cyan-500"></i>Günlük Loglar</h4>
+              <div id="teamProgressLogs" class="space-y-2 max-h-96 overflow-y-auto"></div>
+            </div>
+          </div>
         </section>
 
         <!-- İNSAN KAYNAKLARI PANELİ -->
@@ -1128,6 +1188,123 @@
       loadPendingUsers();
       fetchAdminStats();
       fetchAdminUsers();
+      if (typeof loadTeamProgress === 'function') loadTeamProgress();
+    }
+
+    let teamProgressChartInstance = null;
+
+    async function loadTeamProgress() {
+      const deptCheckboxes = document.querySelectorAll('.progress-dept-checkbox:checked');
+      const roleCheckboxes = document.querySelectorAll('.progress-role-checkbox:checked');
+      const logsContainer = document.getElementById('teamProgressLogs');
+
+      if (deptCheckboxes.length === 0 || roleCheckboxes.length === 0) {
+        if (logsContainer) logsContainer.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Görüntülemek için en az bir birim ve bir rol seçiniz.</p>`;
+        if (teamProgressChartInstance) { teamProgressChartInstance.destroy(); teamProgressChartInstance = null; }
+        return;
+      }
+
+      const departments = Array.from(deptCheckboxes).map(cb => cb.value).join(',');
+      const roles = Array.from(roleCheckboxes).map(cb => cb.value).join(',');
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/team-progress?userRole=${currentUser.role}&departments=${encodeURIComponent(departments)}&roles=${encodeURIComponent(roles)}`);
+        const data = await res.json();
+
+        if (!res.ok) {
+          if (logsContainer) logsContainer.innerHTML = `<p class="text-xs text-rose-500 text-center py-4">${data.error || 'Veri alınamadı.'}</p>`;
+          return;
+        }
+
+        renderTeamProgressChart(data.people, data.logs);
+        renderTeamProgressLogs(data.logs);
+      } catch (err) {
+        console.error("Ekip gidişatı verisi alınamadı:", err);
+      }
+    }
+
+    function renderTeamProgressChart(people, logs) {
+      const canvas = document.getElementById('teamProgressChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (teamProgressChartInstance) { teamProgressChartInstance.destroy(); teamProgressChartInstance = null; }
+
+      if (!people || people.length === 0) return;
+
+      // Tüm log tarihlerini topla (kronolojik, tekilleştirilmiş)
+      const allDates = Array.from(new Set((logs || []).map(l => l.log_date))).sort();
+
+      if (allDates.length === 0) {
+        return;
+      }
+
+      const colors = ['#06b6d4', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#ec4899', '#3b82f6', '#84cc16', '#f97316', '#14b8a6'];
+
+      const datasets = people
+        .filter(person => (logs || []).some(l => l.intern_id === person.id))
+        .map((person, idx) => {
+          const personLogs = (logs || []).filter(l => l.intern_id === person.id).sort((a, b) => a.log_date.localeCompare(b.log_date));
+          const dateToCumulative = {};
+          let cumulative = 0;
+          personLogs.forEach(l => {
+            cumulative++;
+            dateToCumulative[l.log_date] = cumulative;
+          });
+
+          let running = 0;
+          const dataPoints = allDates.map(date => {
+            if (dateToCumulative[date] !== undefined) running = dateToCumulative[date];
+            return running;
+          });
+
+          const color = colors[idx % colors.length];
+          return {
+            label: person.name,
+            data: dataPoints,
+            borderColor: color,
+            backgroundColor: color + '20',
+            tension: 0.3,
+            fill: false,
+            pointRadius: 2
+          };
+        });
+
+      teamProgressChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: { labels: allDates, datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } }
+          },
+          scales: {
+            y: { beginAtZero: true, ticks: { precision: 0 } }
+          }
+        }
+      });
+    }
+
+    function renderTeamProgressLogs(logs) {
+      const container = document.getElementById('teamProgressLogs');
+      if (!container) return;
+
+      if (!logs || logs.length === 0) {
+        container.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Seçilen kriterlere ait log kaydı bulunamadı.</p>`;
+        return;
+      }
+
+      const sorted = [...logs].sort((a, b) => b.log_date.localeCompare(a.log_date));
+
+      container.innerHTML = sorted.map(log => `
+        <div class="bg-slate-100 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-xl p-3 text-xs">
+          <div class="flex justify-between items-center mb-1">
+            <span class="font-bold text-slate-800 dark:text-slate-200">${log.intern_name || '-'}</span>
+            <span class="text-slate-400">${log.log_date}</span>
+          </div>
+          <div class="text-slate-500 dark:text-slate-400 text-[11px] mb-1">${log.task_title || 'Görev silinmiş'}</div>
+          <div class="text-slate-700 dark:text-slate-300">${log.note}</div>
+        </div>
+      `).join('');
     }
 
     const DEPARTMENT_LABELS = {
@@ -2201,19 +2378,39 @@
     function populateAssigneeOptions() {
       const select = document.getElementById('taskAssignee');
       select.innerHTML = '';
+
       const interns = usersList.filter(u => u.role === 'INTERN');
-      interns.forEach(intern => {
-        const opt = document.createElement('option');
-        opt.value = intern.id;
-        opt.innerText = intern.name;
-        select.appendChild(opt);
-      });
+      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+
+      if (interns.length > 0) {
+        const internGroup = document.createElement('optgroup');
+        internGroup.label = 'Stajyerler';
+        interns.forEach(intern => {
+          const opt = document.createElement('option');
+          opt.value = intern.id;
+          opt.innerText = intern.name;
+          internGroup.appendChild(opt);
+        });
+        select.appendChild(internGroup);
+      }
+
+      if (engineers.length > 0) {
+        const engineerGroup = document.createElement('optgroup');
+        engineerGroup.label = 'Mühendisler';
+        engineers.forEach(eng => {
+          const opt = document.createElement('option');
+          opt.value = eng.id;
+          opt.innerText = eng.name;
+          engineerGroup.appendChild(opt);
+        });
+        select.appendChild(engineerGroup);
+      }
     }
 
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       listEl.innerHTML = '';
-      let interns = usersList.filter(u => u.role === 'INTERN');
+      let interns = usersList.filter(u => u.role === 'INTERN' || u.role === 'ENGINEER');
 
       const internData = interns.map(intern => {
         const activeTasks = tasksList.filter(t => (t.assigned_to == intern.id) && t.status !== 'APPROVED');
@@ -2272,7 +2469,7 @@
       const res = await fetch(`${API_BASE_URL}/api/tasks`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, description, assignedTo, category, endDate, workDays, createdBy: currentUser.name })
+        body: JSON.stringify({ title, description, assignedTo, category, endDate, workDays, createdBy: currentUser.name, userRole: currentUser.role })
       });
 
       if (res.ok) {
@@ -2281,6 +2478,9 @@
         document.getElementById('taskDescription').value = '';
         await loadTasks();
         renderInternStatusList();
+      } else {
+        const data = await res.json();
+        alert('Hata: ' + (data.error || 'Görev atanamadı.'));
       }
     }
 
@@ -2397,7 +2597,7 @@
       }
 
       let internButtons = '';
-      if (currentUser.role === 'INTERN' && task.status !== 'APPROVED') {
+      if (task.assigned_to === currentUser.id && task.status !== 'APPROVED') {
         internButtons = `
           <div class="flex gap-2 mt-2">
             <button onclick="openLogModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
