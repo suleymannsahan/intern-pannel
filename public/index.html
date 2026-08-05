@@ -198,10 +198,10 @@
 
       <!-- ORTA MENÜ: Görevler / Yeni Kayıt Onayı / Kullanıcı Yönetimi -->
       <nav class="flex-1 flex items-center justify-center gap-2 sm:gap-6 flex-wrap">
-        <!--<button id="tasksNavBtn" onclick="toggleTasksDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+        <button id="tasksNavBtn" onclick="toggleTasksDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
           Görevler
           <span id="tasksBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-        </button>-->
+        </button>
         <button id="pendingNavBtn" onclick="togglePendingDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
           Yeni Kayıt Onayı
           <span id="pendingBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
@@ -247,21 +247,26 @@
       </div>
     </header>
 
-    <!-- GÖREVLER TAM EKRAN MODAL 
+    <!-- GÖREVLER TAM EKRAN MODAL (Alt rollerin, kendisine ATANMAMIŞ görevleri) -->
     <div id="tasksDropdown" onclick="if(event.target===this) toggleTasksDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
         <div class="flex justify-between items-center">
           <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
             <i class="fa-solid fa-list-check text-cyan-500"></i> Görevler
+            <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">— ekibinizdeki görevler</span>
           </h3>
           <button onclick="toggleTasksDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
 
-        <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 flex flex-wrap gap-2 items-center">
-          <div class="flex-1 min-w-[200px] relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
-            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya stajyer adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+        <!-- FİLTRE BARI -->
+        <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2 items-center">
+          <div class="relative sm:col-span-2 lg:col-span-2">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya kişi adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
           </div>
+          <select id="filterAssignee" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Kişiler</option>
+          </select>
           <select id="filterCategory" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
             <option value="">Tüm Kategoriler</option>
             <option value="Yazılım">Yazılım</option>
@@ -269,26 +274,44 @@
             <option value="Ağ & Sistem">Ağ & Sistem</option>
             <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
           </select>
-          <select id="filterStatus" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-            <option value="">Tüm Durumlar</option>
-            <option value="IN_PROGRESS">Devam Ediyor</option>
-            <option value="COMPLETED">Tamamlandı</option>
-            <option value="APPROVED">Onaylandı</option>
-            <option value="REVISION_REQUESTED">Revize İstendi</option>
+          <select id="filterSort" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="end_asc">Son Teslim (yakın → uzak)</option>
+            <option value="end_desc">Son Teslim (uzak → yakın)</option>
+            <option value="title_asc">Başlık (A → Z)</option>
           </select>
         </div>
 
-        <section id="activeTasksSection" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-          <h4 class="font-bold text-sm mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500 animate-spin"></i>Aktif Görevler</h4>
-          <div id="taskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </section>
+        <!-- İKİ BÖLÜM: AKTİF | GEÇMİŞ -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <!-- SOL: AKTİF GÖREVLER -->
+          <section class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500"></i>Aktif Görevler <span id="activeTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">0</span></h4>
+            </div>
+            <select id="filterStatusActive" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+              <option value="">Tüm Aktif Durumlar</option>
+              <option value="IN_PROGRESS">Devam Ediyor</option>
+              <option value="COMPLETED">Tamamlandı (Onay Bekliyor)</option>
+              <option value="REVISION_REQUESTED">Revize İstendi</option>
+            </select>
+            <div id="taskList" class="grid grid-cols-1 gap-4"></div>
+          </section>
 
-        <section id="pastTasksSection" class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
-          <h4 class="font-bold text-sm mb-3 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan Görevler</h4>
-          <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
-        </section>
+          <!-- SAĞ: GEÇMİŞ / TAMAMLANAN GÖREVLER -->
+          <section class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
+            <div class="flex items-center justify-between mb-3">
+              <h4 class="font-bold text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan <span id="pastTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">0</span></h4>
+            </div>
+            <select id="filterStatusPast" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+              <option value="">Tümü (Onaylanan + Tamamlanan)</option>
+              <option value="APPROVED">Onaylandı</option>
+              <option value="COMPLETED">Tamamlandı</option>
+            </select>
+            <div id="pastTaskList" class="grid grid-cols-1 gap-4"></div>
+          </section>
+        </div>
       </div>
-    </div> -->
+    </div>
 
     <!-- YENİ KAYIT ONAYLARI TAM EKRAN MODAL -->
     <div id="pendingDropdown" onclick="if(event.target===this) togglePendingDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -1032,7 +1055,9 @@
     function updateTasksBadge() {
       const badge = document.getElementById('tasksBadgeCount');
       if (!badge) return;
-      const needsAttention = (tasksList || []).filter(t => t.status === 'COMPLETED' || t.status === 'REVISION_REQUESTED').length;
+      // Ekipteki (kendisine atanmamış) görevlerden onay/revize bekleyenler
+      const teamTasks = (typeof getVisibleTeamTasks === 'function') ? getVisibleTeamTasks() : (tasksList || []);
+      const needsAttention = teamTasks.filter(t => t.status === 'COMPLETED' || t.status === 'REVISION_REQUESTED').length;
       if (needsAttention > 0) {
         badge.textContent = needsAttention > 9 ? '9+' : String(needsAttention);
         badge.classList.remove('hidden');
@@ -2688,13 +2713,15 @@
 
       // 4. Arayüz Elemanlarının Yetkiye Göre Gösterilip/Gizlenmesi
       if (isLeaderOrAbove) {
-        // Müdür / Ekip Lideri: durum + görev atama paneli
+        // Müdür / Ekip Lideri: durum + görev atama paneli + kendisine atanan görevler (Görevlerim)
         if (leaderSection) leaderSection.classList.remove('hidden');
+        if (mainTasksSection) mainTasksSection.classList.remove('hidden');
         if (warningBanner) warningBanner.classList.add('hidden');
 
         setTaskTargetType('INTERN');       // görev atama formunu varsayılan olarak stajyere ayarla
         populateStatusRoleFilter();        // durum listesi rol seçicisini doldur
         if (typeof renderInternStatusList === 'function') renderInternStatusList();
+        if (typeof renderMainTaskList === 'function') renderMainTaskList();
 
       } else if (isEngineer) {
         // Mühendis: kendi stajyerlerinin durumu + stajyere görev atama + kendi görevleri ana ekranda
@@ -2752,9 +2779,9 @@
         calendarNavBtn.classList.remove('hidden');
       }
 
-      // 6. Görevler Menü Yazısı: Müdür/Ekip Lideri/Admin üst menüden büyük görev panelini kullanır.
-      // Mühendis, Stajyer ve Teknisyen görevleri doğrudan ana ekranda gördüğü için bu buton onlarda gizli.
-      const canAccessTasks = ['MANAGER', 'LEADER', 'ADMIN'].includes(currentUser.role);
+      // 6. Görevler Menü Yazısı: Alt rolü olan herkes (Müdür/Ekip Lideri/Mühendis) ve Admin,
+      // ekibindeki (kendisine atanmamış) görevleri üst menüdeki "Görevler" panelinden görür.
+      const canAccessTasks = currentUser.role === 'ADMIN' || getSubordinateRoles(currentUser.role).length > 0;
       const tasksNavBtn = document.getElementById('tasksNavBtn');
       if (tasksNavBtn) {
         tasksNavBtn.classList.toggle('hidden', !canAccessTasks);
@@ -3229,9 +3256,10 @@
       const searchVal = (document.getElementById('mainSearchInput')?.value || '').toLowerCase();
       const filterStat = document.getElementById('mainFilterStatus')?.value || '';
 
+      // "Görevlerim": SADECE kendisine atanan görevler
       const filtered = tasksList.filter(t => {
+        if (t.assigned_to != currentUser.id) return false;
         const matchesSearch = t.title.toLowerCase().includes(searchVal) ||
-                              (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
                               (t.created_by && t.created_by.toLowerCase().includes(searchVal));
         const matchesStatus = filterStat === '' || t.status === filterStat;
         return matchesSearch && matchesStatus;
@@ -3240,8 +3268,8 @@
       const activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
       const pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
 
-      // Mühendis, kendi stajyerlerinin görevlerini yönetebilir (onay/revize/düzenle/sil)
-      const isManager = currentUser.role === 'ENGINEER';
+      // Görevlerim alanında görevler kendisine ait; yönetim butonları gösterilmez
+      const isManager = false;
 
       if (activeTasks.length === 0) {
         container.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Görev bulunmamaktadır.</div>`;
@@ -3288,56 +3316,111 @@
       renderTaskList();
     }
 
+    // Bir görevin atandığı kişinin rolünü usersList üzerinden bulur
+    function getAssigneeRole(task) {
+      const u = (usersList || []).find(x => x.id == task.assigned_to);
+      return u ? u.role : null;
+    }
+
+    // "Görevler" alanında gösterilecek görevler:
+    // - Kendisine ATANMAMIŞ olacak (kendi görevleri "Görevlerim" alanında)
+    // - Atanan kişinin rolü, mevcut kullanıcının bir ALT rolü olacak (rol sıralaması)
+    // - Admin herkesin görevini görür
+    function getVisibleTeamTasks() {
+      if (!currentUser) return [];
+      const isAdmin = currentUser.role === 'ADMIN';
+      const subRoles = getSubordinateRoles(currentUser.role); // örn. LEADER -> [ENGINEER, TECHNICIAN, INTERN]
+
+      return (tasksList || []).filter(t => {
+        if (t.assigned_to == currentUser.id) return false; // kendi görevi değil
+        if (isAdmin) return true;
+        const arole = getAssigneeRole(t);
+        if (!arole) return false;
+        return subRoles.includes(arole);
+      });
+    }
+
+    // Görevler alanındaki "kişi" filtresini, görünür görevlerdeki kişilerle doldurur
+    function populateTaskAssigneeFilter(visibleTasks) {
+      const sel = document.getElementById('filterAssignee');
+      if (!sel) return;
+      const prev = sel.value;
+      const seen = new Map();
+      visibleTasks.forEach(t => {
+        if (t.assigned_to != null && !seen.has(String(t.assigned_to))) {
+          seen.set(String(t.assigned_to), t.assignee_name || ('#' + t.assigned_to));
+        }
+      });
+      const opts = ['<option value="">Tüm Kişiler</option>']
+        .concat([...seen.entries()]
+          .sort((a, b) => a[1].localeCompare(b[1]))
+          .map(([id, name]) => `<option value="${id}">${name}</option>`));
+      sel.innerHTML = opts.join('');
+      if ([...seen.keys()].includes(prev)) sel.value = prev;
+    }
+
     function renderTaskList() {
       const container = document.getElementById('taskList');
       const pastContainer = document.getElementById('pastTaskList');
-      
-      if (container) container.innerHTML = '';
-      if (pastContainer) pastContainer.innerHTML = '';
+      if (!container || !pastContainer) return;
+
+      container.innerHTML = '';
+      pastContainer.innerHTML = '';
+
+      const base = getVisibleTeamTasks();
+      populateTaskAssigneeFilter(base);
 
       const searchVal = document.getElementById('searchInput')?.value.toLowerCase() || '';
       const filterCat = document.getElementById('filterCategory')?.value || '';
-      const filterStat = document.getElementById('filterStatus')?.value || '';
+      const filterAssignee = document.getElementById('filterAssignee')?.value || '';
+      const filterSort = document.getElementById('filterSort')?.value || 'end_asc';
+      const filterStatActive = document.getElementById('filterStatusActive')?.value || '';
+      const filterStatPast = document.getElementById('filterStatusPast')?.value || '';
 
-      // Filtreleme işlemleri
-      const filtered = tasksList.filter(t => {
-        const matchesSearch = t.title.toLowerCase().includes(searchVal) || 
+      // Ortak filtreler (arama, kategori, kişi)
+      let filtered = base.filter(t => {
+        const matchesSearch = t.title.toLowerCase().includes(searchVal) ||
                               (t.assignee_name && t.assignee_name.toLowerCase().includes(searchVal)) ||
                               (t.created_by && t.created_by.toLowerCase().includes(searchVal));
         const matchesCategory = filterCat === '' || t.category === filterCat;
-        const matchesStatus = filterStat === '' || t.status === filterStat;
-        return matchesSearch && matchesCategory && matchesStatus;
+        const matchesAssignee = filterAssignee === '' || String(t.assigned_to) === filterAssignee;
+        return matchesSearch && matchesCategory && matchesAssignee;
       });
 
-      const activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
-      const pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
+      // Sıralama
+      filtered = filtered.slice().sort((a, b) => {
+        if (filterSort === 'title_asc') return (a.title || '').localeCompare(b.title || '');
+        const da = a.end_date || '', db = b.end_date || '';
+        if (filterSort === 'end_desc') return db.localeCompare(da);
+        return da.localeCompare(db); // end_asc (varsayılan)
+      });
 
-      // Yetki Kontrolü (ADMIN, MANAGER, LEADER veya ENGINEER kontrolü)
-      const isManager = (
-        currentUser.role === 'ADMIN' || 
-        currentUser.role === 'MANAGER' || 
-        currentUser.role === 'LEADER' || 
-        currentUser.role === 'ENGINEER'
-      );
+      let activeTasks = filtered.filter(t => t.status !== 'APPROVED' && t.status !== 'COMPLETED');
+      let pastTasks = filtered.filter(t => t.status === 'APPROVED' || t.status === 'COMPLETED');
 
-      // Aktif Görevleri Ekrana Bas
+      // Bölüme özel durum filtreleri
+      if (filterStatActive) activeTasks = activeTasks.filter(t => t.status === filterStatActive);
+      if (filterStatPast) pastTasks = pastTasks.filter(t => t.status === filterStatPast);
+
+      // Sayaçları güncelle
+      const ac = document.getElementById('activeTaskCount');
+      const pc = document.getElementById('pastTaskCount');
+      if (ac) ac.textContent = activeTasks.length;
+      if (pc) pc.textContent = pastTasks.length;
+
+      // Bu alandaki görevler başkasına ait; yönetim yetkisi olanlar (üst roller/admin) müdahale edebilir
+      const isManager = ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(currentUser.role);
+
       if (activeTasks.length === 0) {
-        if (container) container.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Görev bulunmamaktadır.</div>`;
+        container.innerHTML = `<div class="text-xs text-slate-500">Görev bulunmamaktadır.</div>`;
       } else {
-        activeTasks.forEach(task => {
-          const card = createTaskCard(task, false, isManager);
-          if (container) container.appendChild(card);
-        });
+        activeTasks.forEach(task => container.appendChild(createTaskCard(task, false, isManager)));
       }
 
-      // Geçmiş / Tamamlanan Görevleri Ekrana Bas
       if (pastTasks.length === 0) {
-        if (pastContainer) pastContainer.innerHTML = `<div class="text-xs text-slate-500 col-span-2">Geçmiş/Tamamlanan görev kaydı bulunmuyor.</div>`;
+        pastContainer.innerHTML = `<div class="text-xs text-slate-500">Geçmiş/Tamamlanan görev kaydı bulunmuyor.</div>`;
       } else {
-        pastTasks.forEach(task => {
-          const card = createTaskCard(task, true, isManager);
-          if (pastContainer) pastContainer.appendChild(card);
-        });
+        pastTasks.forEach(task => pastContainer.appendChild(createTaskCard(task, true, isManager)));
       }
     }
 
