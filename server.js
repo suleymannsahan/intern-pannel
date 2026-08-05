@@ -3,6 +3,7 @@ const { createClient } = require('@libsql/client');
 const cors = require('cors');
 const bcrypt = require('bcryptjs');
 const path = require('path');
+const gcal = require('./googleCalendar');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -23,7 +24,10 @@ async function initDbMigration() {
     { name: 'username', type: 'TEXT' },
     { name: 'department', type: 'TEXT' },
     { name: 'leader_sub_type', type: 'TEXT' },
-    { name: 'status', type: "TEXT DEFAULT 'PENDING'" }
+    { name: 'status', type: "TEXT DEFAULT 'PENDING'" },
+    // Google Takvim entegrasyonu: kullanıcı başına refresh token ve bağlı durumu
+    { name: 'google_refresh_token', type: 'TEXT' },
+    { name: 'google_calendar_connected', type: 'INTEGER DEFAULT 0' }
   ];
 
   for (const col of columnsToAdd) {
@@ -75,6 +79,8 @@ async function initDb() {
 
     try { await db.execute(`ALTER TABLE tasks ADD COLUMN description TEXT`); } catch (e) {}
     try { await db.execute(`ALTER TABLE tasks ADD COLUMN review_comment TEXT`); } catch (e) {}
+    // Google Takvim etkinlik kimliği (güncelleme/silme senkronu için)
+    try { await db.execute(`ALTER TABLE tasks ADD COLUMN google_event_id TEXT`); } catch (e) {}
 
     await db.execute(`
       CREATE TABLE IF NOT EXISTS daily_logs (
@@ -118,6 +124,8 @@ async function initDb() {
 
     // target_roles: toplantının bildirileceği/hedef rol listesi (virgülle ayrık). Eski kayıtlar için güvenli ekleme.
     try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN target_roles TEXT`); } catch (e) {}
+    // Google Takvim etkinlik kimliği (talep edenin takvimindeki etkinlik)
+    try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN google_event_id TEXT`); } catch (e) {}
 
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
@@ -126,6 +134,245 @@ async function initDb() {
 }
 
 initDb();
+
+// ============================================================
+// GOOGLE TAKVİM ENTEGRASYONU
+// ============================================================
+
+// Serbest tarih metnini YYYY-MM-DD'ye normalize eder (görev/toplantı tarihleri farklı biçimde olabilir)
+function normalizeDateForGcal(raw) {
+  if (!raw) return null;
+  const s = String(raw).trim();
+  const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+  const tr = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+  if (tr) return `${tr[3]}-${tr[2].padStart(2, '0')}-${tr[1].padStart(2, '0')}`;
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return d.toISOString().substring(0, 10);
+  return null;
+}
+
+// Bir kullanıcının bağlı olup olmadığını ve refresh token'ını getirir
+async function getUserGoogleToken(userId) {
+  try {
+    const r = await db.execute({
+      sql: `SELECT google_refresh_token, google_calendar_connected FROM users WHERE id = ?`,
+      args: [userId]
+    });
+    if (r.rows.length === 0) return null;
+    const row = r.rows[0];
+    if (!row.google_calendar_connected || !row.google_refresh_token) return null;
+    return row.google_refresh_token;
+  } catch (e) {
+    console.error('Google token okunamadı:', e.message);
+    return null;
+  }
+}
+
+// GÖREV senkron yardımcıları -------------------------------------------------
+
+// Görevi ilgili kullanıcının takvimine yazar/günceller; event id'yi tasks tablosuna kaydeder.
+async function syncTaskToGoogle(taskId) {
+  if (!gcal.isConfigured()) return;
+  try {
+    const r = await db.execute({
+      sql: `SELECT tasks.*, users.name AS assignee_name
+            FROM tasks LEFT JOIN users ON tasks.assigned_to = users.id
+            WHERE tasks.id = ?`,
+      args: [taskId]
+    });
+    if (r.rows.length === 0) return;
+    const task = r.rows[0];
+
+    const refreshToken = await getUserGoogleToken(task.assigned_to);
+    if (!refreshToken) return; // kullanıcı takvimini bağlamamış
+
+    const dateISO = normalizeDateForGcal(task.end_date);
+    if (!dateISO) return;
+
+    const eventData = {
+      type: 'task',
+      title: task.title,
+      description: task.description || '',
+      dateISO,
+      extraLines: [
+        task.category ? `Kategori: ${task.category}` : null,
+        task.created_by ? `Atayan: ${task.created_by}` : null
+      ]
+    };
+
+    if (task.google_event_id) {
+      await gcal.updateEvent(refreshToken, task.google_event_id, eventData);
+    } else {
+      const eventId = await gcal.createEvent(refreshToken, eventData);
+      await db.execute({
+        sql: `UPDATE tasks SET google_event_id = ? WHERE id = ?`,
+        args: [eventId, taskId]
+      });
+    }
+  } catch (err) {
+    console.error(`Görev #${taskId} Google Takvim senkron hatası:`, err.message);
+  }
+}
+
+// Görev silinmeden ÖNCE çağrılır: takvimden etkinliği kaldırır.
+async function removeTaskFromGoogle(taskId) {
+  if (!gcal.isConfigured()) return;
+  try {
+    const r = await db.execute({
+      sql: `SELECT assigned_to, google_event_id FROM tasks WHERE id = ?`,
+      args: [taskId]
+    });
+    if (r.rows.length === 0) return;
+    const { assigned_to, google_event_id } = r.rows[0];
+    if (!google_event_id) return;
+    const refreshToken = await getUserGoogleToken(assigned_to);
+    if (!refreshToken) return;
+    await gcal.deleteEvent(refreshToken, google_event_id);
+  } catch (err) {
+    console.error(`Görev #${taskId} Google Takvim silme hatası:`, err.message);
+  }
+}
+
+// TOPLANTI senkron yardımcısı ------------------------------------------------
+
+async function syncMeetingToGoogle(meetingId) {
+  if (!gcal.isConfigured()) return;
+  try {
+    const r = await db.execute({
+      sql: `SELECT meeting_requests.*, users.name AS requester_name
+            FROM meeting_requests LEFT JOIN users ON meeting_requests.requested_by = users.id
+            WHERE meeting_requests.id = ?`,
+      args: [meetingId]
+    });
+    if (r.rows.length === 0) return;
+    const m = r.rows[0];
+
+    const refreshToken = await getUserGoogleToken(m.requested_by);
+    if (!refreshToken) return;
+
+    const dateISO = normalizeDateForGcal(m.preferred_date);
+    if (!dateISO) return; // tarihi olmayan toplantı takvime yazılmaz
+
+    const eventData = {
+      type: 'meeting',
+      title: m.subject,
+      description: m.description || '',
+      dateISO,
+      extraLines: [
+        m.department ? `Birim: ${m.department}` : null,
+        m.status ? `Durum: ${m.status}` : null
+      ]
+    };
+
+    if (m.google_event_id) {
+      await gcal.updateEvent(refreshToken, m.google_event_id, eventData);
+    } else {
+      const eventId = await gcal.createEvent(refreshToken, eventData);
+      await db.execute({
+        sql: `UPDATE meeting_requests SET google_event_id = ? WHERE id = ?`,
+        args: [eventId, meetingId]
+      });
+    }
+  } catch (err) {
+    console.error(`Toplantı #${meetingId} Google Takvim senkron hatası:`, err.message);
+  }
+}
+
+// --- Google OAuth Endpoint'leri ---
+
+// 1) Bağlanmayı başlat: kullanıcıyı Google izin ekranına yönlendirir.
+//    Kullanım: tarayıcıda GET /api/google/auth?userId=123
+app.get('/api/google/auth', (req, res) => {
+  if (!gcal.isConfigured()) {
+    return res.status(503).send('Google Takvim entegrasyonu sunucuda yapılandırılmamış.');
+  }
+  const { userId } = req.query;
+  if (!userId) return res.status(400).send('userId gerekli.');
+  const url = gcal.getAuthUrl(userId);
+  res.redirect(url);
+});
+
+// 2) Google geri dönüş (callback): code'u refresh_token'a çevirir ve saklar.
+app.get('/api/google/callback', async (req, res) => {
+  const { code, state, error } = req.query;
+  const appBase = process.env.APP_BASE_URL || '/';
+
+  if (error) {
+    return res.redirect(`${appBase}?gcal=denied`);
+  }
+  if (!code || !state) {
+    return res.status(400).send('Eksik parametre.');
+  }
+
+  try {
+    const tokens = await gcal.exchangeCodeForTokens(code);
+    const userId = state;
+
+    if (!tokens.refresh_token) {
+      // refresh_token gelmediyse (kullanıcı daha önce izin vermiş olabilir) yine de bağlı say,
+      // ama ideal olan prompt:'consent' ile her seferinde almak. Mevcut token'ı koru.
+      await db.execute({
+        sql: `UPDATE users SET google_calendar_connected = 1 WHERE id = ?`,
+        args: [userId]
+      });
+    } else {
+      await db.execute({
+        sql: `UPDATE users SET google_refresh_token = ?, google_calendar_connected = 1 WHERE id = ?`,
+        args: [tokens.refresh_token, userId]
+      });
+    }
+
+    // Bağlandıktan sonra, kullanıcının mevcut açık görevlerini geriye dönük takvime ekle
+    try {
+      const openTasks = await db.execute({
+        sql: `SELECT id FROM tasks WHERE assigned_to = ? AND status != 'APPROVED'`,
+        args: [userId]
+      });
+      for (const t of openTasks.rows) {
+        await syncTaskToGoogle(t.id);
+      }
+    } catch (backfillErr) {
+      console.error('Geriye dönük görev senkronu hatası:', backfillErr.message);
+    }
+
+    res.redirect(`${appBase}?gcal=connected`);
+  } catch (err) {
+    console.error('Google callback hatası:', err.message);
+    res.redirect(`${appBase}?gcal=error`);
+  }
+});
+
+// 3) Bağlı durumu sorgula
+app.get('/api/google/status', async (req, res) => {
+  const { userId } = req.query;
+  if (!userId) return res.status(400).json({ error: 'userId gerekli.' });
+  try {
+    const r = await db.execute({
+      sql: `SELECT google_calendar_connected FROM users WHERE id = ?`,
+      args: [userId]
+    });
+    const connected = r.rows.length > 0 && !!r.rows[0].google_calendar_connected;
+    res.json({ connected, configured: gcal.isConfigured() });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 4) Bağlantıyı kaldır
+app.post('/api/google/disconnect', async (req, res) => {
+  const { userId } = req.body;
+  if (!userId) return res.status(400).json({ error: 'userId gerekli.' });
+  try {
+    await db.execute({
+      sql: `UPDATE users SET google_refresh_token = NULL, google_calendar_connected = 0 WHERE id = ?`,
+      args: [userId]
+    });
+    res.json({ message: 'Google Takvim bağlantısı kaldırıldı.' });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- API ENDPOINT'LERİ ---
 
@@ -392,7 +639,7 @@ app.post('/api/tasks', async (req, res) => {
   try {
     const { title, description, assignedTo, category, endDate, workDays, createdBy, userRole } = req.body;
 
-    if (!['ADMIN', 'MANAGER', 'LEADER'].includes(userRole)) {
+    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Görev atamaya yetkiniz yok!' });
     }
 
@@ -490,7 +737,12 @@ app.post('/api/tasks', async (req, res) => {
       }
     }
 
-    res.json({ id: Number(result.lastInsertRowid), message: "Görev oluşturuldu ve e-posta bildirimi gönderildi." });
+    const newTaskId = Number(result.lastInsertRowid);
+
+    // Google Takvim senkronu (kullanıcı takvimini bağladıysa). Yanıtı bekletmemek için await sonrası.
+    syncTaskToGoogle(newTaskId).catch(e => console.error('Task sync:', e.message));
+
+    res.json({ id: newTaskId, message: "Görev oluşturuldu ve e-posta bildirimi gönderildi." });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -888,6 +1140,9 @@ app.delete('/api/tasks/:id', async (req, res) => {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
+    // Silmeden ÖNCE Google Takvim etkinliğini kaldır (event id satırla birlikte kaybolmadan)
+    await removeTaskFromGoogle(taskId);
+
     // Göreve ait logları ve revizyonları temizle
     await db.execute({
       sql: `DELETE FROM daily_logs WHERE task_id = ?`,
@@ -932,6 +1187,7 @@ app.delete('/api/users/:id', async (req, res) => {
     const taskIds = tasksResult.rows.map(r => r.id);
 
     for (const taskId of taskIds) {
+      await removeTaskFromGoogle(taskId); // takvim etkinliğini de temizle
       await db.execute({ sql: `DELETE FROM task_revisions WHERE task_id = ?`, args: [taskId] });
     }
     await db.execute({ sql: `DELETE FROM daily_logs WHERE intern_id = ?`, args: [userId] });
@@ -962,6 +1218,10 @@ app.put('/api/tasks/:id', async (req, res) => {
     });
 
     if (result.rowsAffected === 0) return res.status(404).json({ error: 'Görev bulunamadı.' });
+
+    // Güncellenen görevi takvimde de güncelle (başlık/tarih/açıklama değişmiş olabilir)
+    syncTaskToGoogle(taskId).catch(e => console.error('Task update sync:', e.message));
+
     res.json({ message: 'Görev başarıyla güncellendi.' });
   } catch (error) {
     res.status(500).json({ error: 'Görev güncellenemedi: ' + error.message });
@@ -1126,7 +1386,12 @@ app.post('/api/meetings', async (req, res) => {
       args: [requestedBy, department || null, subject, description || null, preferredDate || null, now, targetRolesStr]
     });
 
-    res.json({ id: Number(result.lastInsertRowid), message: 'Toplantı talebiniz iletildi.' });
+    const newMeetingId = Number(result.lastInsertRowid);
+
+    // Talep edenin takvimine (tarihi varsa) toplantıyı ekle
+    syncMeetingToGoogle(newMeetingId).catch(e => console.error('Meeting sync:', e.message));
+
+    res.json({ id: newMeetingId, message: 'Toplantı talebiniz iletildi.' });
   } catch (error) {
     res.status(500).json({ error: 'Toplantı talebi oluşturulurken hata: ' + error.message });
   }

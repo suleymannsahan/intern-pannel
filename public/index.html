@@ -73,7 +73,7 @@
       class="absolute inset-0 w-full h-full object-cover z-0"
       autoplay muted loop playsinline
       poster="">
-      <source src="login-bg2.mp4" type="video/mp4">
+      <source src="login-bg.mp4" type="video/mp4">
     </video>
     <!-- Video üzerine hafif karartma katmanı (formların okunabilirliği için) -->
     <div class="absolute inset-0 z-0 bg-black/40 dark:bg-black/55"></div>
@@ -233,6 +233,9 @@
           <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl">
             <button onclick="openEditProfileModal(); toggleSettingsDropdown();" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
               <i class="fa-solid fa-user-pen text-cyan-500"></i> Profili Düzenle
+            </button>
+            <button id="gcalConnectBtn" onclick="handleGoogleCalendarClick()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
+              <i class="fa-brands fa-google text-cyan-500"></i> <span id="gcalConnectLabel">Google Takvim'i Bağla</span>
             </button>
             <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
               <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
@@ -4017,6 +4020,80 @@
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#39;');
     }
+
+    // ========= GOOGLE TAKVİM OTOMATİK BAĞLAMA (OAuth) =========
+    let gcalConnected = false;
+
+    // Ayarlar menüsündeki butona basınca: bağlı değilse Google'a yönlendir, bağlıysa kaldır.
+    function handleGoogleCalendarClick() {
+      if (!currentUser) return;
+      if (gcalConnected) {
+        disconnectGoogleCalendar();
+      } else {
+        // Google izin ekranına git (backend userId'yi state olarak taşır)
+        window.location.href = `${API_BASE_URL}/api/google/auth?userId=${currentUser.id}`;
+      }
+    }
+
+    async function disconnectGoogleCalendar() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/google/disconnect`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userId: currentUser.id })
+        });
+        if (res.ok) {
+          gcalConnected = false;
+          updateGcalButton();
+          alert('Google Takvim bağlantısı kaldırıldı.');
+        }
+      } catch (err) {
+        console.error('Google bağlantı kaldırma hatası:', err);
+      }
+    }
+
+    // Bağlı durumu backend'den çekip butonu günceller
+    async function refreshGoogleCalendarStatus() {
+      if (!currentUser) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/google/status?userId=${currentUser.id}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        gcalConnected = !!data.connected;
+        // Entegrasyon sunucuda yapılandırılmamışsa butonu gizle
+        const btn = document.getElementById('gcalConnectBtn');
+        if (btn) btn.classList.toggle('hidden', !data.configured);
+        updateGcalButton();
+      } catch (err) {
+        console.error('Google durum sorgusu hatası:', err);
+      }
+    }
+
+    function updateGcalButton() {
+      const label = document.getElementById('gcalConnectLabel');
+      if (!label) return;
+      label.innerText = gcalConnected ? 'Google Takvim Bağlı ✓ (Kaldır)' : "Google Takvim'i Bağla";
+    }
+
+    // Sayfa yüklendiğinde: OAuth dönüşü sonucunu göster ve durum sorgusunu yap
+    (function handleGcalRedirect() {
+      const params = new URLSearchParams(window.location.search);
+      const gcal = params.get('gcal');
+      if (gcal) {
+        const messages = {
+          connected: 'Google Takvim başarıyla bağlandı! Görev ve toplantılarınız otomatik eklenecek.',
+          denied: 'Google Takvim bağlantısına izin verilmedi.',
+          error: 'Google Takvim bağlanırken bir hata oluştu. Lütfen tekrar deneyin.'
+        };
+        if (messages[gcal]) setTimeout(() => alert(messages[gcal]), 300);
+        // URL'i temizle (yenilemede tekrar uyarı çıkmasın)
+        params.delete('gcal');
+        const clean = window.location.pathname + (params.toString() ? '?' + params.toString() : '');
+        window.history.replaceState({}, '', clean);
+      }
+      // currentUser hazırsa durum sorgusunu geciktirerek çalıştır
+      setTimeout(() => { if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus(); }, 500);
+    })();
   </script>
 </body>
 </html>
