@@ -214,6 +214,9 @@
           Toplantı
           <span id="meetingsBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
         </button>
+        <button id="calendarNavBtn" onclick="toggleCalendarModal()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+          <i class="fa-regular fa-calendar-days mr-1"></i>Takvim
+        </button>
       </nav>
 
       <div class="flex items-center gap-3 shrink-0">
@@ -2619,6 +2622,12 @@
         loadMeetings();
       }
 
+      // Takvim menüsü: tüm giriş yapmış kullanıcılar için görünür (herkesin görevi/toplantısı olabilir)
+      const calendarNavBtn = document.getElementById('calendarNavBtn');
+      if (calendarNavBtn) {
+        calendarNavBtn.classList.remove('hidden');
+      }
+
       // 6. Görevler Menü Yazısı: Müdür/Ekip Lideri/Admin üst menüden büyük görev panelini kullanır.
       // Mühendis, Stajyer ve Teknisyen görevleri doğrudan ana ekranda gördüğü için bu buton onlarda gizli.
       const canAccessTasks = ['MANAGER', 'LEADER', 'ADMIN'].includes(currentUser.role);
@@ -3675,6 +3684,338 @@
       }
 
       doc.save(`Staj_Raporu_${fixTurkishChars(intern.name).replace(/\s+/g, '_')}.pdf`);
+    }
+  </script>
+
+  <!-- ============ TAKVİM MODALI ============ -->
+  <div id="calendarModal" onclick="if(event.target===this) toggleCalendarModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
+      <!-- Başlık -->
+      <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2">
+            <button onclick="calendarChangeMonth(-1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+            <button onclick="calendarChangeMonth(1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+          </div>
+          <h2 id="calendarTitle" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">Takvim</h2>
+          <button onclick="calendarGoToday()" class="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition-all">Bugün</button>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium">
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500"></span>Görev</span>
+            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-violet-500"></span>Toplantı</span>
+          </div>
+          <button onclick="toggleCalendarModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+        </div>
+      </div>
+
+      <!-- Takvim gövdesi -->
+      <div class="flex-1 overflow-auto p-3 sm:p-4">
+        <!-- Gün başlıkları -->
+        <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2">
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Pzt</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Sal</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Çar</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Per</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cum</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cmt</div>
+          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Paz</div>
+        </div>
+        <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
+        <p id="calendarEmptyHint" class="hidden text-center text-xs text-slate-400 py-4">Bu ay için görev veya toplantı bulunmuyor.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ GÜN DETAY MODALI ============ -->
+  <div id="calendarDayModal" onclick="if(event.target===this) closeCalendarDayModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
+    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+      <div class="flex items-center justify-between px-5 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+        <h3 id="calendarDayTitle" class="text-base font-bold text-slate-900 dark:text-slate-100">Gün Detayı</h3>
+        <button onclick="closeCalendarDayModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      <div id="calendarDayBody" class="flex-1 overflow-auto p-4 space-y-2"></div>
+    </div>
+  </div>
+
+  <!-- ============ TAKVİM JS ============ -->
+  <script>
+    // Takvim durumu
+    let calendarViewDate = new Date();      // görüntülenen ay
+    let calendarEvents = [];                // { date:'YYYY-MM-DD', type:'task'|'meeting', title, meta, status }
+    const CAL_MONTH_NAMES = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+    function toggleCalendarModal() {
+      const modal = document.getElementById('calendarModal');
+      if (!modal) return;
+      modal.classList.toggle('hidden');
+      if (!modal.classList.contains('hidden')) {
+        calendarViewDate = new Date();
+        loadCalendarData();
+      }
+    }
+
+    function calendarChangeMonth(delta) {
+      calendarViewDate.setMonth(calendarViewDate.getMonth() + delta);
+      renderCalendar();
+    }
+
+    function calendarGoToday() {
+      calendarViewDate = new Date();
+      renderCalendar();
+    }
+
+    // Yerel saat diliminde YYYY-MM-DD üretir (toISOString UTC kaydırması yapmasın)
+    function calLocalISO(d) {
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    }
+
+    // Serbest tarih metnini YYYY-MM-DD'ye normalize etmeye çalışır
+    function calNormalizeDate(raw) {
+      if (!raw) return null;
+      const s = String(raw).trim();
+      // Zaten ISO ise ilk 10 karakteri al
+      const isoMatch = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+      // GG.AA.YYYY veya GG/AA/YYYY
+      const trMatch = s.match(/^(\d{1,2})[.\/](\d{1,2})[.\/](\d{4})/);
+      if (trMatch) {
+        const dd = trMatch[1].padStart(2, '0');
+        const mm = trMatch[2].padStart(2, '0');
+        return `${trMatch[3]}-${mm}-${dd}`;
+      }
+      // Son çare: Date parse
+      const d = new Date(s);
+      if (!isNaN(d.getTime())) return calLocalISO(d);
+      return null;
+    }
+
+    async function loadCalendarData() {
+      calendarEvents = [];
+      if (!currentUser) { renderCalendar(); return; }
+
+      // 1) Görevler
+      try {
+        let url = `${API_BASE_URL}/api/tasks?userId=${currentUser.id}&role=${currentUser.role}`;
+        if (currentUser.department) url += `&department=${encodeURIComponent(currentUser.department)}`;
+        const res = await fetch(url);
+        const tasks = await res.json();
+        if (Array.isArray(tasks)) {
+          tasks.forEach(t => {
+            const date = calNormalizeDate(t.end_date);
+            if (!date) return;
+            calendarEvents.push({
+              date,
+              type: 'task',
+              title: t.title || 'Görev',
+              description: t.description || '',
+              assignee: t.assignee_name || '',
+              category: t.category || '',
+              status: t.status || ''
+            });
+          });
+        }
+      } catch (err) { console.error('Takvim görevleri alınamadı:', err); }
+
+      // 2) Toplantılar (sadece erişimi olan roller için anlamlı; yine de deneriz)
+      try {
+        let url = `${API_BASE_URL}/api/meetings?userId=${currentUser.id}&role=${currentUser.role}`;
+        if (currentUser.department) url += `&department=${encodeURIComponent(currentUser.department)}`;
+        const res = await fetch(url);
+        if (res.ok) {
+          const meetings = await res.json();
+          if (Array.isArray(meetings)) {
+            meetings.forEach(m => {
+              const date = calNormalizeDate(m.preferred_date);
+              if (!date) return;
+              calendarEvents.push({
+                date,
+                type: 'meeting',
+                title: m.subject || 'Toplantı',
+                description: m.description || '',
+                assignee: m.requester_name || '',
+                department: m.department || '',
+                status: m.status || ''
+              });
+            });
+          }
+        }
+      } catch (err) { console.error('Takvim toplantıları alınamadı:', err); }
+
+      renderCalendar();
+    }
+
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const title = document.getElementById('calendarTitle');
+      const emptyHint = document.getElementById('calendarEmptyHint');
+      if (!grid) return;
+
+      const year = calendarViewDate.getFullYear();
+      const month = calendarViewDate.getMonth();
+      title.innerText = `${CAL_MONTH_NAMES[month]} ${year}`;
+
+      // Ayın ilk günü ve Pazartesi başlangıçlı ofset
+      const firstDay = new Date(year, month, 1);
+      let startOffset = firstDay.getDay() - 1; // JS: 0=Pazar
+      if (startOffset < 0) startOffset = 6;    // Pazar -> 6
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const todayISO = calLocalISO(new Date());
+
+      // Bu ayın etkinliklerini güne göre grupla
+      const eventsByDate = {};
+      let monthEventCount = 0;
+      calendarEvents.forEach(ev => {
+        const [ey, em] = ev.date.split('-').map(Number);
+        if (ey === year && (em - 1) === month) {
+          (eventsByDate[ev.date] = eventsByDate[ev.date] || []).push(ev);
+          monthEventCount++;
+        }
+      });
+      if (emptyHint) emptyHint.classList.toggle('hidden', monthEventCount > 0);
+
+      let html = '';
+      // Baştaki boş hücreler
+      for (let i = 0; i < startOffset; i++) {
+        html += `<div class="min-h-[70px] sm:min-h-[96px] rounded-lg sm:rounded-xl bg-slate-50 dark:bg-slate-950/40 border border-transparent"></div>`;
+      }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateISO = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+        const dayEvents = eventsByDate[dateISO] || [];
+        const isToday = dateISO === todayISO;
+
+        const ring = isToday ? 'ring-2 ring-cyan-500' : 'border border-slate-200 dark:border-slate-800';
+        const dayNumCls = isToday
+          ? 'bg-cyan-600 text-white'
+          : 'text-slate-500 dark:text-slate-400';
+
+        let chips = '';
+        const maxShown = 3;
+        dayEvents.slice(0, maxShown).forEach(ev => {
+          const color = ev.type === 'task'
+            ? 'bg-cyan-500/15 text-cyan-700 dark:text-cyan-300 border-cyan-500/30'
+            : 'bg-violet-500/15 text-violet-700 dark:text-violet-300 border-violet-500/30';
+          const icon = ev.type === 'task' ? 'fa-clipboard-check' : 'fa-people-group';
+          chips += `<div class="truncate text-[9px] sm:text-[10px] leading-tight px-1 py-0.5 rounded border ${color} font-medium"><i class="fa-solid ${icon} mr-0.5"></i>${escapeHtmlCal(ev.title)}</div>`;
+        });
+        if (dayEvents.length > maxShown) {
+          chips += `<div class="text-[9px] sm:text-[10px] text-slate-400 font-semibold pl-1">+${dayEvents.length - maxShown} daha</div>`;
+        }
+
+        const clickable = dayEvents.length > 0
+          ? `onclick="openCalendarDay('${dateISO}')" style="cursor:pointer"`
+          : '';
+
+        html += `
+          <div ${clickable} class="min-h-[70px] sm:min-h-[96px] rounded-lg sm:rounded-xl ${ring} bg-white dark:bg-slate-900 p-1 sm:p-1.5 flex flex-col gap-0.5 sm:gap-1 hover:border-cyan-400 dark:hover:border-cyan-600 transition-all overflow-hidden">
+            <div class="flex justify-end">
+              <span class="text-[10px] sm:text-xs font-bold h-5 w-5 sm:h-6 sm:w-6 flex items-center justify-center rounded-full ${dayNumCls}">${day}</span>
+            </div>
+            <div class="flex flex-col gap-0.5 overflow-hidden">${chips}</div>
+          </div>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    function openCalendarDay(dateISO) {
+      const modal = document.getElementById('calendarDayModal');
+      const titleEl = document.getElementById('calendarDayTitle');
+      const bodyEl = document.getElementById('calendarDayBody');
+      if (!modal) return;
+
+      const dayEvents = calendarEvents.filter(ev => ev.date === dateISO)
+        .sort((a, b) => (a.type === b.type ? 0 : a.type === 'task' ? -1 : 1));
+
+      const [y, m, d] = dateISO.split('-').map(Number);
+      titleEl.innerText = `${d} ${CAL_MONTH_NAMES[m - 1]} ${y}`;
+
+      if (dayEvents.length === 0) {
+        bodyEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Bu güne ait kayıt yok.</p>`;
+      } else {
+        bodyEl.innerHTML = dayEvents.map(ev => {
+          const isTask = ev.type === 'task';
+          const accent = isTask ? 'border-l-cyan-500' : 'border-l-violet-500';
+          const badge = isTask
+            ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/15 text-cyan-600 dark:text-cyan-300">GÖREV</span>'
+            : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-full bg-violet-500/15 text-violet-600 dark:text-violet-300">TOPLANTI</span>';
+
+          const statusMap = {
+            'IN_PROGRESS': 'Devam Ediyor', 'APPROVED': 'Onaylandı', 'PENDING': 'Beklemede',
+            'COMPLETED': 'Tamamlandı', 'REVISION': 'Revizyon', 'REJECTED': 'Reddedildi'
+          };
+          const statusTxt = statusMap[ev.status] || ev.status || '';
+
+          const metaLines = [];
+          if (ev.assignee) metaLines.push(`<i class="fa-solid fa-user w-3.5 text-slate-400"></i> ${escapeHtmlCal(ev.assignee)}`);
+          if (isTask && ev.category) metaLines.push(`<i class="fa-solid fa-tag w-3.5 text-slate-400"></i> ${escapeHtmlCal(ev.category)}`);
+          if (!isTask && ev.department) metaLines.push(`<i class="fa-solid fa-building w-3.5 text-slate-400"></i> ${escapeHtmlCal(ev.department)}`);
+          if (statusTxt) metaLines.push(`<i class="fa-solid fa-circle-info w-3.5 text-slate-400"></i> ${escapeHtmlCal(statusTxt)}`);
+
+          const gcalUrl = buildGoogleCalUrl(ev, dateISO);
+
+          return `
+            <div class="border border-slate-200 dark:border-slate-800 border-l-4 ${accent} rounded-xl p-3 bg-slate-50 dark:bg-slate-950/40">
+              <div class="flex items-start justify-between gap-2">
+                <div class="font-bold text-sm text-slate-900 dark:text-slate-100 break-words">${escapeHtmlCal(ev.title)}</div>
+                ${badge}
+              </div>
+              ${ev.description ? `<div class="text-xs text-slate-500 dark:text-slate-400 mt-1 break-words">${escapeHtmlCal(ev.description)}</div>` : ''}
+              ${metaLines.length ? `<div class="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">${metaLines.map(l => `<div class="flex items-center gap-1.5">${l}</div>`).join('')}</div>` : ''}
+              <a href="${gcalUrl}" target="_blank" rel="noopener" class="mt-3 inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all">
+                <i class="fa-brands fa-google text-cyan-500"></i> Google Takvim'e Ekle
+              </a>
+            </div>`;
+        }).join('');
+      }
+
+      modal.classList.remove('hidden');
+    }
+
+    function closeCalendarDayModal() {
+      const modal = document.getElementById('calendarDayModal');
+      if (modal) modal.classList.add('hidden');
+    }
+
+    // Google Calendar "hızlı ekle" (render) linki üretir — tüm gün etkinliği olarak
+    function buildGoogleCalUrl(ev, dateISO) {
+      const start = dateISO.replace(/-/g, '');            // YYYYMMDD
+      const endDate = new Date(dateISO + 'T00:00:00');
+      endDate.setDate(endDate.getDate() + 1);
+      const end = calLocalISO(endDate).replace(/-/g, ''); // Google tüm-gün için bitiş = ertesi gün
+
+      const prefix = ev.type === 'task' ? '[Görev] ' : '[Toplantı] ';
+      const title = prefix + (ev.title || '');
+
+      const detailParts = [];
+      if (ev.description) detailParts.push(ev.description);
+      if (ev.assignee) detailParts.push((ev.type === 'task' ? 'Atanan: ' : 'Talep eden: ') + ev.assignee);
+      if (ev.type === 'task' && ev.category) detailParts.push('Kategori: ' + ev.category);
+      if (ev.type === 'meeting' && ev.department) detailParts.push('Birim: ' + ev.department);
+      detailParts.push('Görevlendirme ve Takip Paneli');
+      const details = detailParts.join('\n');
+
+      const params = new URLSearchParams({
+        action: 'TEMPLATE',
+        text: title,
+        dates: `${start}/${end}`,
+        details: details
+      });
+      return `https://calendar.google.com/calendar/render?${params.toString()}`;
+    }
+
+    // Basit HTML kaçış (XSS önlemi)
+    function escapeHtmlCal(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
     }
   </script>
 </body>
