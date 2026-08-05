@@ -675,6 +675,20 @@
 
   <!-- MODALLAR -->
 
+  <!-- GÖREV DETAY MODALI (karta tıklanınca ekranda büyür) -->
+  <div id="taskDetailModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]" onclick="if(event.target===this) closeTaskDetailModal();">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-start gap-3 p-6 pb-3 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+        <div class="min-w-0">
+          <h3 id="taskDetailTitle" class="font-bold text-xl text-cyan-600 dark:text-cyan-300 break-words"></h3>
+          <div id="taskDetailStatus" class="mt-1.5"></div>
+        </div>
+        <button onclick="closeTaskDetailModal()" class="shrink-0 text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div id="taskDetailBody" class="p-6 pt-4 space-y-4"></div>
+    </div>
+  </div>
+
   <!-- EKİP GİDİŞATI KİŞİ DETAY MODALI (Büyük, açılır-kapanır) -->
           <div id="personProgressModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="if(event.target===this) closePersonProgressModal();">
             <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-5">
@@ -1289,6 +1303,36 @@
       if (currentUser.role !== 'HR' && typeof loadTasks === 'function') {
         loadTasks();
       }
+
+      // Üst menü buton görünürlüklerini garanti altına al (showDashboard bir yerde aksarsa diye)
+      if (typeof applyNavVisibility === 'function') applyNavVisibility();
+    }
+
+    // Üst menüdeki rol-bağımlı butonların görünürlüğünü ayarlar
+    function applyNavVisibility() {
+      if (!currentUser) return;
+      const role = currentUser.role;
+      const isAdmin = role === 'ADMIN';
+
+      // Görevler: alt rolü olan herkes + admin
+      const canAccessTasks = isAdmin || getSubordinateRoles(role).length > 0;
+      const tasksNavBtn = document.getElementById('tasksNavBtn');
+      if (tasksNavBtn) tasksNavBtn.classList.toggle('hidden', !canAccessTasks);
+
+      // Toplantı
+      const canAccessMeetings = ['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(role);
+      const meetingsNavBtn = document.getElementById('meetingsNavBtn');
+      if (meetingsNavBtn) meetingsNavBtn.classList.toggle('hidden', !canAccessMeetings);
+
+      // Takvim: herkes
+      const calendarNavBtn = document.getElementById('calendarNavBtn');
+      if (calendarNavBtn) calendarNavBtn.classList.remove('hidden');
+
+      // Yeni Kayıt Onayı & Kullanıcı Yönetimi: sadece Admin
+      const pendingNavBtn = document.getElementById('pendingNavBtn');
+      const userMgmtNavBtn = document.getElementById('userMgmtNavBtn');
+      if (pendingNavBtn) pendingNavBtn.classList.toggle('hidden', !isAdmin);
+      if (userMgmtNavBtn) userMgmtNavBtn.classList.toggle('hidden', !isAdmin);
     }
 
     function showSection(sectionName) {
@@ -1542,26 +1586,25 @@
         INTERN: 'fa-graduation-cap text-amber-500'
       };
 
-      // RÜTBE AĞACI: en üst rolden en alt role doğru dikey (yukarıdan aşağıya) sıralı.
-      // Her seviye, bir alttakine göre hafifçe girintili; her kişi tıklanabilir kişi kartı.
+      // RÜTBE AĞACI: en üst rolden en alt role doğru, alanın ORTASINDA aşağı doğru dikey sıralı.
+      // Her seviye ortalanmış bir blok; seviyeler arasında dikey bağlantı çizgisi.
       container.innerHTML = `
-        <div class="relative">
+        <div class="flex flex-col items-center">
           ${roleKeys.map((role, idx) => {
             const icon = roleIconsTree[role] || 'fa-user text-slate-400';
-            const indentPx = idx * 20; // her seviye biraz daha içeride → ağaç görünümü
             return `
-              <div class="relative" style="margin-left:${indentPx}px">
-                ${idx > 0 ? '<div class="absolute -left-3 -top-3 h-6 w-3 border-l-2 border-b-2 border-slate-300 dark:border-slate-700 rounded-bl-lg"></div>' : ''}
-                <div class="flex items-center gap-2 mb-2 mt-4">
-                  <span class="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"><i class="fa-solid ${icon} text-xs"></i></span>
+              ${idx > 0 ? '<div class="h-6 w-px bg-slate-300 dark:border-slate-700 dark:bg-slate-700"></div>' : ''}
+              <div class="w-full max-w-2xl">
+                <div class="flex items-center justify-center gap-2 mb-3">
+                  <span class="inline-flex items-center justify-center h-7 w-7 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"><i class="fa-solid ${icon} text-xs"></i></span>
                   <h5 class="font-bold text-xs uppercase tracking-wider text-slate-600 dark:text-slate-300">${ROLE_LABELS_TR[role] || role} <span class="text-slate-400 font-semibold">(${byRole[role].length})</span></h5>
                 </div>
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pl-2 border-l-2 border-slate-200 dark:border-slate-800">
+                <div class="flex flex-wrap justify-center gap-3">
                   ${byRole[role].map(u => {
                     const active = tasksList.filter(t => t.assigned_to == u.id && t.status !== 'APPROVED').length;
                     const done = tasksList.filter(t => t.assigned_to == u.id && t.status === 'APPROVED').length;
                     return `
-                      <button onclick="openPersonProgress(${u.id})" class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
+                      <button onclick="openPersonProgress(${u.id})" class="group w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
                         <div class="flex items-center gap-3">
                           <div class="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-bold text-sm">
                             ${(u.name || '?').trim().charAt(0).toUpperCase()}
@@ -1570,7 +1613,6 @@
                             <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">${u.name}</div>
                             <div class="text-[10px] text-slate-400 truncate">${ROLE_LABELS_TR[u.role] || u.role}</div>
                           </div>
-                          <i class="fa-solid fa-chevron-right text-slate-300 dark:text-slate-600 text-xs group-hover:text-cyan-500 transition-colors"></i>
                         </div>
                         <div class="flex items-center gap-2 mt-3">
                           <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">${active} aktif</span>
@@ -3426,14 +3468,59 @@
 
     function createTaskCard(task, isPast, isManager) {
       const taskLogs = dailyLogsList.filter(l => l.task_id === task.id);
-      const card = document.createElement('div');
-      card.className = "bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 flex flex-col justify-between gap-3 shadow-md backdrop-blur-sm";
+      const card = document.createElement('button');
+      card.type = 'button';
+      card.className = "text-left w-full bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-md backdrop-blur-sm hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg hover:-translate-y-0.5 transition-all";
+      card.onclick = () => openTaskDetailModal(task.id, isManager);
 
-      // Revizyon Geçmişi HTML Görünümü (Herkes Görebilir)
+      let statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
+      if (task.status === 'COMPLETED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Onay Bekliyor</span>`;
+      if (task.status === 'APPROVED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
+      if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
+
+      const noteCount = taskLogs.length;
+      const revCount = (task.revisions && task.revisions.length) || 0;
+
+      // Kart sadece özet gösterir; detay için tıklanır (modal açılır)
+      card.innerHTML = `
+        <div class="flex justify-between items-start gap-2">
+          <h4 class="font-bold text-base text-cyan-600 dark:text-cyan-300 break-words min-w-0">${task.title}</h4>
+          ${statusBadge}
+        </div>
+        <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span><i class="fa-regular fa-user me-1"></i>${task.assignee_name || 'Bilinmiyor'}</span>
+          <span><i class="fa-regular fa-calendar me-1"></i>${task.end_date || '-'}</span>
+          ${noteCount ? `<span><i class="fa-solid fa-clipboard-list me-1"></i>${noteCount} not</span>` : ''}
+          ${revCount ? `<span class="text-rose-500"><i class="fa-solid fa-rotate-left me-1"></i>${revCount} revizyon</span>` : ''}
+        </div>
+        <div class="mt-2 text-[11px] font-semibold text-cyan-600 dark:text-cyan-400">
+          Detayları görüntüle <i class="fa-solid fa-up-right-and-down-left-from-center ms-1 text-[10px]"></i>
+        </div>
+      `;
+      return card;
+    }
+
+    // Görev detayını büyük modalde gösterir
+    function openTaskDetailModal(taskId, isManager) {
+      const task = (tasksList || []).find(t => t.id == taskId);
+      if (!task) return;
+
+      // Yönetim yetkisi verilmediyse rolden yeniden hesapla (güvenli varsayılan)
+      if (typeof isManager === 'undefined') {
+        isManager = ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(currentUser.role) && task.assigned_to != currentUser.id;
+      }
+
+      const taskLogs = dailyLogsList.filter(l => l.task_id === task.id);
+
+      let statusBadge = `<span class="px-2.5 py-1 text-xs rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
+      if (task.status === 'COMPLETED') statusBadge = `<span class="px-2.5 py-1 text-xs rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Tamamlandı (Onay Bekliyor)</span>`;
+      if (task.status === 'APPROVED') statusBadge = `<span class="px-2.5 py-1 text-xs rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
+      if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2.5 py-1 text-xs rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
+
       let revisionsHtml = '';
       if (task.revisions && task.revisions.length > 0) {
         revisionsHtml = task.revisions.map(r => `
-          <div class="bg-rose-50 dark:bg-rose-950/30 p-2 rounded-xl text-xs border border-rose-200 dark:border-rose-900/50 mt-1">
+          <div class="bg-rose-50 dark:bg-rose-950/30 p-3 rounded-xl text-xs border border-rose-200 dark:border-rose-900/50">
             <div class="flex justify-between items-center text-[10px] text-rose-600 dark:text-rose-400 font-bold mb-1">
               <span><i class="fa-solid fa-user-pen me-1"></i>Revize Eden: ${r.revised_by}</span>
               <span><i class="fa-regular fa-clock me-1"></i>${r.created_at}</span>
@@ -3443,36 +3530,31 @@
         `).join('');
       }
 
-      let logsHtml = taskLogs.map(l => `
-        <div class="bg-slate-100 dark:bg-slate-900/90 p-2.5 rounded-xl text-xs border border-slate-200 dark:border-slate-800 mt-1">
+      const logsHtml = taskLogs.map(l => `
+        <div class="bg-slate-100 dark:bg-slate-900/90 p-3 rounded-xl text-xs border border-slate-200 dark:border-slate-800">
           <div class="text-slate-400 font-semibold mb-0.5">${l.log_date}</div>
           <div class="text-slate-800 dark:text-slate-200">${l.note}</div>
         </div>
       `).join('');
 
-      let statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
-      if (task.status === 'COMPLETED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-cyan-500/10 text-cyan-500 border border-cyan-500/30">Stajyer Tamamladı (Onay Bekliyor)</span>`;
-      if (task.status === 'APPROVED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-emerald-500/10 text-emerald-500 border border-emerald-500/30">Onaylandı</span>`;
-      if (task.status === 'REVISION_REQUESTED') statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/10 text-rose-500 border border-rose-500/30">Revize İsteniyor</span>`;
-
       let managerReviewButtons = '';
       if (isManager) {
         managerReviewButtons = `
-          <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-800">
-            <button onclick="openEditTaskModal(${task.id})" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
+          <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button onclick="openEditTaskModal(${task.id}); closeTaskDetailModal();" class="bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1">
               <i class="fa-solid fa-pen me-1"></i> Düzenle
             </button>
             ${task.status !== 'APPROVED' ? `
               ${task.status === 'COMPLETED' ? `
-                <button onclick="reviewTask(${task.id}, 'APPROVE')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+                <button onclick="reviewTask(${task.id}, 'APPROVE'); closeTaskDetailModal();" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
                   <i class="fa-solid fa-check"></i> Onayla
                 </button>
               ` : ''}
-              <button onclick="openRevisionModal(${task.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
+              <button onclick="openRevisionModal(${task.id}); closeTaskDetailModal();" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-2 rounded-xl transition-all shadow-md flex items-center justify-center gap-1">
                 <i class="fa-solid fa-rotate-left"></i> Revize Et
               </button>
             ` : ''}
-            <button onclick="deleteTask(${task.id})" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all flex items-center gap-1">
+            <button onclick="deleteTask(${task.id}); closeTaskDetailModal();" class="bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs font-semibold px-4 py-2 rounded-xl transition-all flex items-center gap-1">
               <i class="fa-solid fa-trash-can"></i> Sil
             </button>
           </div>
@@ -3482,12 +3564,12 @@
       let internButtons = '';
       if (task.assigned_to === currentUser.id && task.status !== 'APPROVED') {
         internButtons = `
-          <div class="flex gap-2 mt-2">
-            <button onclick="openLogModal('${task.id}', '${task.title.replace(/'/g, "\\'")}')" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2 rounded-xl transition-all">
+          <div class="flex flex-wrap gap-2 pt-3 border-t border-slate-200 dark:border-slate-800">
+            <button onclick="openLogModal('${task.id}', '${(task.title || '').replace(/'/g, "\\'")}'); closeTaskDetailModal();" class="flex-1 bg-slate-200 dark:bg-slate-900 hover:bg-slate-300 dark:hover:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-xs font-semibold py-2.5 rounded-xl transition-all">
               <i class="fa-solid fa-pen me-1"></i> Not / İlerleme Ekle
             </button>
             ${task.status !== 'COMPLETED' ? `
-              <button onclick="completeTask(${task.id})" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-semibold px-3 py-2 rounded-xl transition-all">
+              <button onclick="completeTask(${task.id}); closeTaskDetailModal();" class="bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 text-emerald-600 dark:text-emerald-300 text-xs font-semibold px-4 py-2.5 rounded-xl transition-all">
                 <i class="fa-solid fa-check me-1"></i> Görevi Tamamla
               </button>
             ` : ''}
@@ -3495,54 +3577,44 @@
         `;
       }
 
-      // Kart gövdesi normalde gizli; başlığa tıklanınca açılır (göz yorgunluğunu azaltmak için)
-      const bodyId = `taskBody-${task.id}-${Math.random().toString(36).slice(2, 7)}`;
+      document.getElementById('taskDetailTitle').innerText = task.title || '';
+      document.getElementById('taskDetailStatus').innerHTML = statusBadge;
+      document.getElementById('taskDetailBody').innerHTML = `
+        <div class="text-sm text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-4 rounded-xl border border-slate-200 dark:border-slate-800">
+          <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
+        </div>
 
-      card.innerHTML = `
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-slate-500 dark:text-slate-400">
+          <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
+          <div><i class="fa-regular fa-user me-1"></i> Atanan: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
+          <div><i class="fa-solid fa-tag me-1"></i> Kategori: <b class="text-slate-800 dark:text-slate-200">${task.category || '-'}</b></div>
+          <div><i class="fa-regular fa-calendar me-1"></i> Son Teslim: <b class="text-slate-800 dark:text-slate-200">${task.end_date || '-'}</b></div>
+        </div>
+
+        ${revisionsHtml ? `
+          <div>
+            <span class="text-xs font-bold text-rose-500"><i class="fa-solid fa-rotate-left me-1"></i>Revizyon Geçmişi:</span>
+            <div class="mt-2 space-y-2">${revisionsHtml}</div>
+          </div>
+        ` : ''}
+
         <div>
-          <button type="button" onclick="toggleCollapse('${bodyId}', this)" class="w-full flex justify-between items-start gap-2 text-left">
-            <div class="flex items-start gap-2 min-w-0 flex-1">
-              <i class="fa-solid fa-chevron-down text-xs text-slate-400 mt-1.5 transition-transform duration-200 shrink-0"></i>
-              <h4 class="font-bold text-base text-cyan-600 dark:text-cyan-300 break-words">${task.title}</h4>
-            </div>
-            ${statusBadge}
-          </button>
-
-          <div id="${bodyId}" class="hidden mt-3">
-            <div class="text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 mb-3">
-              <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
-            </div>
-
-            <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-              <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
-              <div><i class="fa-regular fa-user me-1"></i> Atanan Stajyer: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
-              <div><i class="fa-regular fa-calendar me-1"></i> Kategori: <b class="text-slate-800 dark:text-slate-200">${task.category}</b></div>
-              <div><i class="fa-regular fa-calendar me-1"></i> Son Teslim: <b>${task.end_date}</b></div>
-            </div>
-
-            <!-- Revizyon Geçmişi (Tüm Kullanıcılara Açık) -->
-            ${revisionsHtml ? `
-              <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800">
-                <span class="text-xs font-bold text-rose-500"><i class="fa-solid fa-rotate-left me-1"></i>Revizyon Geçmişi:</span>
-                <div class="max-h-28 overflow-y-auto mt-1 space-y-1">
-                  ${revisionsHtml}
-                </div>
-              </div>
-            ` : ''}
-
-            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Günlük İlerleme Notları (${taskLogs.length}):</span>
-              <div class="max-h-32 overflow-y-auto mt-1 pr-1 space-y-1">
-                ${logsHtml || '<div class="text-xs text-slate-400 italic">Not girilmedi.</div>'}
-              </div>
-            </div>
-
-            ${internButtons}
-            ${managerReviewButtons}
+          <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Günlük İlerleme Notları (${taskLogs.length}):</span>
+          <div class="mt-2 space-y-2">
+            ${logsHtml || '<div class="text-xs text-slate-400 italic">Not girilmedi.</div>'}
           </div>
         </div>
+
+        ${internButtons}
+        ${managerReviewButtons}
       `;
-      return card;
+
+      document.getElementById('taskDetailModal').classList.remove('hidden');
+    }
+
+    function closeTaskDetailModal() {
+      const m = document.getElementById('taskDetailModal');
+      if (m) m.classList.add('hidden');
     }
 
     async function completeTask(taskId) {
