@@ -198,10 +198,10 @@
 
       <!-- ORTA MENÜ: Görevler / Yeni Kayıt Onayı / Kullanıcı Yönetimi -->
       <nav class="flex-1 flex items-center justify-center gap-2 sm:gap-6 flex-wrap">
-        <button id="tasksNavBtn" onclick="toggleTasksDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
+        <!--<button id="tasksNavBtn" onclick="toggleTasksDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
           Görevler
           <span id="tasksBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
-        </button>
+        </button>-->
         <button id="pendingNavBtn" onclick="togglePendingDropdown()" class="hidden relative text-xs sm:text-sm font-bold text-slate-700 dark:text-slate-200 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all px-1 py-1">
           Yeni Kayıt Onayı
           <span id="pendingBadgeCount" class="hidden absolute -top-1.5 -right-3 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
@@ -247,7 +247,7 @@
       </div>
     </header>
 
-    <!-- GÖREVLER TAM EKRAN MODAL -->
+    <!-- GÖREVLER TAM EKRAN MODAL 
     <div id="tasksDropdown" onclick="if(event.target===this) toggleTasksDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
       <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
         <div class="flex justify-between items-center">
@@ -288,7 +288,7 @@
           <div id="pastTaskList" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
         </section>
       </div>
-    </div>
+    </div> -->
 
     <!-- YENİ KAYIT ONAYLARI TAM EKRAN MODAL -->
     <div id="pendingDropdown" onclick="if(event.target===this) togglePendingDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
@@ -1509,19 +1509,57 @@
         return;
       }
 
-      container.innerHTML = roleKeys.map(role => `
-        <div>
-          <h5 class="font-semibold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">${ROLE_LABELS_TR[role] || role} (${byRole[role].length})</h5>
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2">
-            ${byRole[role].map(u => `
-              <button onclick="openPersonProgress(${u.id})" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 rounded-xl p-3 text-left transition-all flex items-center justify-between gap-2">
-                <span class="text-xs font-semibold text-slate-800 dark:text-slate-200">${u.name}</span>
-                <i class="fa-solid fa-chevron-right text-slate-400 text-xs"></i>
-              </button>
-            `).join('')}
-          </div>
+      const roleIconsTree = {
+        MANAGER: 'fa-user-shield text-indigo-500',
+        LEADER: 'fa-user-tie text-cyan-500',
+        ENGINEER: 'fa-user-gear text-emerald-500',
+        TECHNICIAN: 'fa-screwdriver-wrench text-slate-500',
+        INTERN: 'fa-graduation-cap text-amber-500'
+      };
+
+      // RÜTBE AĞACI: en üst rolden en alt role doğru dikey (yukarıdan aşağıya) sıralı.
+      // Her seviye, bir alttakine göre hafifçe girintili; her kişi tıklanabilir kişi kartı.
+      container.innerHTML = `
+        <div class="relative">
+          ${roleKeys.map((role, idx) => {
+            const icon = roleIconsTree[role] || 'fa-user text-slate-400';
+            const indentPx = idx * 20; // her seviye biraz daha içeride → ağaç görünümü
+            return `
+              <div class="relative" style="margin-left:${indentPx}px">
+                ${idx > 0 ? '<div class="absolute -left-3 -top-3 h-6 w-3 border-l-2 border-b-2 border-slate-300 dark:border-slate-700 rounded-bl-lg"></div>' : ''}
+                <div class="flex items-center gap-2 mb-2 mt-4">
+                  <span class="inline-flex items-center justify-center h-6 w-6 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700"><i class="fa-solid ${icon} text-xs"></i></span>
+                  <h5 class="font-bold text-xs uppercase tracking-wider text-slate-600 dark:text-slate-300">${ROLE_LABELS_TR[role] || role} <span class="text-slate-400 font-semibold">(${byRole[role].length})</span></h5>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pl-2 border-l-2 border-slate-200 dark:border-slate-800">
+                  ${byRole[role].map(u => {
+                    const active = tasksList.filter(t => t.assigned_to == u.id && t.status !== 'APPROVED').length;
+                    const done = tasksList.filter(t => t.assigned_to == u.id && t.status === 'APPROVED').length;
+                    return `
+                      <button onclick="openPersonProgress(${u.id})" class="group bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
+                        <div class="flex items-center gap-3">
+                          <div class="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-bold text-sm">
+                            ${(u.name || '?').trim().charAt(0).toUpperCase()}
+                          </div>
+                          <div class="min-w-0 flex-1">
+                            <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate group-hover:text-cyan-600 dark:group-hover:text-cyan-400 transition-colors">${u.name}</div>
+                            <div class="text-[10px] text-slate-400 truncate">${ROLE_LABELS_TR[u.role] || u.role}</div>
+                          </div>
+                          <i class="fa-solid fa-chevron-right text-slate-300 dark:text-slate-600 text-xs group-hover:text-cyan-500 transition-colors"></i>
+                        </div>
+                        <div class="flex items-center gap-2 mt-3">
+                          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">${active} aktif</span>
+                          <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">${done} tamamlandı</span>
+                        </div>
+                      </button>
+                    `;
+                  }).join('')}
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
-      `).join('');
+      `;
     }
 
     function backToDeptProgressList() {
@@ -1696,6 +1734,21 @@
       TEKNISYEN: 'Teknisyen (eski kod — güncellenmeli)',
       STAJYER: 'Stajyer (eski kod — güncellenmeli)'
     };
+
+    // ========= GENEL AÇILIR-KAPANIR (COLLAPSE) YARDIMCISI =========
+    // Verilen id'li elemanın görünürlüğünü değiştirir ve tetikleyen butondaki
+    // chevron ikonunu döndürür. Site genelinde "gereksiz kalabalığı" gizlemek için kullanılır.
+    function toggleCollapse(targetId, btn) {
+      const el = document.getElementById(targetId);
+      if (!el) return;
+      const isHidden = el.classList.toggle('hidden');
+      if (btn) {
+        const chevron = btn.querySelector('.fa-chevron-down, .fa-chevron-up');
+        if (chevron) {
+          chevron.classList.toggle('rotate-180', !isHidden);
+        }
+      }
+    }
 
     async function loadHRPanel() {
       const container = document.getElementById('hrPersonnelList');
@@ -2039,9 +2092,30 @@
           return (DEPARTMENT_LABELS[a] || a).localeCompare(DEPARTMENT_LABELS[b] || b);
         });
 
-        container.innerHTML = deptKeys.map(dept => {
+        // Rol ve birim seçeneklerini oluşturmak için sabitler
+        const ROLE_OPTS = [
+          ['INTERN', 'Stajyer'], ['TECHNICIAN', 'Teknisyen'], ['ENGINEER', 'Mühendis'],
+          ['LEADER', 'Ekip Lideri'], ['MANAGER', 'Müdür'], ['HR', 'İnsan Kaynakları'], ['ADMIN', 'Sistem Yöneticisi']
+        ];
+        const DEPT_OPTS = [
+          ['ELEKTRONIK', 'Elektronik'], ['MEKANIK', 'Mekanik'], ['YAZILIM', 'Yazılım'], ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']
+        ];
+
+        const buildRoleSelect = (u) => `
+          <select onchange="changeUserRoleSelect(${u.id}, this.value)" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-cyan-500">
+            ${ROLE_OPTS.map(([v, l]) => `<option value="${v}" ${u.role === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>`;
+
+        const buildDeptSelect = (u) => `
+          <select onchange="changeUserDeptSelect(${u.id}, '${u.role}', this.value)" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs font-semibold focus:outline-none focus:border-cyan-500">
+            <option value="">-- Birim Seçiniz --</option>
+            ${DEPT_OPTS.map(([v, l]) => `<option value="${v}" ${u.department === v ? 'selected' : ''}>${l}</option>`).join('')}
+          </select>`;
+
+        container.innerHTML = deptKeys.map((dept, deptIdx) => {
           const deptLabel = DEPARTMENT_LABELS[dept] || dept;
           const deptUsers = byDepartment[dept];
+          const deptGroupId = `mgmtDept-${dept}`;
 
           // 2. Her ekip içinde rol bazında grupla (en yetkiliden en aza)
           const byRole = {};
@@ -2059,49 +2133,57 @@
 
           const roleGroupsHtml = roleKeys.map(role => {
             const roleLabel = ROLE_LABELS_TR[role] || role;
-            const rows = byRole[role].map(u => `
-              <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors">
-                <td class="py-2.5 px-2 text-slate-400">${u.id}</td>
-                <td class="py-2.5 px-2 font-semibold text-slate-800 dark:text-slate-200">${u.name}</td>
-                <td class="py-2.5 px-2 text-slate-500 dark:text-slate-400">${u.username || '-'}</td>
-                <td class="py-2.5 px-2">${u.status || '-'}</td>
-                <td class="py-2.5 px-2 text-right space-x-1">
-                  <button onclick="handleChangeUserRole(${u.id}, '${u.role}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Rol Değiştir</button>
-                  <button onclick="handleChangeUserDepartment(${u.id}, '${u.role}', '${u.department || ''}')" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-xs px-2.5 py-1.5 rounded-lg font-semibold">Birim Değiştir</button>
-                  <button onclick="handleDeleteAdminUser(${u.id})" class="bg-rose-600 hover:bg-rose-500 text-white text-xs px-2.5 py-1.5 rounded-lg font-semibold">Sil</button>
-                </td>
-              </tr>
+            const roleGroupId = `mgmtRole-${dept}-${role}`;
+
+            const cards = byRole[role].map(u => `
+              <div class="bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div class="min-w-0">
+                    <div class="font-bold text-sm text-slate-800 dark:text-slate-100 truncate">${u.name}</div>
+                    <div class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">
+                      <div><i class="fa-solid fa-at me-1 text-slate-400"></i>${u.username || '-'}</div>
+                      <div class="mt-0.5"><i class="fa-solid fa-circle-dot me-1 text-slate-400"></i>${u.status || '-'}</div>
+                    </div>
+                  </div>
+                  <button onclick="handleDeleteAdminUser(${u.id})" class="shrink-0 bg-rose-500/10 hover:bg-rose-500/20 text-rose-500 border border-rose-500/30 text-xs px-2.5 py-1.5 rounded-lg font-semibold transition-all">
+                    <i class="fa-solid fa-trash-can"></i>
+                  </button>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Rol</label>
+                    ${buildRoleSelect(u)}
+                  </div>
+                  <div>
+                    <label class="block text-[10px] font-semibold text-slate-400 mb-1">Birim</label>
+                    ${buildDeptSelect(u)}
+                  </div>
+                </div>
+              </div>
             `).join('');
 
             return `
-              <div>
-                <h5 class="font-semibold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">${roleLabel} (${byRole[role].length})</h5>
-                <div class="overflow-x-auto">
-                  <table class="w-full text-left border-collapse">
-                    <thead>
-                      <tr class="text-[11px] text-slate-400 border-b border-slate-200 dark:border-slate-700">
-                        <th class="py-2 px-2">ID</th>
-                        <th class="py-2 px-2">Ad Soyad</th>
-                        <th class="py-2 px-2">Kullanıcı Adı</th>
-                        <th class="py-2 px-2">Durum</th>
-                        <th class="py-2 px-2 text-right">İşlemler</th>
-                      </tr>
-                    </thead>
-                    <tbody class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
-                      ${rows}
-                    </tbody>
-                  </table>
+              <div class="border border-slate-200 dark:border-slate-800 rounded-xl">
+                <button type="button" onclick="toggleCollapse('${roleGroupId}', this)" class="w-full flex items-center justify-between gap-2 px-3 py-2 text-left">
+                  <span class="font-semibold text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400">${roleLabel} (${byRole[role].length})</span>
+                  <i class="fa-solid fa-chevron-down text-[10px] text-slate-400 transition-transform duration-200"></i>
+                </button>
+                <div id="${roleGroupId}" class="hidden grid grid-cols-1 sm:grid-cols-2 gap-2 p-3 pt-0">
+                  ${cards}
                 </div>
               </div>
             `;
           }).join('');
 
           return `
-            <div class="border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
-              <h4 class="font-bold text-sm text-cyan-600 dark:text-cyan-400 mb-3 flex items-center gap-2 border-b border-slate-200 dark:border-slate-800 pb-2">
-                <i class="fa-solid fa-people-group"></i> ${deptLabel} (${deptUsers.length})
-              </h4>
-              <div class="space-y-4">
+            <div class="border border-slate-200 dark:border-slate-700 rounded-2xl overflow-hidden">
+              <button type="button" onclick="toggleCollapse('${deptGroupId}', this)" class="w-full flex items-center justify-between gap-2 px-4 py-3 bg-slate-50 dark:bg-slate-800/40 text-left hover:bg-slate-100 dark:hover:bg-slate-800/70 transition-colors">
+                <span class="font-bold text-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
+                  <i class="fa-solid fa-people-group"></i> ${deptLabel} (${deptUsers.length})
+                </span>
+                <i class="fa-solid fa-chevron-down text-xs text-slate-400 transition-transform duration-200"></i>
+              </button>
+              <div id="${deptGroupId}" class="hidden space-y-3 p-4">
                 ${roleGroupsHtml}
               </div>
             </div>
@@ -2153,6 +2235,47 @@
         }
       } catch (err) {
         console.error("Kullanıcı oluşturma hatası:", err);
+      }
+    }
+
+    // Select ile rol değiştirme (elle yazmadan)
+    async function changeUserRoleSelect(userId, newRole) {
+      if (!newRole) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newRole, adminRole: currentUser.role })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await fetchAdminUsers();
+        } else {
+          alert('Hata: ' + data.error);
+          await fetchAdminUsers();
+        }
+      } catch (err) {
+        console.error("Rol güncelleme hatası:", err);
+      }
+    }
+
+    // Select ile birim değiştirme (elle yazmadan)
+    async function changeUserDeptSelect(userId, currentRole, newDepartment) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/users/${userId}/role`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newRole: currentRole, department: newDepartment, adminRole: currentUser.role })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          await fetchAdminUsers();
+        } else {
+          alert('Hata: ' + data.error);
+          await fetchAdminUsers();
+        }
+      } catch (err) {
+        console.error("Birim güncelleme hatası:", err);
       }
     }
 
@@ -2554,9 +2677,10 @@
       if (mainTasksSection) mainTasksSection.classList.add('hidden');
       if (teamProgressSection) teamProgressSection.classList.add('hidden');
 
-      // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri, Mühendis).
+      // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri).
+      // Mühendisler için Ekip Gidişatı kaldırıldı.
       // Admin kendi panelindeki (adminPanelSection içindeki modal) akışıyla görür; burada tekrar göstermeyiz.
-      const canSeeTeamProgress = getSubordinateRoles(role).length > 0 && role !== 'ADMIN';
+      const canSeeTeamProgress = getSubordinateRoles(role).length > 0 && role !== 'ADMIN' && role !== 'ENGINEER';
       if (teamProgressSection && canSeeTeamProgress) {
         teamProgressSection.classList.remove('hidden');
         if (typeof loadTeamProgress === 'function') loadTeamProgress();
@@ -2742,10 +2866,16 @@
         const roleGroupsHtml = roleKeys.map(role => {
           const roleLabel = ROLE_LABELS_TR[role] || role;
           const icon = roleIcons[role] || 'fa-user text-slate-400';
+          const groupId = `sidebarRole-${dept}-${role}`;
           return `
-            <div class="space-y-2 pt-2">
-              <div class="font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5"><i class="fa-solid ${icon} me-1"></i> ${roleLabel} (${byRole[role].length})</div>
-              ${byRole[role].map(u => renderUserItem(u)).join('')}
+            <div class="pt-2">
+              <button type="button" onclick="toggleCollapse('${groupId}', this)" class="w-full flex items-center justify-between gap-2 font-bold text-slate-500 dark:text-slate-400 text-[11px] uppercase tracking-wider border-b border-slate-200 dark:border-slate-800 pb-1.5 hover:text-cyan-600 dark:hover:text-cyan-400 transition-colors">
+                <span><i class="fa-solid ${icon} me-1"></i> ${roleLabel} (${byRole[role].length})</span>
+                <i class="fa-solid fa-chevron-down text-[10px] transition-transform duration-200"></i>
+              </button>
+              <div id="${groupId}" class="hidden space-y-2 mt-2">
+                ${byRole[role].map(u => renderUserItem(u)).join('')}
+              </div>
             </div>
           `;
         }).join('');
@@ -2898,7 +3028,7 @@
       }
 
       // Etiketleri hedefe göre değiştir: stajyer -> "Görev Tanımı", mühendis -> "Kart Adı"
-      if (titleLabel) titleLabel.innerText = (type === 'INTERN') ? 'Görev Tanımı' : 'Kart Adı';
+      if (titleLabel) titleLabel.innerText = (type === 'INTERN') ? 'Görev Tanımı' : 'Proje Adı';
       if (assigneeLabel) assigneeLabel.innerText = (type === 'INTERN') ? 'Görevin Atanacağı Stajyer' : 'Görevin Atanacağı Mühendis';
 
       populateAssigneeOptions();
@@ -3282,44 +3412,52 @@
         `;
       }
 
+      // Kart gövdesi normalde gizli; başlığa tıklanınca açılır (göz yorgunluğunu azaltmak için)
+      const bodyId = `taskBody-${task.id}-${Math.random().toString(36).slice(2, 7)}`;
+
       card.innerHTML = `
         <div>
-          <div class="flex justify-between items-start gap-2 mb-2">
-            <h4 class="font-bold text-base text-cyan-600 dark:text-cyan-300">${task.title}</h4>
+          <button type="button" onclick="toggleCollapse('${bodyId}', this)" class="w-full flex justify-between items-start gap-2 text-left">
+            <div class="flex items-start gap-2 min-w-0 flex-1">
+              <i class="fa-solid fa-chevron-down text-xs text-slate-400 mt-1.5 transition-transform duration-200 shrink-0"></i>
+              <h4 class="font-bold text-base text-cyan-600 dark:text-cyan-300 break-words">${task.title}</h4>
+            </div>
             ${statusBadge}
-          </div>
+          </button>
 
-          <div class="text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 mb-3">
-            <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
-          </div>
+          <div id="${bodyId}" class="hidden mt-3">
+            <div class="text-xs text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-900/80 p-2.5 rounded-xl border border-slate-200 dark:border-slate-800 mb-3">
+              <b>Açıklama:</b> ${task.description || 'Açıklama belirtilmemiş.'}
+            </div>
 
-          <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
-            <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
-            <div><i class="fa-regular fa-user me-1"></i> Atanan Stajyer: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
-            <div><i class="fa-regular fa-calendar me-1"></i> Kategori: <b class="text-slate-800 dark:text-slate-200">${task.category}</b></div>
-            <div><i class="fa-regular fa-calendar me-1"></i> Son Teslim: <b>${task.end_date}</b></div>
-          </div>
+            <div class="text-xs text-slate-500 dark:text-slate-400 space-y-1">
+              <div><i class="fa-solid fa-user-check text-cyan-500 me-1"></i> Görevi Veren: <b class="text-slate-800 dark:text-slate-200">${task.created_by || 'Sistem'}</b></div>
+              <div><i class="fa-regular fa-user me-1"></i> Atanan Stajyer: <b class="text-slate-800 dark:text-slate-200">${task.assignee_name || 'Bilinmiyor'}</b></div>
+              <div><i class="fa-regular fa-calendar me-1"></i> Kategori: <b class="text-slate-800 dark:text-slate-200">${task.category}</b></div>
+              <div><i class="fa-regular fa-calendar me-1"></i> Son Teslim: <b>${task.end_date}</b></div>
+            </div>
 
-          <!-- Revizyon Geçmişi (Tüm Kullanıcılara Açık) -->
-          ${revisionsHtml ? `
-            <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800">
-              <span class="text-xs font-bold text-rose-500"><i class="fa-solid fa-rotate-left me-1"></i>Revizyon Geçmişi:</span>
-              <div class="max-h-28 overflow-y-auto mt-1 space-y-1">
-                ${revisionsHtml}
+            <!-- Revizyon Geçmişi (Tüm Kullanıcılara Açık) -->
+            ${revisionsHtml ? `
+              <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800">
+                <span class="text-xs font-bold text-rose-500"><i class="fa-solid fa-rotate-left me-1"></i>Revizyon Geçmişi:</span>
+                <div class="max-h-28 overflow-y-auto mt-1 space-y-1">
+                  ${revisionsHtml}
+                </div>
+              </div>
+            ` : ''}
+
+            <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
+              <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Günlük İlerleme Notları (${taskLogs.length}):</span>
+              <div class="max-h-32 overflow-y-auto mt-1 pr-1 space-y-1">
+                ${logsHtml || '<div class="text-xs text-slate-400 italic">Not girilmedi.</div>'}
               </div>
             </div>
-          ` : ''}
 
-          <div class="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800">
-            <span class="text-xs font-bold text-slate-500 dark:text-slate-400">Günlük İlerleme Notları (${taskLogs.length}):</span>
-            <div class="max-h-32 overflow-y-auto mt-1 pr-1 space-y-1">
-              ${logsHtml || '<div class="text-xs text-slate-400 italic">Not girilmedi.</div>'}
-            </div>
+            ${internButtons}
+            ${managerReviewButtons}
           </div>
         </div>
-
-        ${internButtons}
-        ${managerReviewButtons}
       `;
       return card;
     }
