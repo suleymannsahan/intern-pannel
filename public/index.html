@@ -73,7 +73,7 @@
       class="absolute inset-0 w-full h-full object-cover z-0"
       autoplay muted loop playsinline
       poster="">
-      <source src="login-bg.mp4" type="video/mp4">
+      <source src="login-bg2.mp4" type="video/mp4">
     </video>
     <!-- Video üzerine hafif karartma katmanı (formların okunabilirliği için) -->
     <div class="absolute inset-0 z-0 bg-black/40 dark:bg-black/55"></div>
@@ -233,9 +233,6 @@
           <div id="settingsDropdown" class="hidden absolute right-0 mt-2 w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-2 z-50 backdrop-blur-xl">
             <button onclick="openEditProfileModal(); toggleSettingsDropdown();" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
               <i class="fa-solid fa-user-pen text-cyan-500"></i> Profili Düzenle
-            </button>
-            <button id="gcalConnectBtn" onclick="handleGoogleCalendarClick()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center gap-2.5 transition-all">
-              <i class="fa-brands fa-google text-cyan-500"></i> <span id="gcalConnectLabel">Google Takvim'i Bağla</span>
             </button>
             <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
               <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
@@ -3708,6 +3705,9 @@
             <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500"></span>Görev</span>
             <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-violet-500"></span>Toplantı</span>
           </div>
+          <button id="gcalConnectBtn" onclick="handleGoogleCalendarClick()" class="hidden inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all">
+            <i class="fa-brands fa-google text-cyan-500"></i> <span id="gcalConnectLabel">Google Takvim'i Bağla</span>
+          </button>
           <button onclick="toggleCalendarModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
         </div>
       </div>
@@ -3755,6 +3755,8 @@
       if (!modal.classList.contains('hidden')) {
         calendarViewDate = new Date();
         loadCalendarData();
+        // Google bağlı durumunu ve buton görünürlüğünü tazele
+        if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus();
       }
     }
 
