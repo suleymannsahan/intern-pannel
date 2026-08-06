@@ -464,73 +464,6 @@
       </div>
     </div>
 
-    <!-- TOPLANTI TAM EKRAN MODAL -->
-    <div id="meetingsModal" onclick="if(event.target===this) toggleMeetingsModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-5">
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-calendar-check text-cyan-500"></i> Toplantı Talepleri
-          </h3>
-          <button onclick="toggleMeetingsModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-
-        <!-- YENİ TOPLANTI TALEBİ OLUŞTURMA -->
-        <div id="meetingRequestFormWrapper" class="hidden bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
-          <h4 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Toplantı Talebi</h4>
-          <form onsubmit="handleCreateMeetingRequest(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div id="meetingTargetDeptWrapper" class="hidden md:col-span-2">
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim</label>
-              <select id="meetingTargetDepartment" onchange="if(currentUser.role==='ADMIN') populateMeetingTargetRoles();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-                <option value="">-- Birim Seçiniz --</option>
-                <option value="ELEKTRONIK">Elektronik</option>
-                <option value="MEKANIK">Mekanik</option>
-                <option value="YAZILIM">Yazılım</option>
-                <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
-              </select>
-            </div>
-
-            <!-- Hedef roller: talep sahibinin rolüne göre JS ile doldurulur -->
-            <div id="meetingTargetRolesWrapper" class="md:col-span-2">
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Toplantıya Çağrılacaklar (bildirim düşer)</label>
-              <div id="meetingTargetRolesOptions" class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5"></div>
-            </div>
-
-            <div>
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Konu</label>
-              <input type="text" id="meetingSubject" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-            </div>
-            <div>
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Tercih Edilen Tarih & Saat</label>
-              <input type="datetime-local" id="meetingPreferredDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-            </div>
-            <div class="md:col-span-2">
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Açıklama</label>
-              <textarea id="meetingDescription" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
-            </div>
-            <div class="md:col-span-2 flex justify-end">
-              <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Talep Gönder</button>
-            </div>
-          </form>
-        </div>
-
-        <!-- TALEP LİSTESİ (yan yana 2'şerli, sağ/sol oklarla kaydırılır) -->
-        <div>
-          <div class="flex justify-between items-center mb-3">
-            <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-list text-cyan-500"></i>Talepler</h4>
-            <div class="flex items-center gap-2">
-              <button type="button" id="meetingPrevBtn" onclick="scrollMeetingCarousel(-1)" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-                <i class="fa-solid fa-chevron-left"></i>
-              </button>
-              <button type="button" id="meetingNextBtn" onclick="scrollMeetingCarousel(1)" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
-                <i class="fa-solid fa-chevron-right"></i>
-              </button>
-            </div>
-          </div>
-          <div id="meetingRequestsList" class="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2" style="scrollbar-width: thin;"></div>
-        </div>
-      </div>
-    </div>
-
     <div class="flex-1 flex relative overflow-hidden">
       <!-- SOL SIDEBAR -->
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
@@ -655,6 +588,124 @@
             </div>
           </div>
         </section>
+
+        <!-- TOPLANTI TAM EKRAN MODAL (modal olarak da, "Toplantı" kutucuğundan tam sayfa olarak da kullanılır) -->
+        <div id="meetingsModal" onclick="if(event.target===this) toggleMeetingsModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div id="meetingsModalCard" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-5">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <button type="button" id="meetingsModalBackBtn" onclick="toggleMeetingsModal()" class="hidden w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-calendar-check text-cyan-500"></i> Toplantı Talepleri
+                </h3>
+              </div>
+              <button id="meetingsModalCloseBtn" onclick="toggleMeetingsModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- YENİ TOPLANTI TALEBİ OLUŞTURMA -->
+            <div id="meetingRequestFormWrapper" class="hidden bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-5">
+              <h4 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Toplantı Talebi</h4>
+              <form onsubmit="handleCreateMeetingRequest(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div id="meetingTargetDeptWrapper" class="hidden md:col-span-2">
+                  <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim</label>
+                  <select id="meetingTargetDepartment" onchange="if(currentUser.role==='ADMIN') populateMeetingTargetRoles();" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                    <option value="">-- Birim Seçiniz --</option>
+                    <option value="ELEKTRONIK">Elektronik</option>
+                    <option value="MEKANIK">Mekanik</option>
+                    <option value="YAZILIM">Yazılım</option>
+                    <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
+                  </select>
+                </div>
+
+                <!-- Hedef roller: talep sahibinin rolüne göre JS ile doldurulur -->
+                <div id="meetingTargetRolesWrapper" class="md:col-span-2">
+                  <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Toplantıya Çağrılacaklar (bildirim düşer)</label>
+                  <div id="meetingTargetRolesOptions" class="flex flex-wrap gap-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5"></div>
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Konu</label>
+                  <input type="text" id="meetingSubject" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                  <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Tercih Edilen Tarih & Saat</label>
+                  <input type="datetime-local" id="meetingPreferredDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                </div>
+                <div class="md:col-span-2">
+                  <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Açıklama</label>
+                  <textarea id="meetingDescription" rows="2" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                  <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Talep Gönder</button>
+                </div>
+              </form>
+            </div>
+
+            <!-- TALEP LİSTESİ (yan yana 2'şerli, sağ/sol oklarla kaydırılır) -->
+            <div>
+              <div class="flex justify-between items-center mb-3">
+                <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-list text-cyan-500"></i>Talepler</h4>
+                <div class="flex items-center gap-2">
+                  <button type="button" id="meetingPrevBtn" onclick="scrollMeetingCarousel(-1)" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-chevron-left"></i>
+                  </button>
+                  <button type="button" id="meetingNextBtn" onclick="scrollMeetingCarousel(1)" class="p-2 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all disabled:opacity-30 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-chevron-right"></i>
+                  </button>
+                </div>
+              </div>
+              <div id="meetingRequestsList" class="flex gap-3 overflow-x-auto scroll-smooth snap-x snap-mandatory pb-2" style="scrollbar-width: thin;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- TAKVİM MODALI (modal olarak da, "Takvim" kutucuğundan tam sayfa olarak da kullanılır) -->
+        <div id="calendarModal" onclick="if(event.target===this) toggleCalendarModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
+          <div id="calendarModalCard" class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
+            <!-- Başlık -->
+            <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+              <div class="flex items-center gap-3">
+                <button type="button" id="calendarModalBackBtn" onclick="toggleCalendarModal()" class="hidden w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <div class="flex items-center gap-2">
+                  <button onclick="calendarChangeMonth(-1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
+                  <button onclick="calendarChangeMonth(1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
+                </div>
+                <h2 id="calendarTitle" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">Takvim</h2>
+                <button onclick="calendarGoToday()" class="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition-all">Bugün</button>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium">
+                  <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500"></span>Görev</span>
+                  <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-violet-500"></span>Toplantı</span>
+                </div>
+                <button id="gcalConnectBtn" onclick="handleGoogleCalendarClick()" class="hidden inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all">
+                  <i class="fa-brands fa-google text-cyan-500"></i> <span id="gcalConnectLabel">Google Takvim'i Bağla</span>
+                </button>
+                <button id="calendarModalCloseBtn" onclick="toggleCalendarModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+              </div>
+            </div>
+
+            <!-- Takvim gövdesi -->
+            <div class="flex-1 overflow-auto p-3 sm:p-4">
+              <!-- Gün başlıkları -->
+              <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2">
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Pzt</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Sal</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Çar</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Per</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cum</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cmt</div>
+                <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Paz</div>
+              </div>
+              <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
+              <p id="calendarEmptyHint" class="hidden text-center text-xs text-slate-400 py-4">Bu ay için görev veya toplantı bulunmuyor.</p>
+            </div>
+          </div>
+        </div>
 
         <!-- ADMIN PANELİ EKRANI (istatistikler; Yeni Kayıt Onayı ve Kullanıcı Yönetimi artık header'daki baloncuklarda) -->
         <section id="adminPanelSection" class="hidden space-y-6">
@@ -5308,6 +5359,26 @@
     // ============================================================
     const MODAL_OVERLAY_CLASSES = ['fixed', 'inset-0', 'bg-slate-950/80', 'backdrop-blur-md', 'items-center', 'justify-center', 'z-50'];
 
+    // Kart (modal içi beyaz kutu) ve başlık düğmelerinin modal/sayfa moduna göre
+    // aldığı sınıflar: sayfa modunda diğer kutucuk sayfalarıyla (statusPageSection vb.)
+    // aynı görünüme (kenarlıksız genişlik, yumuşak arka plan, geri oku) döner.
+    const MODAL_PAGE_CONFIG = {
+      meetingsModal: {
+        cardId: 'meetingsModalCard',
+        backBtnId: 'meetingsModalBackBtn',
+        closeBtnId: 'meetingsModalCloseBtn',
+        modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'border-slate-300', 'max-w-4xl', 'max-h-[88vh]', 'overflow-y-auto', 'shadow-2xl'],
+        pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'border-slate-200', 'shadow-xl', 'backdrop-blur-md']
+      },
+      calendarModal: {
+        cardId: 'calendarModalCard',
+        backBtnId: 'calendarModalBackBtn',
+        closeBtnId: 'calendarModalCloseBtn',
+        modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'shadow-2xl', 'max-w-5xl', 'max-h-[92vh]', 'overflow-hidden'],
+        pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'shadow-xl', 'backdrop-blur-md']
+      }
+    };
+
     function openModalAsPage(modalId, opener) {
       const home = document.getElementById('leaderSection');
       if (home) home.classList.add('hidden');
@@ -5316,6 +5387,18 @@
         modal.dataset.asPage = '1';
         MODAL_OVERLAY_CLASSES.forEach(c => modal.classList.remove(c));
         modal.classList.add('block');
+      }
+      const cfg = MODAL_PAGE_CONFIG[modalId];
+      if (cfg) {
+        const card = document.getElementById(cfg.cardId);
+        if (card) {
+          cfg.modalOnlyClasses.forEach(c => card.classList.remove(c));
+          cfg.pageOnlyClasses.forEach(c => card.classList.add(c));
+        }
+        const backBtn = document.getElementById(cfg.backBtnId);
+        if (backBtn) backBtn.classList.remove('hidden');
+        const closeBtn = document.getElementById(cfg.closeBtnId);
+        if (closeBtn) closeBtn.classList.add('hidden');
       }
       if (typeof opener === 'function') opener();
     }
@@ -5328,6 +5411,18 @@
       modal.classList.remove('block');
       MODAL_OVERLAY_CLASSES.forEach(c => modal.classList.add(c));
       if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
+      const cfg = MODAL_PAGE_CONFIG[modalId];
+      if (cfg) {
+        const card = document.getElementById(cfg.cardId);
+        if (card) {
+          cfg.pageOnlyClasses.forEach(c => card.classList.remove(c));
+          cfg.modalOnlyClasses.forEach(c => card.classList.add(c));
+        }
+        const backBtn = document.getElementById(cfg.backBtnId);
+        if (backBtn) backBtn.classList.add('hidden');
+        const closeBtn = document.getElementById(cfg.closeBtnId);
+        if (closeBtn) closeBtn.classList.remove('hidden');
+      }
     }
 
     function openLeaderMeetingsPage() {
@@ -6428,49 +6523,6 @@
       doc.save(`Staj_Raporu_${fixTurkishChars(intern.name).replace(/\s+/g, '_')}.pdf`);
     }
   </script>
-
-  <!-- ============ TAKVİM MODALI ============ -->
-  <div id="calendarModal" onclick="if(event.target===this) toggleCalendarModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 z-50">
-    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden">
-      <!-- Başlık -->
-      <div class="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="flex items-center gap-2">
-            <button onclick="calendarChangeMonth(-1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-left"></i></button>
-            <button onclick="calendarChangeMonth(1)" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-cyan-500/10 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all"><i class="fa-solid fa-chevron-right"></i></button>
-          </div>
-          <h2 id="calendarTitle" class="text-lg sm:text-xl font-bold text-slate-900 dark:text-slate-100">Takvim</h2>
-          <button onclick="calendarGoToday()" class="hidden sm:inline-block text-xs font-semibold px-3 py-1.5 rounded-lg bg-cyan-600 text-white hover:bg-cyan-700 transition-all">Bugün</button>
-        </div>
-        <div class="flex items-center gap-3">
-          <div class="hidden sm:flex items-center gap-3 text-[11px] font-medium">
-            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-cyan-500"></span>Görev</span>
-            <span class="flex items-center gap-1.5 text-slate-600 dark:text-slate-300"><span class="h-2.5 w-2.5 rounded-full bg-violet-500"></span>Toplantı</span>
-          </div>
-          <button id="gcalConnectBtn" onclick="handleGoogleCalendarClick()" class="hidden inline-flex items-center gap-2 text-xs font-semibold px-3 py-1.5 rounded-lg bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-700 dark:text-slate-200 hover:border-cyan-500 hover:text-cyan-600 dark:hover:text-cyan-400 transition-all">
-            <i class="fa-brands fa-google text-cyan-500"></i> <span id="gcalConnectLabel">Google Takvim'i Bağla</span>
-          </button>
-          <button onclick="toggleCalendarModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-      </div>
-
-      <!-- Takvim gövdesi -->
-      <div class="flex-1 overflow-auto p-3 sm:p-4">
-        <!-- Gün başlıkları -->
-        <div class="grid grid-cols-7 gap-1 sm:gap-2 mb-1 sm:mb-2">
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Pzt</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Sal</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Çar</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Per</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cum</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Cmt</div>
-          <div class="text-center text-[10px] sm:text-xs font-bold text-slate-400 py-1">Paz</div>
-        </div>
-        <div id="calendarGrid" class="grid grid-cols-7 gap-1 sm:gap-2"></div>
-        <p id="calendarEmptyHint" class="hidden text-center text-xs text-slate-400 py-4">Bu ay için görev veya toplantı bulunmuyor.</p>
-      </div>
-    </div>
-  </div>
 
   <!-- ============ GÜN DETAY MODALI ============ -->
   <div id="calendarDayModal" onclick="if(event.target===this) closeCalendarDayModal();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]">
