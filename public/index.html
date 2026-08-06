@@ -365,16 +365,6 @@
           </div>
         </div>
 
-        <!-- YAKLAŞAN TOPLANTILAR (toplantı erişimi olan tüm roller; admin sağ kolonda görür) -->
-        <section id="upcomingMeetingsSection" class="hidden space-y-3">
-          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-3">
-            <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-              <i class="fa-solid fa-calendar-check text-cyan-500"></i> Yaklaşan Toplantılar
-            </h2>
-            <div id="upcomingMeetingsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 scroll-panel max-h-80 pr-1"></div>
-          </div>
-        </section>
-
         <!-- MÜHENDİS/LİDER ANA EKRANI: sadece başlıklı kutucuklar; her biri kendi sayfasını açar -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
@@ -975,7 +965,7 @@
         <!-- KİŞİ DETAY SAYFASI (tam ekran; Ekip Gidişatı'ndan kişiye tıklanınca açılır) -->
         <section id="personDetailSection" class="hidden space-y-5">
           <button onclick="closePersonDetailPage()" class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold flex items-center gap-1.5 hover:underline">
-            <i class="fa-solid fa-arrow-left"></i> Ekip Gidişatı'na Dön
+            <i class="fa-solid fa-arrow-left"></i> Geri Dön
           </button>
 
           <!-- Üst kimlik kartı -->
@@ -991,7 +981,7 @@
             </div>
           </div>
 
-          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div id="pdGrid" class="grid grid-cols-1 lg:grid-cols-3 gap-5">
             <!-- Sol: İletişim & kişisel bilgiler -->
             <div class="space-y-5">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
@@ -1008,7 +998,7 @@
                 <div id="pdAssignedInterns" class="space-y-2"></div>
               </div>
               <!-- Günlük loglar -->
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+              <div id="pdLogsCard" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-clock-rotate-left text-cyan-500"></i> Son Günlük Notlar
                 </h3>
@@ -1017,14 +1007,14 @@
             </div>
 
             <!-- Sağ: Projeler + görevler -->
-            <div class="lg:col-span-2 space-y-5">
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <div id="pdRightCol" class="lg:col-span-2 space-y-5">
+              <div id="pdProjectsCard" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-diagram-project text-indigo-500"></i> Sorumlu Olduğu Projeler
                 </h3>
                 <div id="pdProjects" class="space-y-2 scroll-panel max-h-80 pr-1"></div>
               </div>
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+              <div id="pdTasksCard" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-list-check text-emerald-500"></i> Üzerindeki Görevler
                 </h3>
@@ -1033,13 +1023,68 @@
             </div>
           </div>
         </section>
+
+        <!-- MÜHENDİS ANA EKRANI: Lider/Müdür/Admin ile aynı düzende, sadece başlıklı kutucuklar -->
+        <section id="engineerHomeSection" class="hidden space-y-6">
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button type="button" onclick="openEngineerProjectsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
+              </button>
+              <button type="button" onclick="openEngineerStatusPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-graduation-cap"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Stajyer Durum ve İş Yükü</span>
+              </button>
+              <button type="button" onclick="openEngineerTeamPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-sitemap"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekip Yapılandırılması</span>
+              </button>
+              <button type="button" onclick="openEngineerTasksPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-list-check"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Görevler</span>
+              </button>
+              <button type="button" onclick="openEngineerMeetingsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-comments"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Toplantı</span>
+              </button>
+              <button type="button" onclick="openEngineerCalendarPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-regular fa-calendar-days"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Takvim</span>
+              </button>
+            </div>
+
+            <!-- SAĞ TARAF: hatırlatıcılar -->
+            <div class="space-y-4">
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
+                </h4>
+                <div id="engineerWeekMeetingsList" class="space-y-2 scroll-panel max-h-[260px] pr-1"></div>
+              </div>
+
+              <div class="bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-4 shadow-sm">
+                <h4 class="font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Geciken Projeler
+                </h4>
+                <div id="engineerOverdueProjectsList" class="space-y-2 scroll-panel max-h-[260px] pr-1"></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="engineerSection" class="hidden space-y-6">
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <div class="flex justify-between items-center mb-4">
-              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
-                <i class="fa-solid fa-graduation-cap text-cyan-500"></i> <span id="engineerStatusTitle">Stajyer Durum ve İş Yükü</span>
-              </h3>
-              <span class="text-[11px] text-slate-500 dark:text-slate-400"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
+              <div class="flex items-center gap-3">
+                <button type="button" onclick="closeLeaderSubPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-graduation-cap text-cyan-500"></i> <span id="engineerStatusTitle">Stajyer Durum ve İş Yükü</span>
+                </h3>
+              </div>
+              <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa sıralı</span>
             </div>
             <div id="engineerInternStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
@@ -1048,6 +1093,43 @@
             <span class="font-bold text-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama (Stajyer)</span>
             <span class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-cyan-500 flex items-center gap-1">Aç <i class="fa-solid fa-arrow-right"></i></span>
           </button>
+        </section>
+
+        <!-- MÜHENDİS: PROJELER (sorumlu olunan projeler - gidişat + aciliyet sırası) -->
+        <section id="engineerProjectsPageSection" class="hidden space-y-6">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="closeLeaderSubPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Projeler</h2>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-chart-line text-cyan-500"></i> Sorumlu Olunan Proje Gidişatı
+            </h3>
+            <div id="engineerProjectsList" class="space-y-2"></div>
+          </div>
+
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-arrow-up-wide-short text-indigo-500"></i> Projelerin Aciliyet & Önem Sırası
+            </h3>
+            <div id="engineerUrgencyRankingList" class="space-y-2"></div>
+          </div>
+        </section>
+
+        <!-- MÜHENDİS: EKİP YAPILANDIRILMASI (kendi sorumlu olduğu stajyerlerin şeması) -->
+        <section id="engineerTeamPageSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <div class="flex items-center gap-3 mb-4">
+              <button type="button" onclick="closeLeaderSubPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Ekip Yapılandırılması</h2>
+            </div>
+            <div id="engineerTeamList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+          </div>
         </section>
 
         <!-- YENİ GÖREV ATAMA (AYRI SAYFA) -->
@@ -2140,8 +2222,8 @@
       if (!currentUser) return;
       const role = currentUser.role;
       const isAdmin = role === 'ADMIN';
-      // Ekip Lideri, Müdür ve Admin ana ekranda kutucukları kullanır; üst menüde tekrar göstermeyiz
-      const usesBoxes = role === 'LEADER' || role === 'MANAGER' || role === 'ADMIN';
+      // Ekip Lideri, Müdür, Admin ve Mühendis ana ekranda kutucukları kullanır; üst menüde tekrar göstermeyiz
+      const usesBoxes = role === 'LEADER' || role === 'MANAGER' || role === 'ADMIN' || role === 'ENGINEER';
 
       // Görevler: alt rolü olan herkes + admin
       const canAccessTasks = isAdmin || getSubordinateRoles(role).length > 0;
@@ -2711,6 +2793,126 @@
           </div>
         </button>`;
       }).join('');
+    }
+
+    // ============================================================
+    // MÜHENDİS: "Projeler" kutucuğu ve sağ kolon "Geciken Projeler" hatırlatıcısı.
+    // Backend değişikliği gerekmiyor: GET /api/person/:id/detail zaten owner_id'ye göre
+    // filtrelenmiş projeleri (days_left/actual/planned/behind/priority ile) döndürüyor;
+    // "aciliyet" skoru admin'deki /api/admin/dashboard formülüyle aynı şekilde client-side hesaplanır.
+    // ============================================================
+    let engineerOwnedProjects = [];
+
+    function computeProjectUrgency(p) {
+      return (p.behind ? 40 : 0) + (p.days_left < 0 ? 60 : Math.max(0, 30 - p.days_left * 2)) +
+        (p.priority === 'YÜKSEK' || p.priority === 'HIGH' ? 20 : (p.priority === 'DÜŞÜK' || p.priority === 'LOW' ? -10 : 0));
+    }
+
+    async function loadEngineerOwnedProjects() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/person/${currentUser.id}/detail`);
+        const data = await safeJson(res);
+        engineerOwnedProjects = (res.ok && Array.isArray(data.projects)) ? data.projects : [];
+      } catch (e) {
+        engineerOwnedProjects = [];
+      }
+      renderEngineerProjectsPage();
+      renderEngineerOverdueReminder();
+    }
+
+    function renderEngineerProjectsPage() {
+      const listEl = document.getElementById('engineerProjectsList');
+      const rankEl = document.getElementById('engineerUrgencyRankingList');
+      if (!listEl || !rankEl) return;
+
+      if (engineerOwnedProjects.length === 0) {
+        listEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-4">Sorumlu olduğunuz proje yok.</p>`;
+        rankEl.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Sorumlu olduğunuz proje yok.</p>`;
+        return;
+      }
+
+      listEl.innerHTML = engineerOwnedProjects.map(p => {
+        const daysTxt = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
+        const daysCls = p.days_left < 0 ? 'text-rose-500' : p.days_left <= 3 ? 'text-amber-500' : 'text-emerald-500';
+        return `<button type="button" onclick="openPersonProjectModal(${p.id}, ${currentUser.id})" class="w-full text-left bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 rounded-lg p-3 transition-all">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+            <span class="text-[10px] font-bold ${daysCls} shrink-0">${daysTxt}</span>
+          </div>
+          <div class="flex items-center gap-2 mt-2">
+            <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+              <div class="h-full ${p.behind ? 'bg-rose-500' : 'bg-cyan-500'} rounded-full" style="width:${Math.min(100, Math.max(3, p.actual))}%"></div>
+            </div>
+            <span class="text-[10px] text-slate-400 shrink-0">%${p.actual}${p.planned ? ' / hedef %' + p.planned : ''}</span>
+          </div>
+          ${p.note ? `<div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">${escapeHtmlProj(p.note)}</div>` : ''}
+        </button>`;
+      }).join('');
+
+      const ranked = engineerOwnedProjects
+        .map(p => ({ ...p, urgency: Math.round(computeProjectUrgency(p)) }))
+        .sort((a, b) => b.urgency - a.urgency);
+      rankEl.innerHTML = ranked.map((p, i) => {
+        let barCls = 'bg-emerald-500', lvl = 'Düşük';
+        if (p.urgency >= 70) { barCls = 'bg-rose-500'; lvl = 'Kritik'; }
+        else if (p.urgency >= 40) { barCls = 'bg-amber-500'; lvl = 'Orta'; }
+        const width = Math.min(100, Math.max(6, p.urgency));
+        const daysTxt = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
+        return `<button type="button" onclick="openPersonProjectModal(${p.id}, ${currentUser.id})" class="w-full text-left flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 hover:border-cyan-500 transition-all">
+          <div class="w-6 h-6 shrink-0 rounded-md bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-600 dark:text-slate-300">${i + 1}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${p.urgency >= 70 ? 'bg-rose-500/15 text-rose-500' : p.urgency >= 40 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'} shrink-0">${lvl}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full ${barCls} rounded-full" style="width:${width}%"></div>
+              </div>
+              <span class="text-[10px] text-slate-400 shrink-0">${daysTxt}</span>
+            </div>
+          </div>
+        </button>`;
+      }).join('');
+    }
+
+    // Mühendis ana ekranı sağ kolon: sorumlu olunan projelerden bitişine 14 gün veya daha az kalanlar
+    function renderEngineerOverdueReminder() {
+      const el = document.getElementById('engineerOverdueProjectsList');
+      if (!el) return;
+      const soon = engineerOwnedProjects
+        .filter(p => p.days_left <= 14)
+        .sort((a, b) => a.days_left - b.days_left);
+      if (soon.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Süresi yakında dolan proje yok. 🎉</p>`; return; }
+      el.innerHTML = soon.slice(0, 8).map(p => {
+        const late = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
+        return `<button type="button" onclick="openPersonProjectModal(${p.id}, ${currentUser.id})" class="w-full text-left bg-rose-500/5 border border-rose-200 dark:border-rose-900/40 rounded-lg p-2.5 hover:bg-rose-500/10 transition-all">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-end mt-0.5">
+            <span class="text-rose-500 font-bold">${late}</span>
+          </div>
+        </button>`;
+      }).join('');
+    }
+
+    // Mühendis: kendisine sorumlu mühendis olarak atanmış stajyerlerin ekip şeması listesi
+    function renderEngineerTeamList() {
+      const el = document.getElementById('engineerTeamList');
+      if (!el) return;
+      const interns = (usersList || []).filter(u => u.role === 'INTERN' && u.engineer_id == currentUser.id);
+      if (interns.length === 0) {
+        el.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Sorumlu olduğunuz stajyer yok.</p>`;
+        return;
+      }
+      el.innerHTML = interns.map(i => `
+        <button type="button" onclick="openPersonDetailPage(${i.id})" class="w-full flex items-center gap-3 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 text-left transition-all">
+          <div class="h-9 w-9 shrink-0 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-sm font-bold">${(i.name || '?').trim().charAt(0).toUpperCase()}</div>
+          <div class="min-w-0">
+            <div class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(i.name)}</div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">${ROLE_LABELS_TR['INTERN']}</div>
+          </div>
+        </button>
+      `).join('');
     }
 
     // Geciken/aciliyet listesinden projeye zıpla
@@ -3464,6 +3666,23 @@
           </div>
         `).join('');
       }
+
+      // Mühendis viewer: sadece Kişisel Bilgiler kartı görünür, diğer tüm kartlar (sayaçlar,
+      // atanmış stajyerler, günlük notlar, projeler, görevler) gizlenir.
+      const restrictedView = currentUser.role === 'ENGINEER';
+      const pdCountersEl = document.getElementById('pdCounters');
+      const pdLogsCardEl = document.getElementById('pdLogsCard');
+      const pdProjectsCardEl = document.getElementById('pdProjectsCard');
+      const pdTasksCardEl = document.getElementById('pdTasksCard');
+      const pdRightColEl = document.getElementById('pdRightCol');
+      const pdGridEl = document.getElementById('pdGrid');
+      if (pdCountersEl) pdCountersEl.classList.toggle('hidden', restrictedView);
+      if (pdLogsCardEl) pdLogsCardEl.classList.toggle('hidden', restrictedView);
+      if (pdProjectsCardEl) pdProjectsCardEl.classList.toggle('hidden', restrictedView);
+      if (pdTasksCardEl) pdTasksCardEl.classList.toggle('hidden', restrictedView);
+      if (pdRightColEl) pdRightColEl.classList.toggle('hidden', restrictedView);
+      if (pdGridEl) pdGridEl.classList.toggle('lg:grid-cols-1', restrictedView);
+      if (assignedWrap && restrictedView) assignedWrap.classList.add('hidden');
     }
 
     // Kişi detay sayfasındaki "Sorumlu Olduğu Projeler" kartına tıklayınca açılan
@@ -3897,59 +4116,6 @@
 
     // Ana ekrandaki "Yaklaşan Toplantılar" kartını doldurur (toplantı erişimi olan roller).
     // Kendi verisini çeker; loadMeetings'ten bağımsızdır.
-    async function renderUpcomingMeetings() {
-      const el = document.getElementById('upcomingMeetingsList');
-      if (!el) return;
-      try {
-        let url = `${API_BASE_URL}/api/meetings?userId=${currentUser.id}&role=${currentUser.role}`;
-        if (currentUser.department) url += `&department=${encodeURIComponent(currentUser.department)}`;
-        const res = await fetch(url);
-        const meetings = await safeJson(res);
-        const todayStr = new Date().toISOString().substring(0, 10);
-        const upcoming = (Array.isArray(meetings) ? meetings : [])
-          .filter(m => {
-            if (m.status === 'REJECTED') return false;
-            const raw = m.preferred_date || m.created_at || '';
-            const d = raw.substring(0, 10);
-            return d && d >= todayStr; // bugün veya ileride
-          })
-          .sort((a, b) => {
-            const da = (a.preferred_date || a.created_at || '').substring(0, 10);
-            const db = (b.preferred_date || b.created_at || '').substring(0, 10);
-            return da.localeCompare(db);
-          });
-
-        if (upcoming.length === 0) {
-          el.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Yaklaşan toplantı yok.</p>`;
-          return;
-        }
-        const statusLabels = { APPROVED: 'Onaylı', PENDING: 'Bekliyor' };
-        el.innerHTML = upcoming.slice(0, 12).map(m => {
-          const rawDate = (m.preferred_date || m.created_at || '');
-          const dOnly = rawDate.substring(0, 10);
-          let when = dOnly;
-          if (m.preferred_date && m.preferred_date.length > 10) when = m.preferred_date.substring(0, 16).replace('T', ' ');
-          const isToday = dOnly === todayStr;
-          const st = m.status === 'APPROVED' ? 'text-emerald-500' : 'text-amber-500';
-          const rolesText = m.target_roles ? m.target_roles.split(',').map(r => ROLE_LABELS_TR[r.trim()] || r.trim()).join(', ') : '';
-          return `<div class="bg-slate-50 dark:bg-slate-900/50 border ${isToday ? 'border-cyan-400 dark:border-cyan-600' : 'border-slate-200 dark:border-slate-700'} rounded-xl p-3">
-            <div class="flex items-start justify-between gap-2">
-              <div class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
-              ${isToday ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 shrink-0">BUGÜN</span>' : ''}
-            </div>
-            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-1.5">
-              <span><i class="fa-regular fa-clock me-1"></i>${when}</span>
-              <span class="${st} font-bold">${statusLabels[m.status] || m.status || ''}</span>
-            </div>
-            ${m.requester_name ? `<div class="text-[10px] text-slate-400 mt-0.5 truncate">${escapeHtmlProj(m.requester_name)}${m.department ? ' · ' + (DEPARTMENT_LABELS[m.department] || m.department) : ''}</div>` : ''}
-            ${rolesText ? `<div class="text-[10px] text-cyan-600 dark:text-cyan-400 mt-0.5 truncate"><i class="fa-solid fa-bell me-1"></i>${rolesText}</div>` : ''}
-          </div>`;
-        }).join('');
-      } catch (e) {
-        el.innerHTML = `<p class="text-xs text-rose-400 col-span-full text-center py-4">Toplantılar yüklenemedi.</p>`;
-      }
-    }
-
     // Müdür/Ekip Lideri ana ekranındaki sağ kolon hatırlatıcısı: sadece bulunulan hafta
     // (bugünden Pazar'a kadar) içinde gerçekleşecek toplantıları listeler.
     async function renderLeaderWeekMeetings(containerId = 'leaderWeekMeetingsList') {
@@ -4873,6 +5039,7 @@
       // İlgili bölümlere kısayol
       const leaderSection = document.getElementById('leaderSection');
       const adminHomeSection = document.getElementById('adminHomeSection');
+      const engineerHomeSection = document.getElementById('engineerHomeSection');
       const engineerSection = document.getElementById('engineerSection');
       const mainTasksSection = document.getElementById('mainTasksSection');
       const teamProgressSection = document.getElementById('teamProgressSection');
@@ -4882,6 +5049,7 @@
       // ana ekranları her zaman kutucuklu "ev" görünümüyle başlar)
       if (leaderSection) leaderSection.classList.add('hidden');
       if (adminHomeSection) adminHomeSection.classList.add('hidden');
+      if (engineerHomeSection) engineerHomeSection.classList.add('hidden');
       if (engineerSection) engineerSection.classList.add('hidden');
       if (mainTasksSection) mainTasksSection.classList.add('hidden');
       if (teamProgressSection) teamProgressSection.classList.add('hidden');
@@ -4895,6 +5063,10 @@
       if (adminPanelSec) adminPanelSec.classList.add('hidden');
       const adminStatusPageSec = document.getElementById('adminStatusPageSection');
       if (adminStatusPageSec) adminStatusPageSec.classList.add('hidden');
+      const engineerProjectsPageSec = document.getElementById('engineerProjectsPageSection');
+      if (engineerProjectsPageSec) engineerProjectsPageSec.classList.add('hidden');
+      const engineerTeamPageSec = document.getElementById('engineerTeamPageSection');
+      if (engineerTeamPageSec) engineerTeamPageSec.classList.add('hidden');
       // Kutucuk akışından açılan "geri" butonları: her dashboard render'ında varsayılan
       // (gizli) duruma dönsün — bir sonraki oturumda yanlış role sızmasın.
       const teamProgressBackBtn = document.getElementById('teamProgressBackBtn');
@@ -4944,13 +5116,10 @@
         if (typeof renderLeaderWeekMeetings === 'function') renderLeaderWeekMeetings();
 
       } else if (isEngineer) {
-        // Mühendis: kendi stajyerlerinin durumu + stajyere görev atama + kendi görevleri ana ekranda
-        if (engineerSection) engineerSection.classList.remove('hidden');
-        if (mainTasksSection) mainTasksSection.classList.remove('hidden');
-
-        populateEngineerAssigneeOptions();       // stajyer seçim kutusunu doldur
-        if (typeof renderEngineerInternStatusList === 'function') renderEngineerInternStatusList();
-        if (typeof renderMainTaskList === 'function') renderMainTaskList();
+        // Mühendis: Ekip Lideri/Müdür/Admin ile aynı düzende, kutucuklu ana ekranı (engineerHomeSection) görür.
+        if (engineerHomeSection) engineerHomeSection.classList.remove('hidden');
+        if (typeof renderLeaderWeekMeetings === 'function') renderLeaderWeekMeetings('engineerWeekMeetingsList');
+        if (typeof loadEngineerOwnedProjects === 'function') loadEngineerOwnedProjects();
 
         if (typeof checkDailyLogWarning === 'function') checkDailyLogWarning();
 
@@ -4988,18 +5157,6 @@
 
       if (canAccessMeetings && typeof loadMeetings === 'function') {
         loadMeetings();
-      }
-
-      // Ana ekrandaki "Yaklaşan Toplantılar" kartı: sadece Mühendis için ana ekranda inline gösterilir.
-      // Admin kendi panelinin sağ kolonunda kendi özet listesini görür. Müdür/Ekip Lideri artık ana
-      // ekranın sağ kolonundaki "Bu Hafta Toplantılar" hatırlatıcısını görür (renderLeaderWeekMeetings).
-      const upcomingSection = document.getElementById('upcomingMeetingsSection');
-      if (upcomingSection) {
-        const showUpcomingInline = canAccessMeetings && isEngineer;
-        upcomingSection.classList.toggle('hidden', !showUpcomingInline);
-        if (showUpcomingInline && typeof renderUpcomingMeetings === 'function') {
-          renderUpcomingMeetings();
-        }
       }
 
       updateTasksBadge();
@@ -5345,7 +5502,7 @@
     // "Yeni Görev Atama" panelini kendi sayfasında açar (Müdür/Ekip Lideri veya Mühendis).
     // O anki role göre doğru formu gösterir, diğer tüm ana panel bölümlerini gizler.
     function openNewTaskPage() {
-      const sectionsToHide = ['leaderSection', 'engineerSection', 'mainTasksSection', 'teamProgressSection', 'upcomingMeetingsSection', 'statusPageSection', 'leaderTasksPageSection'];
+      const sectionsToHide = ['leaderSection', 'adminHomeSection', 'engineerHomeSection', 'engineerSection', 'engineerProjectsPageSection', 'engineerTeamPageSection', 'mainTasksSection', 'teamProgressSection', 'statusPageSection', 'leaderTasksPageSection'];
       sectionsToHide.forEach(id => {
         const el = document.getElementById(id);
         if (el) el.classList.add('hidden');
@@ -5615,6 +5772,70 @@
       }, 'adminHomeSection');
     }
 
+    // ============================================================
+    // MÜHENDİS: kutucuk -> alt sayfa geçişleri. Lider/Müdür ve Admin ile aynı mekanizma,
+    // "ana ekran" olarak engineerHomeSection kullanılır.
+    // ============================================================
+    function openEngineerProjectsPage() {
+      const home = document.getElementById('engineerHomeSection');
+      if (home) home.classList.add('hidden');
+      const section = document.getElementById('engineerProjectsPageSection');
+      if (section) section.classList.remove('hidden');
+      renderEngineerProjectsPage();
+    }
+
+    function openEngineerStatusPage() {
+      const home = document.getElementById('engineerHomeSection');
+      if (home) home.classList.add('hidden');
+      const section = document.getElementById('engineerSection');
+      if (section) section.classList.remove('hidden');
+      populateEngineerAssigneeOptions();
+      if (typeof renderEngineerInternStatusList === 'function') renderEngineerInternStatusList();
+    }
+
+    function openEngineerTeamPage() {
+      const home = document.getElementById('engineerHomeSection');
+      if (home) home.classList.add('hidden');
+      const section = document.getElementById('engineerTeamPageSection');
+      if (section) section.classList.remove('hidden');
+      renderEngineerTeamList();
+    }
+
+    function openEngineerTasksPage() {
+      const home = document.getElementById('engineerHomeSection');
+      if (home) home.classList.add('hidden');
+      const section = document.getElementById('leaderTasksPageSection');
+      if (section) section.classList.remove('hidden');
+      renderLeaderTasksPage();
+    }
+
+    function openEngineerMeetingsPage() {
+      openModalAsPage('meetingsModal', () => {
+        const modal = document.getElementById('meetingsModal');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof populateMeetingTargetRoles === 'function') populateMeetingTargetRoles();
+        if (typeof loadMeetings === 'function') loadMeetings();
+        const track = document.getElementById('meetingRequestsList');
+        if (track && !track.dataset.scrollBound) {
+          track.addEventListener('scroll', () => {
+            if (typeof updateMeetingCarouselControls === 'function') updateMeetingCarouselControls();
+          });
+          track.dataset.scrollBound = '1';
+        }
+        if (typeof updateMeetingCarouselControls === 'function') setTimeout(updateMeetingCarouselControls, 0);
+      }, 'engineerHomeSection');
+    }
+
+    function openEngineerCalendarPage() {
+      openModalAsPage('calendarModal', () => {
+        const modal = document.getElementById('calendarModal');
+        if (modal) modal.classList.remove('hidden');
+        calendarViewDate = new Date();
+        if (typeof loadCalendarData === 'function') loadCalendarData();
+        if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus();
+      }, 'engineerHomeSection');
+    }
+
     // "Görevler" kutucuğu: Müdür/Ekip Lideri'nin hem kendi görevlerini hem de
     // altındaki rollerin (rol sıralaması) görevlerini birlikte, kart olarak gösterir.
     function renderLeaderTasksPage() {
@@ -5768,11 +5989,11 @@
     }
 
     // Ortak durum kartı oluşturucu (verilen role göre listeyi bir konteynere basar)
-    function renderStatusCards(listEl, wantedRole, wantedDept) {
+    function renderStatusCards(listEl, wantedRole, wantedDept, wantedEngineerId) {
       if (!listEl) return;
       listEl.innerHTML = '';
 
-      const people = usersList.filter(u => u.role === wantedRole && (!wantedDept || u.department === wantedDept));
+      const people = usersList.filter(u => u.role === wantedRole && (!wantedDept || u.department === wantedDept) && (!wantedEngineerId || u.engineer_id == wantedEngineerId));
 
       const data = people.map(person => {
         const activeTasks = tasksList.filter(t => (t.assigned_to == person.id) && t.status !== 'APPROVED');
@@ -5905,12 +6126,12 @@
       renderStatusCards(listEl, adminStatusSelectedRole, adminStatusSelectedDept);
     }
 
-    // Mühendis: kendi birimindeki stajyerlerin durum listesi
+    // Mühendis: kendisine sorumlu mühendis olarak atanmış (engineer_id ile bağlı) stajyerlerin durum listesi
     function renderEngineerInternStatusList() {
       const listEl = document.getElementById('engineerInternStatusList');
       const titleEl = document.getElementById('engineerStatusTitle');
       if (titleEl) titleEl.innerText = 'Stajyer Durum ve İş Yükü';
-      renderStatusCards(listEl, 'INTERN');
+      renderStatusCards(listEl, 'INTERN', undefined, currentUser.id);
     }
 
     // Mühendisin stajyer görev atama kutusunu doldurur
@@ -5919,7 +6140,7 @@
       if (!select) return;
       select.innerHTML = '';
 
-      const interns = usersList.filter(u => u.role === 'INTERN');
+      const interns = usersList.filter(u => u.role === 'INTERN' && u.engineer_id == currentUser.id);
       if (interns.length === 0) {
         const opt = document.createElement('option');
         opt.value = '';
