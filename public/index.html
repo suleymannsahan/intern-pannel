@@ -508,14 +508,14 @@
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-            <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
-              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2">
+            <div class="mb-4">
+              <h3 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2 mb-3">
                 <i class="fa-solid fa-users text-cyan-500"></i> <span id="statusListTitle">Durum ve İş Yükü</span>
               </h3>
-              <div class="flex items-center gap-2">
-                <select id="statusRoleFilter" onchange="renderInternStatusList()" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 focus:outline-none focus:border-cyan-500">
-                  <!-- Rol seçenekleri JS ile role göre doldurulur -->
-                </select>
+              <div class="flex flex-wrap items-center gap-2">
+                <div id="statusRoleToggle" class="inline-flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+                  <!-- Rol toggle butonları JS ile role göre doldurulur -->
+                </div>
                 <span class="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:inline"><i class="fa-solid fa-arrow-up-short-wide me-1"></i>En az yoğundan en çoğa</span>
               </div>
             </div>
@@ -4669,16 +4669,51 @@
       });
     }
 
-    // "Durum ve İş Yükü" rol seçicisini, mevcut kullanıcının görebileceği alt rollerle doldurur
+    // "Durum ve İş Yükü" rol toggle'ı (INTERN / ENGINEER) - mevcut seçim
+    let statusRoleFilterValue = 'INTERN';
+
+    // "Durum ve İş Yükü" rol toggle'ını, mevcut kullanıcının görebileceği alt rollerle doldurur
     function populateStatusRoleFilter() {
-      const select = document.getElementById('statusRoleFilter');
-      if (!select || !currentUser) return;
+      const toggle = document.getElementById('statusRoleToggle');
+      if (!toggle || !currentUser) return;
 
       // Görüntülenebilir alt roller (durum/iş yükü için stajyer ve mühendisle sınırlı tutuyoruz)
-      let roles = getSubordinateRoles(currentUser.role).filter(r => ['ENGINEER', 'INTERN'].includes(r));
+      const visibleRoles = getSubordinateRoles(currentUser.role);
+      // Sabit sıra: solda Stajyer, sağda Mühendis
+      let roles = ['INTERN', 'ENGINEER'].filter(r => visibleRoles.includes(r));
       if (roles.length === 0) roles = ['INTERN'];
 
-      select.innerHTML = roles.map(r => `<option value="${r}">${ROLE_LABELS_TR[r] || r}</option>`).join('');
+      if (!roles.includes(statusRoleFilterValue)) statusRoleFilterValue = roles[0];
+
+      toggle.innerHTML = roles.map(r => `
+        <button type="button" data-role="${r}" onclick="setStatusRoleFilter('${r}')" class="px-4 py-1.5 text-xs font-semibold rounded-lg transition-all">${ROLE_LABELS_TR[r] || r}</button>
+      `).join('');
+
+      updateStatusRoleToggleStyles();
+    }
+
+    // Aktif/pasif buton stillerini günceller
+    function updateStatusRoleToggleStyles() {
+      const toggle = document.getElementById('statusRoleToggle');
+      if (!toggle) return;
+
+      const activeCls = ['bg-cyan-600', 'text-white'];
+      const passiveCls = ['text-slate-500', 'dark:text-slate-400'];
+
+      toggle.querySelectorAll('button[data-role]').forEach(btn => {
+        if (btn.dataset.role === statusRoleFilterValue) {
+          btn.classList.add(...activeCls); btn.classList.remove(...passiveCls);
+        } else {
+          btn.classList.remove(...activeCls); btn.classList.add(...passiveCls);
+        }
+      });
+    }
+
+    // Durum ve İş Yükü toggle'ında rol seçimini değiştirir
+    function setStatusRoleFilter(role) {
+      statusRoleFilterValue = role;
+      updateStatusRoleToggleStyles();
+      renderInternStatusList();
     }
 
     // Ortak durum kartı oluşturucu (verilen role göre listeyi bir konteynere basar)
@@ -4744,10 +4779,9 @@
     function renderInternStatusList() {
       const listEl = document.getElementById('internStatusList');
       const titleEl = document.getElementById('statusListTitle');
-      const roleSelect = document.getElementById('statusRoleFilter');
       if (!listEl) return;
 
-      const wantedRole = (roleSelect && roleSelect.value) ? roleSelect.value : 'INTERN';
+      const wantedRole = statusRoleFilterValue || 'INTERN';
 
       // Seçilen role göre başlığı güncelle
       if (titleEl) titleEl.innerText = `${ROLE_LABELS_TR[wantedRole] || wantedRole} Durum ve İş Yükü`;
