@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="tr" class="dark">
+<html lang="tr">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -236,7 +236,7 @@
             </button>
             <button onclick="toggleDarkMode()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 flex items-center justify-between transition-all">
               <span class="flex items-center gap-2.5"><i class="fa-solid fa-moon text-amber-500 dark:text-cyan-400"></i> Tema Modu</span>
-              <span id="themeText" class="text-[10px] text-slate-400">Karanlık</span>
+              <span id="themeText" class="text-[10px] text-slate-400">Aydınlık</span>
             </button>
             <div class="border-t border-slate-200 dark:border-slate-800 my-1"></div>
             <button onclick="handleLogout()" class="w-full text-left px-3 py-2 rounded-xl text-xs font-semibold text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-950/30 flex items-center gap-2.5 transition-all">
@@ -554,6 +554,131 @@
           </div>
           <p class="text-xs text-slate-400 text-center">Yeni Kayıt Onayları ve Kullanıcı Yönetimi artık üst menüdeki ilgili ikonlardan erişilebilir.</p>
 
+          <!-- ============================================================ -->
+          <!-- PROJE GİDİŞATI PANELİ (fotoğraftaki yeni admin paneli)       -->
+          <!-- ============================================================ -->
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+
+            <!-- SOL/ORTA: Birim → Firma → Proje → Gidişat Grafiği -->
+            <div class="xl:col-span-2 space-y-4">
+
+              <!-- Ekip / Proje Gidişatı ana kartı -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-4">
+                <div class="flex flex-wrap items-center justify-between gap-2">
+                  <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                    <i class="fa-solid fa-chart-line text-cyan-500"></i> Proje Gidişatı
+                  </h3>
+                  <button onclick="openProjectManageModal()" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all">
+                    <i class="fa-solid fa-plus"></i> Firma / Proje Yönet
+                  </button>
+                </div>
+
+                <!-- ADIM 1: Birim seçimi (elektronik / yazılım / mekanik ...) -->
+                <div>
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Birim Seçin</div>
+                  <div id="projDeptChips" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- ADIM 2: Firma seçimi -->
+                <div id="projCompanyWrap" class="hidden">
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Firma Seçin</div>
+                  <div id="projCompanyChips" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- ADIM 3: Proje seçimi (tıklanınca renk değişir) -->
+                <div id="projProjectWrap" class="hidden">
+                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Proje Seçin</div>
+                  <div id="projProjectChips" class="flex flex-wrap gap-2"></div>
+                </div>
+
+                <!-- ADIM 4: Grafik + seçilen proje bilgisi -->
+                <div id="projChartWrap" class="hidden space-y-3 pt-1">
+                  <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-2">
+                      <div id="projChartTitle" class="text-sm font-bold text-slate-800 dark:text-slate-100"></div>
+                      <div id="projChartBadges" class="flex items-center gap-1.5"></div>
+                    </div>
+                    <div class="relative h-64">
+                      <canvas id="projProgressChart"></canvas>
+                    </div>
+                  </div>
+                  <!-- Sorumlu / not kutusu -->
+                  <div id="projOwnerNote" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 text-sm text-amber-700 dark:text-amber-300 flex items-start gap-3">
+                    <i class="fa-solid fa-circle-info mt-0.5"></i>
+                    <div id="projOwnerNoteText" class="flex-1"></div>
+                  </div>
+                  <!-- İlerleme noktası ekleme (admin) -->
+                  <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5">
+                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Yeni İlerleme Noktası Ekle</div>
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
+                      <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-[10px] text-slate-500 mb-1">Tarih</label>
+                        <input type="date" id="progNewDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">Planlanan %</label>
+                        <input type="number" id="progNewPlanned" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                      </div>
+                      <div>
+                        <label class="block text-[10px] text-slate-500 mb-1">Gerçekleşen %</label>
+                        <input type="number" id="progNewActual" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                      </div>
+                      <div class="col-span-2 sm:col-span-1">
+                        <label class="block text-[10px] text-slate-500 mb-1">Not (ops.)</label>
+                        <input type="text" id="progNewNote" placeholder="örn: hastaydım" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                      </div>
+                      <div class="col-span-2 sm:col-span-5">
+                        <button onclick="handleAddProgress()" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-all">
+                          <i class="fa-solid fa-plus me-1"></i> Kaydet
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div id="projEmptyState" class="text-xs text-slate-400 text-center py-4">
+                  Grafikleri görmek için önce bir birim, firma ve proje seçin.
+                </div>
+              </div>
+
+              <!-- ALT: Aciliyet & Önem Sırası -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-arrow-up-wide-short text-indigo-500"></i> Projelerin Aciliyet & Önem Sırası
+                </h3>
+                <div id="urgencyRankingList" class="space-y-2"></div>
+              </div>
+            </div>
+
+            <!-- SAĞ KOLON: Bildirim panelleri -->
+            <div class="space-y-4">
+
+              <!-- Son 3 gün toplantı listesi -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-calendar-check text-cyan-500"></i> Son 3 Gün Toplantılar
+                </h4>
+                <div id="recentMeetingsList" class="space-y-2"></div>
+              </div>
+
+              <!-- Geciken Projeler bildirimi -->
+              <div class="bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-4 shadow-sm">
+                <h4 class="font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-triangle-exclamation"></i> Geciken Projeler
+                </h4>
+                <div id="overdueProjectsList" class="space-y-2"></div>
+              </div>
+
+              <!-- Yeni kullanıcı bilgilendirme -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
+                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-user-plus text-emerald-500"></i> Yeni Kullanıcı Bildirimleri
+                </h4>
+                <div id="newUserNotifList" class="space-y-2"></div>
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <!-- EKİP GİDİŞATI (Admin + alt rolü olan herkes: kendi altındaki rolleri görür) -->
@@ -674,6 +799,100 @@
   </div>
 
   <!-- MODALLAR -->
+
+  <!-- FİRMA / PROJE YÖNETİM MODALI -->
+  <div id="projectManageModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]" onclick="if(event.target===this) closeProjectManageModal();">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-center gap-3 p-6 pb-3 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+        <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-diagram-project text-cyan-500"></i> Firma & Proje Yönetimi
+        </h3>
+        <button onclick="closeProjectManageModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="p-6 space-y-6">
+        <!-- Yeni Firma -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+          <h4 class="font-bold text-sm mb-3 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-building"></i> Yeni Firma Ekle</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+            <div class="sm:col-span-1">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Firma Adı</label>
+              <input type="text" id="newCompanyName" placeholder="örn: Türk Telekom" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim (ops.)</label>
+              <select id="newCompanyDept" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="">Genel (birime bağlı değil)</option>
+                <option value="ELEKTRONIK">Elektronik</option>
+                <option value="YAZILIM">Yazılım</option>
+                <option value="MEKANIK">Mekanik</option>
+              </select>
+            </div>
+            <button onclick="handleAddCompany()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all">Firma Ekle</button>
+          </div>
+          <div id="companyListInModal" class="flex flex-wrap gap-2 mt-3"></div>
+        </div>
+
+        <!-- Yeni Proje -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+          <h4 class="font-bold text-sm mb-3 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-folder-plus"></i> Yeni Proje Ekle</h4>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Firma</label>
+              <select id="newProjectCompany" onchange="syncNewProjectDeptFromCompany()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Proje Adı</label>
+              <input type="text" id="newProjectName" placeholder="örn: A Projesi" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim</label>
+              <select id="newProjectDept" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="ELEKTRONIK">Elektronik</option>
+                <option value="YAZILIM">Yazılım</option>
+                <option value="MEKANIK">Mekanik</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Sorumlu Kişi</label>
+              <select id="newProjectOwner" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="">Belirtilmemiş</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Başlangıç Tarihi</label>
+              <input type="date" id="newProjectStart" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Bitiş Tarihi (Deadline)</label>
+              <input type="date" id="newProjectEnd" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Öncelik</label>
+              <select id="newProjectPriority" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                <option value="YÜKSEK">Yüksek</option>
+                <option value="NORMAL" selected>Normal</option>
+                <option value="DÜŞÜK">Düşük</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Not (ops.)</label>
+              <input type="text" id="newProjectNote" placeholder="Kısa açıklama" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+          </div>
+          <div class="flex justify-end mt-3">
+            <button onclick="handleAddProject()" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Proje Oluştur</button>
+          </div>
+        </div>
+
+        <!-- Mevcut Projeler -->
+        <div>
+          <h4 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-list text-cyan-500"></i> Mevcut Projeler</h4>
+          <div id="projectListInModal" class="space-y-2"></div>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- GÖREV DETAY MODALI (karta tıklanınca ekranda büyür) -->
   <div id="taskDetailModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]" onclick="if(event.target===this) closeTaskDetailModal();">
@@ -972,7 +1191,7 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com'; 
+    const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com';  //http://localhost:5000
 
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
     let usersList = [];
@@ -1130,6 +1349,10 @@
       } else {
         html.classList.add('dark');
         if (themeText) themeText.innerText = 'Karanlık';
+      }
+      // Açık proje grafiği varsa tema renkleriyle yeniden çiz
+      if (typeof projProgressChartInstance !== 'undefined' && projProgressChartInstance && projSelectedProject) {
+        loadProjectChart(projSelectedProject);
       }
     }
 
@@ -1476,6 +1699,539 @@
       // Ekip Gidişatı, usersList'e ihtiyaç duyduğu için önce onu tazeleyip sonra render ediyoruz
       await loadUsers();
       if (typeof loadTeamProgress === 'function') loadTeamProgress();
+
+      // Yeni Proje Gidişatı paneli (fotoğraftaki admin paneli)
+      if (typeof loadProjectDashboard === 'function') loadProjectDashboard();
+    }
+
+    // ============================================================
+    // PROJE GİDİŞATI PANELİ (Firma → Proje → Planlanan/Gerçekleşen grafik)
+    // ============================================================
+    const PROJECT_DEPTS = [
+      { key: 'ELEKTRONIK', label: 'Elektronik', icon: 'fa-microchip' },
+      { key: 'YAZILIM', label: 'Yazılım', icon: 'fa-code' },
+      { key: 'MEKANIK', label: 'Mekanik', icon: 'fa-gears' }
+    ];
+    let projCompaniesCache = [];
+    let projProjectsCache = [];
+    let projSelectedDept = null;
+    let projSelectedCompany = null;
+    let projSelectedProject = null;
+    let projSelectedProjectOwnerId = null;
+    let projProgressChartInstance = null;
+
+    async function loadProjectDashboard() {
+      renderProjectDeptChips();
+      await refreshDashboardSummary();
+    }
+
+    // ADIM 1: Birim çipleri
+    function renderProjectDeptChips() {
+      const el = document.getElementById('projDeptChips');
+      if (!el) return;
+      el.innerHTML = PROJECT_DEPTS.map(d => {
+        const active = projSelectedDept === d.key;
+        return `<button onclick="selectProjectDept('${d.key}')" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+          ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-500/20'
+          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-cyan-500'}">
+          <i class="fa-solid ${d.icon} me-1.5"></i>${d.label}</button>`;
+      }).join('');
+    }
+
+    async function selectProjectDept(dept) {
+      projSelectedDept = dept;
+      projSelectedCompany = null;
+      projSelectedProject = null;
+      renderProjectDeptChips();
+      // Firmaları çek (birime bağlı olanlar + genel olanlar)
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/companies`);
+        const all = await res.json();
+        projCompaniesCache = (all || []).filter(c => !c.department || c.department === dept);
+      } catch (e) { projCompaniesCache = []; }
+      renderProjectCompanyChips();
+      // Sonraki adımları gizle
+      document.getElementById('projCompanyWrap').classList.remove('hidden');
+      document.getElementById('projProjectWrap').classList.add('hidden');
+      document.getElementById('projChartWrap').classList.add('hidden');
+      document.getElementById('projEmptyState').classList.remove('hidden');
+    }
+
+    // ADIM 2: Firma çipleri
+    function renderProjectCompanyChips() {
+      const el = document.getElementById('projCompanyChips');
+      if (!el) return;
+      if (projCompaniesCache.length === 0) {
+        el.innerHTML = `<span class="text-xs text-slate-400">Bu birime bağlı firma yok. "Firma / Proje Yönet" ile ekleyin.</span>`;
+        return;
+      }
+      el.innerHTML = projCompaniesCache.map(c => {
+        const active = projSelectedCompany === c.id;
+        return `<button onclick="selectProjectCompany(${c.id})" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+          ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-500/20'
+          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-500'}">
+          <i class="fa-solid fa-building me-1.5"></i>${escapeHtmlProj(c.name)}</button>`;
+      }).join('');
+    }
+
+    async function selectProjectCompany(companyId) {
+      projSelectedCompany = companyId;
+      projSelectedProject = null;
+      renderProjectCompanyChips();
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects?company_id=${companyId}&department=${encodeURIComponent(projSelectedDept)}`);
+        projProjectsCache = await res.json();
+      } catch (e) { projProjectsCache = []; }
+      renderProjectProjectChips();
+      document.getElementById('projProjectWrap').classList.remove('hidden');
+      document.getElementById('projChartWrap').classList.add('hidden');
+      document.getElementById('projEmptyState').classList.remove('hidden');
+    }
+
+    // ADIM 3: Proje çipleri (tıklanınca renk değişir)
+    function renderProjectProjectChips() {
+      const el = document.getElementById('projProjectChips');
+      if (!el) return;
+      if (projProjectsCache.length === 0) {
+        el.innerHTML = `<span class="text-xs text-slate-400">Bu firmaya ait proje yok. "Firma / Proje Yönet" ile ekleyin.</span>`;
+        return;
+      }
+      el.innerHTML = projProjectsCache.map(p => {
+        const active = projSelectedProject === p.id;
+        const overdueDot = p.is_overdue ? '<span class="inline-block w-2 h-2 rounded-full bg-rose-500 ms-1.5"></span>' : '';
+        return `<button onclick="selectProjectProject(${p.id})" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+          ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/20'
+          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-emerald-500'}">
+          <i class="fa-solid fa-folder me-1.5"></i>${escapeHtmlProj(p.name)}${overdueDot}</button>`;
+      }).join('');
+    }
+
+    async function selectProjectProject(projectId) {
+      projSelectedProject = projectId;
+      renderProjectProjectChips();
+      document.getElementById('projEmptyState').classList.add('hidden');
+      document.getElementById('projChartWrap').classList.remove('hidden');
+      await loadProjectChart(projectId);
+    }
+
+    async function loadProjectChart(projectId) {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
+        const data = await res.json();
+        const project = data.project;
+        const progress = data.progress || [];
+        projSelectedProjectOwnerId = project.owner_id;
+
+        // Başlık
+        document.getElementById('projChartTitle').innerText =
+          `${project.company_name || ''} — ${project.name}`;
+
+        // Rozetler: durum + kalan gün
+        const today = new Date().toISOString().substring(0, 10);
+        const daysLeft = Math.round((new Date(project.end_date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+        const last = progress.length ? progress[progress.length - 1] : null;
+        const actual = last ? Number(last.actual) : 0;
+        const planned = last ? Number(last.planned) : 0;
+        const behind = actual < planned - 5;
+        let daysBadge, daysCls;
+        if (daysLeft < 0) { daysBadge = `${Math.abs(daysLeft)} gün gecikti`; daysCls = 'bg-rose-500/15 text-rose-600 dark:text-rose-400'; }
+        else if (daysLeft <= 3) { daysBadge = `Son ${daysLeft} gün`; daysCls = 'bg-amber-500/15 text-amber-600 dark:text-amber-400'; }
+        else { daysBadge = `${daysLeft} gün kaldı`; daysCls = 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'; }
+        document.getElementById('projChartBadges').innerHTML = `
+          <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${daysCls}">${daysBadge}</span>
+          ${behind ? '<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-rose-500/15 text-rose-600 dark:text-rose-400">Planın gerisinde</span>' : '<span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-cyan-500/15 text-cyan-600 dark:text-cyan-400">Yolunda</span>'}
+        `;
+
+        // Sorumlu / not kutusu
+        const noteBox = document.getElementById('projOwnerNote');
+        const noteText = document.getElementById('projOwnerNoteText');
+        // En son notlu ilerleme kaydını bul
+        const lastNoted = [...progress].reverse().find(pr => pr.note && pr.note.trim());
+        let parts = [];
+        if (project.owner_name) parts.push(`<strong>${escapeHtmlProj(project.owner_name)}</strong>`);
+        if (project.note) parts.push(escapeHtmlProj(project.note));
+        if (lastNoted) parts.push(`<span class="opacity-90">${lastNoted.log_date}: ${escapeHtmlProj(lastNoted.note)}</span>`);
+        if (parts.length) {
+          noteText.innerHTML = parts.join(' &middot; ');
+          noteBox.classList.remove('hidden');
+        } else {
+          noteBox.classList.add('hidden');
+        }
+
+        // Grafik
+        renderProjProgressChart(progress);
+
+        // İlerleme ekleme formu tarihini bugüne ayarla
+        const dEl = document.getElementById('progNewDate');
+        if (dEl && !dEl.value) dEl.value = today;
+      } catch (e) {
+        console.error('Proje grafiği yüklenemedi:', e);
+      }
+    }
+
+    function renderProjProgressChart(progress) {
+      const canvas = document.getElementById('projProgressChart');
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (projProgressChartInstance) { projProgressChartInstance.destroy(); projProgressChartInstance = null; }
+
+      const sorted = [...progress].sort((a, b) => a.log_date.localeCompare(b.log_date));
+      const labels = sorted.map(p => p.log_date);
+      const plannedData = sorted.map(p => Number(p.planned));
+      const actualData = sorted.map(p => Number(p.actual));
+
+      const isDark = document.documentElement.classList.contains('dark');
+      const gridColor = isDark ? 'rgba(148,163,184,0.15)' : 'rgba(100,116,139,0.15)';
+      const tickColor = isDark ? '#94a3b8' : '#475569';
+
+      projProgressChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels,
+          datasets: [
+            {
+              label: 'Planlanan',
+              data: plannedData,
+              borderColor: '#6366f1',
+              backgroundColor: 'transparent',
+              borderDash: [6, 4],
+              tension: 0.3,
+              pointRadius: 3,
+              pointBackgroundColor: '#6366f1'
+            },
+            {
+              label: 'Gerçekleşen',
+              data: actualData,
+              borderColor: '#06b6d4',
+              backgroundColor: 'rgba(6,182,212,0.12)',
+              tension: 0.3,
+              fill: true,
+              pointRadius: 3,
+              pointBackgroundColor: '#06b6d4'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          plugins: {
+            legend: { display: true, labels: { color: tickColor, boxWidth: 12, font: { size: 11 } } },
+            tooltip: { callbacks: { label: (c) => `${c.dataset.label}: %${c.parsed.y}` } }
+          },
+          scales: {
+            y: { beginAtZero: true, max: 100, ticks: { color: tickColor, callback: (v) => v + '%' }, grid: { color: gridColor } },
+            x: { ticks: { color: tickColor, font: { size: 10 } }, grid: { color: gridColor } }
+          }
+        }
+      });
+    }
+
+    // İlerleme noktası ekle
+    async function handleAddProgress() {
+      if (!projSelectedProject) return;
+      const date = document.getElementById('progNewDate').value;
+      const planned = document.getElementById('progNewPlanned').value;
+      const actual = document.getElementById('progNewActual').value;
+      const note = document.getElementById('progNewNote').value;
+      if (!date) { showToast('Lütfen tarih seçin.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${projSelectedProject}/progress`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ log_date: date, planned, actual, note, userRole: currentUser.role, userId: currentUser.id })
+        });
+        const out = await res.json();
+        if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
+        document.getElementById('progNewPlanned').value = '';
+        document.getElementById('progNewActual').value = '';
+        document.getElementById('progNewNote').value = '';
+        showToast('İlerleme kaydedildi.', 'success');
+        await loadProjectChart(projSelectedProject);
+        await refreshDashboardSummary();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // Sağ kolon + alt aciliyet listesi
+    async function refreshDashboardSummary() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/admin/dashboard?userRole=${currentUser.role}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        renderRecentMeetings(data.recentMeetings || []);
+        renderOverdueProjects(data.overdueProjects || []);
+        renderNewUserNotifs(data.pendingUsers || []);
+        renderUrgencyRanking(data.urgencyRanking || []);
+      } catch (e) { console.error('Dashboard özeti alınamadı:', e); }
+    }
+
+    function renderRecentMeetings(meetings) {
+      const el = document.getElementById('recentMeetingsList');
+      if (!el) return;
+      if (meetings.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Son 3 günde toplantı yok.</p>`; return; }
+      el.innerHTML = meetings.slice(0, 6).map(m => {
+        const st = m.status === 'APPROVED' ? 'text-emerald-500' : m.status === 'REJECTED' ? 'text-rose-500' : 'text-amber-500';
+        return `<div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5">
+          <div class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
+          <div class="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
+            <span>${escapeHtmlProj(m.requester_name || '')} · ${(m.created_at || '').substring(0, 10)}</span>
+            <span class="${st} font-bold"><i class="fa-solid fa-circle text-[6px] me-1"></i>${m.status || ''}</span>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function renderOverdueProjects(projects) {
+      const el = document.getElementById('overdueProjectsList');
+      if (!el) return;
+      if (projects.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Geciken proje yok. 🎉</p>`; return; }
+      el.innerHTML = projects.slice(0, 8).map(p => {
+        const late = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `Son ${p.days_left} gün`;
+        return `<button onclick="jumpToProject('${p.department}', ${p.id})" class="w-full text-left bg-rose-500/5 border border-rose-200 dark:border-rose-900/40 rounded-lg p-2.5 hover:bg-rose-500/10 transition-all">
+          <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-0.5">
+            <span>${escapeHtmlProj(p.owner_name || 'Sorumlu yok')}</span>
+            <span class="text-rose-500 font-bold">${late}</span>
+          </div>
+        </button>`;
+      }).join('');
+    }
+
+    function renderNewUserNotifs(users) {
+      const el = document.getElementById('newUserNotifList');
+      if (!el) return;
+      if (users.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Bekleyen yeni kullanıcı yok.</p>`; return; }
+      el.innerHTML = users.slice(0, 6).map(u => `
+        <div class="bg-emerald-500/5 border border-emerald-200 dark:border-emerald-900/40 rounded-lg p-2.5 flex items-center justify-between gap-2">
+          <div class="min-w-0">
+            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(u.name)}</div>
+            <div class="text-[10px] text-slate-500 dark:text-slate-400">${ROLE_LABELS_TR[u.role] || u.role || ''} · ${DEPARTMENT_LABELS[u.department] || u.department || '-'}</div>
+          </div>
+          <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">ONAY BEKLİYOR</span>
+        </div>
+      `).join('');
+    }
+
+    function renderUrgencyRanking(projects) {
+      const el = document.getElementById('urgencyRankingList');
+      if (!el) return;
+      if (projects.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Henüz proje eklenmedi. "Firma / Proje Yönet" ile başlayın.</p>`; return; }
+      el.innerHTML = projects.slice(0, 10).map((p, i) => {
+        let barCls = 'bg-emerald-500', lvl = 'Düşük';
+        if (p.urgency >= 70) { barCls = 'bg-rose-500'; lvl = 'Kritik'; }
+        else if (p.urgency >= 40) { barCls = 'bg-amber-500'; lvl = 'Orta'; }
+        const width = Math.min(100, Math.max(6, p.urgency));
+        const daysTxt = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
+        return `<button onclick="jumpToProject('${p.department}', ${p.id})" class="w-full text-left flex items-center gap-3 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 hover:border-cyan-500 transition-all">
+          <div class="w-6 h-6 shrink-0 rounded-md bg-slate-200 dark:bg-slate-800 flex items-center justify-center text-[11px] font-bold text-slate-600 dark:text-slate-300">${i + 1}</div>
+          <div class="flex-1 min-w-0">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+              <span class="text-[9px] font-bold px-1.5 py-0.5 rounded ${p.urgency >= 70 ? 'bg-rose-500/15 text-rose-500' : p.urgency >= 40 ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'} shrink-0">${lvl}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full ${barCls} rounded-full" style="width:${width}%"></div>
+              </div>
+              <span class="text-[10px] text-slate-400 shrink-0">${daysTxt}</span>
+            </div>
+          </div>
+        </button>`;
+      }).join('');
+    }
+
+    // Geciken/aciliyet listesinden projeye zıpla
+    async function jumpToProject(dept, projectId) {
+      if (dept) await selectProjectDept(dept);
+      // Projenin firmasını bul
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
+        const data = await res.json();
+        const companyId = data.project.company_id;
+        if (companyId) await selectProjectCompany(companyId);
+        await selectProjectProject(projectId);
+        document.getElementById('projProgressChart').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (e) {}
+    }
+
+    // ---- Firma / Proje Yönetim Modalı ----
+    function openProjectManageModal() {
+      document.getElementById('projectManageModal').classList.remove('hidden');
+      refreshProjectManageModal();
+    }
+    function closeProjectManageModal() {
+      document.getElementById('projectManageModal').classList.add('hidden');
+    }
+
+    async function refreshProjectManageModal() {
+      // Firmalar
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/companies`);
+        projCompaniesCache = await res.json();
+      } catch (e) { projCompaniesCache = []; }
+      // Firma çip listesi
+      const clist = document.getElementById('companyListInModal');
+      if (clist) {
+        clist.innerHTML = projCompaniesCache.length === 0
+          ? `<span class="text-xs text-slate-400">Henüz firma yok.</span>`
+          : projCompaniesCache.map(c => `
+            <span class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+              ${escapeHtmlProj(c.name)}${c.department ? `<span class="text-[9px] text-slate-400">(${DEPARTMENT_LABELS[c.department] || c.department})</span>` : ''}
+              <button onclick="handleDeleteCompany(${c.id})" class="text-rose-500 hover:text-rose-600 ms-1"><i class="fa-solid fa-xmark"></i></button>
+            </span>`).join('');
+      }
+      // Firma select
+      const sel = document.getElementById('newProjectCompany');
+      if (sel) {
+        sel.innerHTML = projCompaniesCache.length === 0
+          ? `<option value="">Önce firma ekleyin</option>`
+          : projCompaniesCache.map(c => `<option value="${c.id}" data-dept="${c.department || ''}">${escapeHtmlProj(c.name)}</option>`).join('');
+        syncNewProjectDeptFromCompany();
+      }
+      // Sorumlu kişi select (usersList'ten)
+      const ownerSel = document.getElementById('newProjectOwner');
+      if (ownerSel) {
+        const people = (usersList || []).filter(u => u.role !== 'ADMIN' && u.role !== 'HR' && (u.status === 'APPROVED' || !u.status));
+        ownerSel.innerHTML = `<option value="">Belirtilmemiş</option>` +
+          people.map(u => `<option value="${u.id}">${escapeHtmlProj(u.name)} (${ROLE_LABELS_TR[u.role] || u.role})</option>`).join('');
+      }
+      // Mevcut projeler
+      await renderProjectListInModal();
+    }
+
+    function syncNewProjectDeptFromCompany() {
+      const sel = document.getElementById('newProjectCompany');
+      const deptSel = document.getElementById('newProjectDept');
+      if (!sel || !deptSel) return;
+      const opt = sel.options[sel.selectedIndex];
+      const dept = opt ? opt.getAttribute('data-dept') : '';
+      if (dept) deptSel.value = dept;
+    }
+
+    async function renderProjectListInModal() {
+      const el = document.getElementById('projectListInModal');
+      if (!el) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects`);
+        const projects = await res.json();
+        if (!projects.length) { el.innerHTML = `<p class="text-xs text-slate-400">Henüz proje yok.</p>`; return; }
+        el.innerHTML = projects.map(p => `
+          <div class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+              <div class="text-[10px] text-slate-400">${DEPARTMENT_LABELS[p.department] || p.department} · ${p.owner_name || 'Sorumlu yok'} · Bitiş: ${p.end_date} · Öncelik: ${p.priority || 'NORMAL'}</div>
+            </div>
+            <button onclick="handleDeleteProject(${p.id})" class="text-rose-500 hover:text-rose-600 p-1 shrink-0"><i class="fa-solid fa-trash-can"></i></button>
+          </div>
+        `).join('');
+      } catch (e) { el.innerHTML = `<p class="text-xs text-rose-400">Projeler yüklenemedi.</p>`; }
+    }
+
+    async function handleAddCompany() {
+      const name = document.getElementById('newCompanyName').value.trim();
+      const department = document.getElementById('newCompanyDept').value;
+      if (!name) { showToast('Firma adı gerekli.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/companies`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, department: department || null, userRole: currentUser.role })
+        });
+        const out = await res.json();
+        if (!res.ok) { showToast(out.error || 'Eklenemedi.', 'error'); return; }
+        document.getElementById('newCompanyName').value = '';
+        showToast('Firma eklendi.', 'success');
+        await refreshProjectManageModal();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    async function handleDeleteCompany(id) {
+      if (!confirm('Bu firmayı ve bağlı tüm projelerini silmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/companies/${id}`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userRole: currentUser.role })
+        });
+        const out = await res.json();
+        if (!res.ok) { showToast(out.error || 'Silinemedi.', 'error'); return; }
+        showToast('Firma silindi.', 'success');
+        await refreshProjectManageModal();
+        await refreshDashboardSummary();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    async function handleAddProject() {
+      const company_id = document.getElementById('newProjectCompany').value;
+      const name = document.getElementById('newProjectName').value.trim();
+      const department = document.getElementById('newProjectDept').value;
+      const owner_id = document.getElementById('newProjectOwner').value;
+      const start_date = document.getElementById('newProjectStart').value;
+      const end_date = document.getElementById('newProjectEnd').value;
+      const priority = document.getElementById('newProjectPriority').value;
+      const note = document.getElementById('newProjectNote').value.trim();
+      if (!company_id) { showToast('Firma seçin.', 'error'); return; }
+      if (!name) { showToast('Proje adı gerekli.', 'error'); return; }
+      if (!start_date || !end_date) { showToast('Başlangıç ve bitiş tarihi gerekli.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_id, name, department, owner_id: owner_id || null, start_date, end_date, priority, note, userRole: currentUser.role, createdBy: currentUser.name })
+        });
+        const out = await res.json();
+        if (!res.ok) { showToast(out.error || 'Oluşturulamadı.', 'error'); return; }
+        document.getElementById('newProjectName').value = '';
+        document.getElementById('newProjectNote').value = '';
+        showToast('Proje oluşturuldu.', 'success');
+        await refreshProjectManageModal();
+        await refreshDashboardSummary();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    async function handleDeleteProject(id) {
+      if (!confirm('Bu projeyi silmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${id}`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userRole: currentUser.role })
+        });
+        const out = await res.json();
+        if (!res.ok) { showToast(out.error || 'Silinemedi.', 'error'); return; }
+        showToast('Proje silindi.', 'success');
+        await renderProjectListInModal();
+        await refreshDashboardSummary();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // Basit toast bildirim
+    function showToast(message, type = 'info') {
+      let holder = document.getElementById('toastHolder');
+      if (!holder) {
+        holder = document.createElement('div');
+        holder.id = 'toastHolder';
+        holder.className = 'fixed bottom-5 right-5 z-[100] flex flex-col gap-2 items-end';
+        document.body.appendChild(holder);
+      }
+      const colors = {
+        success: 'bg-emerald-600 border-emerald-500',
+        error: 'bg-rose-600 border-rose-500',
+        info: 'bg-slate-800 border-slate-600'
+      };
+      const icons = { success: 'fa-circle-check', error: 'fa-circle-exclamation', info: 'fa-circle-info' };
+      const t = document.createElement('div');
+      t.className = `${colors[type] || colors.info} text-white text-sm font-semibold px-4 py-2.5 rounded-xl shadow-2xl border flex items-center gap-2.5 max-w-xs transition-all duration-300 translate-x-4 opacity-0`;
+      t.innerHTML = `<i class="fa-solid ${icons[type] || icons.info}"></i><span>${escapeHtmlProj(message)}</span>`;
+      holder.appendChild(t);
+      requestAnimationFrame(() => { t.classList.remove('translate-x-4', 'opacity-0'); });
+      setTimeout(() => {
+        t.classList.add('translate-x-4', 'opacity-0');
+        setTimeout(() => t.remove(), 300);
+      }, 3000);
+    }
+
+    // Basit HTML kaçış (proje isimleri için)
+    function escapeHtmlProj(str) {
+      return String(str == null ? '' : str)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
 
     let progressCurrentPersonTasks = [];

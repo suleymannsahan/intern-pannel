@@ -127,6 +127,59 @@ async function initDb() {
     // Google Takvim etkinlik kimliği (talep edenin takvimindeki etkinlik)
     try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN google_event_id TEXT`); } catch (e) {}
 
+    // ============================================================
+    // PROJE SİSTEMİ: Firmalar → Projeler → İlerleme Kayıtları
+    // ============================================================
+
+    // Firmalar (ör. Türk Telekom, Aselsan ...)
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS companies (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        department TEXT,
+        created_at TEXT NOT NULL
+      )
+    `);
+
+    // Projeler: bir firmaya ve bir birime bağlı; sorumlu kişi, tarih aralığı ve öncelik
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS projects (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        company_id INTEGER NOT NULL,
+        name TEXT NOT NULL,
+        department TEXT NOT NULL,
+        owner_id INTEGER,
+        start_date TEXT NOT NULL,
+        end_date TEXT NOT NULL,
+        priority TEXT DEFAULT 'NORMAL',
+        status TEXT DEFAULT 'ACTIVE',
+        note TEXT,
+        created_by TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(company_id) REFERENCES companies(id),
+        FOREIGN KEY(owner_id) REFERENCES users(id)
+      )
+    `);
+
+    // İlerleme kayıtları: her tarih için planlanan % ve gerçekleşen % (gidişat grafiği için)
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS project_progress (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        project_id INTEGER NOT NULL,
+        log_date TEXT NOT NULL,
+        planned INTEGER DEFAULT 0,
+        actual INTEGER DEFAULT 0,
+        note TEXT,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(project_id) REFERENCES projects(id)
+      )
+    `);
+
+    // Eski kayıtlar için güvenli sütun eklemeleri
+    try { await db.execute(`ALTER TABLE projects ADD COLUMN note TEXT`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE projects ADD COLUMN priority TEXT DEFAULT 'NORMAL'`); } catch (e) {}
+    try { await db.execute(`ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'ACTIVE'`); } catch (e) {}
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -1628,6 +1681,317 @@ app.put('/api/meetings/:id/review', async (req, res) => {
     res.json({ message: action === 'APPROVED' ? 'Toplantı talebi onaylandı.' : 'Toplantı talebi reddedildi.' });
   } catch (error) {
     res.status(500).json({ error: 'Talep güncellenirken hata: ' + error.message });
+  }
+});
+
+// ============================================================
+// PROJE SİSTEMİ API'LERİ (Firmalar / Projeler / İlerleme)
+// ============================================================
+
+// Yardımcı: bugünün YYYY-MM-DD değeri
+function todayISO() {
+  return new Date().toISOString().substring(0, 10);
+}
+
+// Yardımcı: iki tarih arası tam gün farkı (b - a)
+function daysBetween(a, b) {
+  const da = new Date(a + 'T00:00:00');
+  const db2 = new Date(b + 'T00:00:00');
+  return Math.round((db2 - da) / 86400000);
+}
+
+// --- FİRMALAR ---
+
+// Firma listesi (opsiyonel birim filtresi)
+app.get('/api/companies', async (req, res) => {
+  try {
+    const { department } = req.query;
+    let sql = `SELECT * FROM companies`;
+    const args = [];
+    if (department) { sql += ` WHERE department = ?`; args.push(department); }
+    sql += ` ORDER BY name ASC`;
+    const r = await db.execute({ sql, args });
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Firma ekle (Admin)
+app.post('/api/companies', async (req, res) => {
+  try {
+    const { name, department, userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (!name || !name.trim()) return res.status(400).json({ error: 'Firma adı gerekli.' });
+    const r = await db.execute({
+      sql: `INSERT INTO companies (name, department, created_at) VALUES (?, ?, ?)`,
+      args: [name.trim(), department || null, todayISO()]
+    });
+    res.json({ message: 'Firma eklendi.', id: Number(r.lastInsertRowid) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Firma sil (Admin) — bağlı projeler ve ilerleme kayıtları da silinir
+app.delete('/api/companies/:id', async (req, res) => {
+  try {
+    const { userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const cid = req.params.id;
+    const projs = await db.execute({ sql: `SELECT id FROM projects WHERE company_id = ?`, args: [cid] });
+    for (const p of projs.rows) {
+      await db.execute({ sql: `DELETE FROM project_progress WHERE project_id = ?`, args: [p.id] });
+    }
+    await db.execute({ sql: `DELETE FROM projects WHERE company_id = ?`, args: [cid] });
+    await db.execute({ sql: `DELETE FROM companies WHERE id = ?`, args: [cid] });
+    res.json({ message: 'Firma ve bağlı projeler silindi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- PROJELER ---
+
+// Proje listesi (opsiyonel firma / birim filtresi). Her projeye özet ilerleme bilgisi eklenir.
+app.get('/api/projects', async (req, res) => {
+  try {
+    const { company_id, department } = req.query;
+    let sql = `
+      SELECT projects.*, companies.name AS company_name, users.name AS owner_name
+      FROM projects
+      LEFT JOIN companies ON projects.company_id = companies.id
+      LEFT JOIN users ON projects.owner_id = users.id
+    `;
+    const conds = [];
+    const args = [];
+    if (company_id) { conds.push('projects.company_id = ?'); args.push(company_id); }
+    if (department) { conds.push('projects.department = ?'); args.push(department); }
+    if (conds.length) sql += ` WHERE ` + conds.join(' AND ');
+    sql += ` ORDER BY projects.end_date ASC`;
+    const r = await db.execute({ sql, args });
+
+    const today = todayISO();
+    // Her proje için son gerçekleşen ilerlemeyi ve gecikme durumunu hesapla
+    const enriched = [];
+    for (const p of r.rows) {
+      const prog = await db.execute({
+        sql: `SELECT planned, actual, log_date FROM project_progress WHERE project_id = ? ORDER BY log_date ASC`,
+        args: [p.id]
+      });
+      const rows = prog.rows;
+      const last = rows.length ? rows[rows.length - 1] : null;
+      const actual = last ? Number(last.actual) : 0;
+      const planned = last ? Number(last.planned) : 0;
+      const daysLeft = daysBetween(today, p.end_date);
+      const isOverdue = (p.status !== 'COMPLETED') && (daysLeft < 0 || (daysLeft <= 3 && actual < 90 && actual < planned - 5));
+      enriched.push({
+        ...p,
+        actual, planned,
+        days_left: daysLeft,
+        is_overdue: isOverdue,
+        behind: actual < planned - 5
+      });
+    }
+    res.json(enriched);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Tek proje + tam ilerleme serisi (gidişat grafiği için)
+app.get('/api/projects/:id', async (req, res) => {
+  try {
+    const pid = req.params.id;
+    const pr = await db.execute({
+      sql: `SELECT projects.*, companies.name AS company_name, users.name AS owner_name
+            FROM projects
+            LEFT JOIN companies ON projects.company_id = companies.id
+            LEFT JOIN users ON projects.owner_id = users.id
+            WHERE projects.id = ?`,
+      args: [pid]
+    });
+    if (pr.rows.length === 0) return res.status(404).json({ error: 'Proje bulunamadı.' });
+    const progress = await db.execute({
+      sql: `SELECT id, log_date, planned, actual, note FROM project_progress WHERE project_id = ? ORDER BY log_date ASC`,
+      args: [pid]
+    });
+    res.json({ project: pr.rows[0], progress: progress.rows });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Proje oluştur (Admin)
+app.post('/api/projects', async (req, res) => {
+  try {
+    const { company_id, name, department, owner_id, start_date, end_date, priority, note, userRole, createdBy } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (!company_id || !name || !department || !start_date || !end_date) {
+      return res.status(400).json({ error: 'Firma, proje adı, birim ve tarihler zorunludur.' });
+    }
+    const r = await db.execute({
+      sql: `INSERT INTO projects (company_id, name, department, owner_id, start_date, end_date, priority, status, note, created_by, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?)`,
+      args: [company_id, name.trim(), department, owner_id || null, start_date, end_date, priority || 'NORMAL', note || null, createdBy || null, todayISO()]
+    });
+    res.json({ message: 'Proje oluşturuldu.', id: Number(r.lastInsertRowid) });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Proje güncelle (Admin) — durum, öncelik, not, tarihler
+app.put('/api/projects/:id', async (req, res) => {
+  try {
+    const { name, owner_id, start_date, end_date, priority, status, note, userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const pid = req.params.id;
+    const cur = await db.execute({ sql: `SELECT * FROM projects WHERE id = ?`, args: [pid] });
+    if (cur.rows.length === 0) return res.status(404).json({ error: 'Proje bulunamadı.' });
+    const p = cur.rows[0];
+    await db.execute({
+      sql: `UPDATE projects SET name=?, owner_id=?, start_date=?, end_date=?, priority=?, status=?, note=? WHERE id=?`,
+      args: [
+        name ?? p.name,
+        owner_id !== undefined ? owner_id : p.owner_id,
+        start_date ?? p.start_date,
+        end_date ?? p.end_date,
+        priority ?? p.priority,
+        status ?? p.status,
+        note !== undefined ? note : p.note,
+        pid
+      ]
+    });
+    res.json({ message: 'Proje güncellendi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Proje sil (Admin)
+app.delete('/api/projects/:id', async (req, res) => {
+  try {
+    const { userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const pid = req.params.id;
+    await db.execute({ sql: `DELETE FROM project_progress WHERE project_id = ?`, args: [pid] });
+    await db.execute({ sql: `DELETE FROM projects WHERE id = ?`, args: [pid] });
+    res.json({ message: 'Proje silindi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- İLERLEME KAYITLARI (gidişat noktaları) ---
+
+// İlerleme noktası ekle (Admin veya proje sahibi)
+app.post('/api/projects/:id/progress', async (req, res) => {
+  try {
+    const { log_date, planned, actual, note, userRole, userId } = req.body;
+    const pid = req.params.id;
+    const cur = await db.execute({ sql: `SELECT owner_id FROM projects WHERE id = ?`, args: [pid] });
+    if (cur.rows.length === 0) return res.status(404).json({ error: 'Proje bulunamadı.' });
+    const isOwner = userId && Number(cur.rows[0].owner_id) === Number(userId);
+    if (!isAdmin(userRole) && !isOwner) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (!log_date) return res.status(400).json({ error: 'Tarih gerekli.' });
+    await db.execute({
+      sql: `INSERT INTO project_progress (project_id, log_date, planned, actual, note, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
+      args: [pid, log_date, Number(planned) || 0, Number(actual) || 0, note || null, todayISO()]
+    });
+    res.json({ message: 'İlerleme kaydedildi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// İlerleme noktası sil (Admin)
+app.delete('/api/progress/:id', async (req, res) => {
+  try {
+    const { userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    await db.execute({ sql: `DELETE FROM project_progress WHERE id = ?`, args: [req.params.id] });
+    res.json({ message: 'Kayıt silindi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- ADMIN DASHBOARD ÖZETİ (geciken projeler + aciliyet sıralaması + son toplantılar) ---
+app.get('/api/admin/dashboard', async (req, res) => {
+  try {
+    const { userRole } = req.query;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const today = todayISO();
+
+    // Tüm projeler + son ilerleme
+    const projRes = await db.execute({
+      sql: `SELECT projects.*, companies.name AS company_name, users.name AS owner_name
+            FROM projects
+            LEFT JOIN companies ON projects.company_id = companies.id
+            LEFT JOIN users ON projects.owner_id = users.id`,
+      args: []
+    });
+
+    const all = [];
+    for (const p of projRes.rows) {
+      const prog = await db.execute({
+        sql: `SELECT planned, actual FROM project_progress WHERE project_id = ? ORDER BY log_date DESC LIMIT 1`,
+        args: [p.id]
+      });
+      const last = prog.rows[0];
+      const actual = last ? Number(last.actual) : 0;
+      const planned = last ? Number(last.planned) : 0;
+      const daysLeft = daysBetween(today, p.end_date);
+      const behind = actual < planned - 5;
+      const overdue = (p.status !== 'COMPLETED') && (daysLeft < 0 || (daysLeft <= 3 && actual < 90 && behind));
+      // Aciliyet skoru: az gün kalması + geri kalması artırır
+      const urgency = (behind ? 40 : 0) + (daysLeft < 0 ? 60 : Math.max(0, 30 - daysLeft * 2)) +
+        (p.priority === 'YÜKSEK' || p.priority === 'HIGH' ? 20 : (p.priority === 'DÜŞÜK' || p.priority === 'LOW' ? -10 : 0));
+      all.push({
+        id: p.id, name: p.name, company_name: p.company_name, department: p.department,
+        owner_name: p.owner_name, end_date: p.end_date, priority: p.priority, status: p.status,
+        note: p.note, actual, planned, days_left: daysLeft, behind, is_overdue: overdue,
+        urgency: Math.round(urgency)
+      });
+    }
+
+    const overdue = all.filter(p => p.is_overdue)
+      .sort((a, b) => a.days_left - b.days_left);
+    const byUrgency = all.filter(p => p.status !== 'COMPLETED')
+      .sort((a, b) => b.urgency - a.urgency);
+
+    // Son 3 gün içindeki toplantılar
+    const meetRes = await db.execute({
+      sql: `SELECT meeting_requests.*, users.name AS requester_name
+            FROM meeting_requests
+            LEFT JOIN users ON meeting_requests.requested_by = users.id
+            ORDER BY created_at DESC LIMIT 30`,
+      args: []
+    });
+    const recentMeetings = meetRes.rows.filter(m => {
+      if (!m.created_at) return false;
+      const d = m.created_at.substring(0, 10);
+      return daysBetween(d, today) <= 3 && daysBetween(d, today) >= 0;
+    });
+
+    // Son 3 gün içinde eklenen (onaya düşen) yeni kullanıcılar — bilgilendirme paneli
+    let recentUsers = [];
+    try {
+      const uRes = await db.execute({ sql: `SELECT id, name, role, department, status FROM users`, args: [] });
+      recentUsers = uRes.rows.filter(u => u.status === 'PENDING');
+    } catch (e) {}
+
+    res.json({
+      overdueProjects: overdue,
+      urgencyRanking: byUrgency,
+      recentMeetings,
+      pendingUsers: recentUsers,
+      totalProjects: all.length,
+      activeProjects: all.filter(p => p.status !== 'COMPLETED').length
+    });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
   }
 });
 
