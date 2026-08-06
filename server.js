@@ -491,17 +491,18 @@ app.post('/api/google/disconnect', async (req, res) => {
 // Kayıt Ol Endpoint'i (Onay Mekanizmalı)
 app.post('/api/register', async (req, res) => {
   try {
-    const { 
-      name, 
-      username, 
-      password, 
+    const {
+      name,
+      username,
+      password,
       email,
       phone,
-      role, 
-      department, 
-      leaderType, 
-      startDate, 
-      endDate 
+      role,
+      department,
+      subArea,
+      leaderType,
+      startDate,
+      endDate
     } = req.body;
 
     if (!name || !username || !password || !role) {
@@ -527,28 +528,30 @@ app.post('/api/register', async (req, res) => {
 
     const result = await db.execute({
       sql: `INSERT INTO users (
-              name, 
-              username, 
-              email, 
+              name,
+              username,
+              email,
               phone,
-              password, 
-              role, 
-              department, 
-              leader_sub_type, 
-              intern_start_date, 
+              password,
+              role,
+              department,
+              sub_area,
+              leader_sub_type,
+              intern_start_date,
               intern_end_date,
               status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
-        name, 
-        username, 
+        name,
+        username,
         userEmail,
         phone.trim(),
-        hashedPassword, 
-        role, 
+        hashedPassword,
+        role,
         department || null,
+        department === 'ELEKTRONIK' ? (subArea || null) : null,
         leaderType || null,
-        role === 'INTERN' ? startDate : null, 
+        role === 'INTERN' ? startDate : null,
         role === 'INTERN' ? endDate : null,
         initialStatus
       ]
