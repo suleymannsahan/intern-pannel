@@ -490,6 +490,8 @@ app.post('/api/register', async (req, res) => {
       name, 
       username, 
       password, 
+      email,
+      phone,
       role, 
       department, 
       leaderType, 
@@ -500,13 +502,19 @@ app.post('/api/register', async (req, res) => {
     if (!name || !username || !password || !role) {
       return res.status(400).json({ error: 'Lütfen tüm zorunlu alanları doldurun!' });
     }
+    if (!email || !email.trim()) {
+      return res.status(400).json({ error: 'E-posta adresi zorunludur!' });
+    }
+    if (!phone || !phone.trim()) {
+      return res.status(400).json({ error: 'Telefon numarası zorunludur!' });
+    }
 
     if (role === 'INTERN' && (!startDate || !endDate)) {
       return res.status(400).json({ error: 'Stajyerler için başlangıç ve bitiş tarihleri zorunludur!' });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
-    const dummyEmail = `${username}@system.local`;
+    const userEmail = email.trim();
 
     // 💡 ONAY MANTIĞI: Ekip Lideri, Müdür veya İnsan Kaynakları departmanı onay beklemeye alınır (PENDING), diğerleri direkt onaylanır (APPROVED)
     const requiresApproval = ['MANAGER', 'LEADER'].includes(role) || department === 'INSAN_KAYNAKLARI';
@@ -517,6 +525,7 @@ app.post('/api/register', async (req, res) => {
               name, 
               username, 
               email, 
+              phone,
               password, 
               role, 
               department, 
@@ -524,11 +533,12 @@ app.post('/api/register', async (req, res) => {
               intern_start_date, 
               intern_end_date,
               status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       args: [
         name, 
         username, 
-        dummyEmail,
+        userEmail,
+        phone.trim(),
         hashedPassword, 
         role, 
         department || null,
@@ -551,6 +561,9 @@ app.post('/api/register', async (req, res) => {
 
   } catch (error) {
     if (error.message.includes('UNIQUE constraint failed')) {
+      if (error.message.includes('email')) {
+        return res.status(400).json({ error: 'Bu e-posta adresi zaten kayıtlı!' });
+      }
       return res.status(400).json({ error: 'Bu kullanıcı adı zaten alınmış!' });
     }
     console.error("Kayıt hatası:", error);
@@ -592,6 +605,8 @@ app.post('/api/login', async (req, res) => {
       name: user.name,
       username: user.username,
       email: user.email,
+      phone: user.phone,
+      sub_area: user.sub_area,
       role: user.role,
       department: user.department,
       leaderType: user.leader_sub_type,
@@ -669,6 +684,26 @@ app.post('/api/reset-password', async (req, res) => {
 
 
 // Kullanıcı Kendi Profil Bilgilerini Güncelleme (Tüm Kayıt Alanları Dahil)
+// Profil tamamlama: kullanıcı ilk girişte eksik telefon/e-posta bilgisini tamamlar
+app.put('/api/users/:id/complete-profile', async (req, res) => {
+  try {
+    const uid = req.params.id;
+    const { email, phone } = req.body;
+    if (!email || !email.trim()) return res.status(400).json({ error: 'E-posta zorunludur.' });
+    if (!phone || !phone.trim()) return res.status(400).json({ error: 'Telefon zorunludur.' });
+    await db.execute({
+      sql: `UPDATE users SET email = ?, phone = ? WHERE id = ?`,
+      args: [email.trim(), phone.trim(), uid]
+    });
+    res.json({ message: 'Profil tamamlandı.', email: email.trim(), phone: phone.trim() });
+  } catch (error) {
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Bu e-posta adresi başka bir kullanıcı tarafından kullanılıyor!' });
+    }
+    res.status(500).json({ error: 'Profil tamamlanamadı: ' + error.message });
+  }
+});
+
 app.put('/api/users/profile', async (req, res) => {
   try {
     const { userId, name, email, password, startDate, endDate, engineerId } = req.body;

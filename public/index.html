@@ -151,6 +151,18 @@
           <input type="password" id="regPassword" required class="w-full bg-white/10 dark:bg-slate-900/20 border border-white/25 dark:border-white/15 text-white placeholder-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
         </div>
 
+        <!-- 3b. E-posta -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-100 mb-1.5">E-posta</label>
+          <input type="email" id="regEmail" required placeholder="ornek@firma.com" class="w-full bg-white/10 dark:bg-slate-900/20 border border-white/25 dark:border-white/15 text-white placeholder-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+        </div>
+
+        <!-- 3c. Telefon -->
+        <div>
+          <label class="block text-xs font-semibold text-slate-100 mb-1.5">Telefon</label>
+          <input type="tel" id="regPhone" required placeholder="05XX XXX XX XX" class="w-full bg-white/10 dark:bg-slate-900/20 border border-white/25 dark:border-white/15 text-white placeholder-slate-300 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+        </div>
+
         <!-- 4. Birim Seçimi -->
         <div>
           <label class="block text-xs font-semibold text-slate-100 mb-1.5">Birim Seçimi</label>
@@ -897,6 +909,32 @@
   </div>
 
   <!-- MODALLAR -->
+
+  <!-- PROFİL TAMAMLAMA MODALI (giriş sonrası eksik telefon/e-posta için; kapatılamaz) -->
+  <div id="completeProfileModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="p-6 pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-id-card-clip text-cyan-500"></i> Profilini Tamamla
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Devam edebilmek için iletişim bilgilerini tamamlaman gerekiyor. Bu bilgiler ekip yönetimi için gereklidir.</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">E-posta <span class="text-rose-500">*</span></label>
+          <input type="email" id="cpEmail" required placeholder="ornek@firma.com" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Telefon <span class="text-rose-500">*</span></label>
+          <input type="tel" id="cpPhone" required placeholder="05XX XXX XX XX" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+        </div>
+        <button onclick="submitCompleteProfile()" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">
+          Kaydet ve Devam Et
+        </button>
+        <p class="text-[10px] text-slate-400 text-center">Bu adım zorunludur ve atlanamaz.</p>
+      </div>
+    </div>
+  </div>
 
   <!-- FİRMA / PROJE YÖNETİM MODALI -->
   <div id="projectManageModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[60]" onclick="if(event.target===this) closeProjectManageModal();">
@@ -1697,8 +1735,20 @@
       const name = document.getElementById('regName').value;
       const username = document.getElementById('regUsername').value;
       const password = document.getElementById('regPassword').value;
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
       const department = document.getElementById('regDepartment').value;
       const isHR = department === 'INSAN_KAYNAKLARI';
+
+      // E-posta ve telefon zorunlu
+      if (!email) {
+        alert('Lütfen e-posta adresinizi giriniz.');
+        return;
+      }
+      if (!phone) {
+        alert('Lütfen telefon numaranızı giriniz.');
+        return;
+      }
 
       // İnsan Kaynakları birimi seçildiyse rol otomatik 'HR' olur, rol menüsü kullanılmaz
       const role = isHR ? 'HR' : document.getElementById('regRole').value;
@@ -1730,6 +1780,8 @@
             name, 
             username, 
             password, 
+            email,
+            phone,
             department, 
             role, 
             leaderType,
@@ -4278,6 +4330,57 @@
       if (isAdmin) {
         fetchAdminUsers();
       }
+
+      // Profil eksikse (telefon yok veya e-posta sahte/eksik) zorunlu tamamlama modalını aç.
+      // Admin ve HR hariç herkese uygulanır.
+      if (currentUser.role !== 'ADMIN') {
+        maybePromptCompleteProfile();
+      }
+    }
+
+    // Telefon/e-posta eksik mi kontrol eder; eksikse zorunlu modalı açar.
+    function isProfileIncomplete() {
+      const email = (currentUser.email || '').trim();
+      const phone = (currentUser.phone || '').trim();
+      const emailMissing = !email || /@system\.local$/i.test(email);
+      const phoneMissing = !phone;
+      return emailMissing || phoneMissing;
+    }
+
+    function maybePromptCompleteProfile() {
+      if (!isProfileIncomplete()) return;
+      const modal = document.getElementById('completeProfileModal');
+      if (!modal) return;
+      // Mevcut (geçerli) değerleri ön-doldur
+      const emailEl = document.getElementById('cpEmail');
+      const phoneEl = document.getElementById('cpPhone');
+      const curEmail = (currentUser.email || '').trim();
+      if (emailEl) emailEl.value = /@system\.local$/i.test(curEmail) ? '' : curEmail;
+      if (phoneEl) phoneEl.value = (currentUser.phone || '').trim();
+      modal.classList.remove('hidden');
+    }
+
+    async function submitCompleteProfile() {
+      const email = document.getElementById('cpEmail').value.trim();
+      const phone = document.getElementById('cpPhone').value.trim();
+      if (!email) { showToast('E-posta gerekli.', 'error'); return; }
+      // Basit e-posta format kontrolü
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { showToast('Geçerli bir e-posta girin.', 'error'); return; }
+      if (!phone) { showToast('Telefon gerekli.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${currentUser.id}/complete-profile`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, phone })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
+        // currentUser'ı güncelle ve kalıcı yap
+        currentUser.email = email;
+        currentUser.phone = phone;
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        document.getElementById('completeProfileModal').classList.add('hidden');
+        showToast('Profil bilgileriniz kaydedildi.', 'success');
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
     function renderSidebarDirectory() {
