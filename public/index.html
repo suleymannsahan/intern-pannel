@@ -1204,6 +1204,32 @@
           </div>
 
 
+  <!-- Toplantı Talebi İçerik Düzenleme Modalı -->
+  <div id="editMeetingModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[70]">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
+      <h3 class="font-bold text-lg mb-4 text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-pen me-2"></i>Toplantı Talebini Düzenle</h3>
+      <form onsubmit="submitEditMeeting(event)" class="space-y-3">
+        <input type="hidden" id="editMeetingId">
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Konu</label>
+          <input type="text" id="editMeetingSubject" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Tercih Edilen Tarih & Saat</label>
+          <input type="datetime-local" id="editMeetingDate" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Açıklama</label>
+          <textarea id="editMeetingDescription" rows="3" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm"></textarea>
+        </div>
+        <div class="flex justify-end gap-2 pt-2">
+          <button type="button" onclick="closeEditMeetingModal()" class="px-4 py-2 bg-slate-200 dark:bg-slate-800 text-xs rounded-xl text-slate-700 dark:text-slate-300">İptal</button>
+          <button type="submit" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-xs rounded-xl text-white font-semibold">Kaydet</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Revize Yorum Modalı -->
   <div id="revisionModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md shadow-2xl">
@@ -1493,7 +1519,8 @@
       }
     }
 
-    // Talep sahibinin rolüne göre "toplantıya çağrılacaklar" rol seçeneklerini doldurur
+    // Talep sahibinin rolüne göre "toplantıya çağrılacaklar" rol seçeneklerini doldurur.
+    // Her rol için: role çağır (aç/kapa) + o rolün altında toplu mu yoksa belirli kişiler mi çağrılacak seçimi.
     function populateMeetingTargetRoles() {
       const wrapper = document.getElementById('meetingTargetRolesWrapper');
       const optionsEl = document.getElementById('meetingTargetRolesOptions');
@@ -1512,12 +1539,69 @@
       // Hiç hedef yoksa alanı gizle
       if (wrapper) wrapper.classList.toggle('hidden', targets.length === 0);
 
-      optionsEl.innerHTML = targets.map(role => `
-        <label class="flex items-center gap-1.5 text-xs font-semibold text-slate-700 dark:text-slate-200 cursor-pointer">
-          <input type="checkbox" class="meetingTargetRole accent-cyan-600" value="${role}">
-          ${ROLE_LABELS_TR[role] || role}
-        </label>
-      `).join('');
+      const dept = currentUser.role === 'ADMIN'
+        ? (document.getElementById('meetingTargetDepartment')?.value || '')
+        : currentUser.department;
+
+      optionsEl.innerHTML = targets.map(role => {
+        const count = (usersList || []).filter(u => u.role === role && u.department === dept && u.status === 'APPROVED').length;
+        return `
+        <div class="w-full border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+          <label class="flex items-center gap-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 cursor-pointer">
+            <input type="checkbox" class="meetingTargetRole accent-cyan-600" value="${role}" onchange="toggleMeetingRoleMode('${role}')">
+            ${ROLE_LABELS_TR[role] || role} <span class="text-slate-400 font-normal">(${count} kişi)</span>
+          </label>
+          <div id="meetingRoleModeWrap_${role}" class="hidden mt-2 pl-5 space-y-2">
+            <div class="flex items-center gap-4 text-[11px] text-slate-600 dark:text-slate-300">
+              <label class="flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="meetingRoleMode_${role}" class="meetingRoleModeRadio" data-role="${role}" value="ALL" checked onchange="renderMeetingRolePeople('${role}')">
+                Tümü (toplu)
+              </label>
+              <label class="flex items-center gap-1 cursor-pointer">
+                <input type="radio" name="meetingRoleMode_${role}" class="meetingRoleModeRadio" data-role="${role}" value="INDIVIDUAL" onchange="renderMeetingRolePeople('${role}')">
+                Kişi seç (ayrı ayrı)
+              </label>
+            </div>
+            <div id="meetingRolePeople_${role}" class="hidden flex flex-wrap gap-2"></div>
+          </div>
+        </div>
+      `;
+      }).join('');
+    }
+
+    // Bir rol çağrılacaklar arasına eklenince/çıkarılınca toplu/bireysel seçim alanını gösterir/gizler
+    function toggleMeetingRoleMode(role) {
+      const cb = document.querySelector(`.meetingTargetRole[value="${role}"]`);
+      const wrap = document.getElementById(`meetingRoleModeWrap_${role}`);
+      if (wrap) wrap.classList.toggle('hidden', !(cb && cb.checked));
+    }
+
+    // "Kişi seç" işaretlenince o roldeki kişileri (kendi biriminden) listeler
+    function renderMeetingRolePeople(role) {
+      const mode = document.querySelector(`input.meetingRoleModeRadio[data-role="${role}"]:checked`)?.value;
+      const peopleWrap = document.getElementById(`meetingRolePeople_${role}`);
+      if (!peopleWrap) return;
+
+      if (mode !== 'INDIVIDUAL') {
+        peopleWrap.classList.add('hidden');
+        peopleWrap.innerHTML = '';
+        return;
+      }
+
+      const dept = currentUser.role === 'ADMIN'
+        ? (document.getElementById('meetingTargetDepartment')?.value || '')
+        : currentUser.department;
+      const people = (usersList || []).filter(u => u.role === role && u.department === dept && u.status === 'APPROVED');
+
+      peopleWrap.innerHTML = people.length > 0
+        ? people.map(p => `
+          <label class="flex items-center gap-1.5 text-[11px] font-medium px-2 py-1 rounded-lg bg-slate-100 dark:bg-slate-800 cursor-pointer">
+            <input type="checkbox" class="meetingTargetUser accent-cyan-600" data-role="${role}" value="${p.id}">
+            ${p.name}
+          </label>
+        `).join('')
+        : `<span class="text-[11px] text-slate-400">Bu rolde kişi bulunamadı.</span>`;
+      peopleWrap.classList.remove('hidden');
     }
 
     function toggleTasksDropdown() {
@@ -3651,6 +3735,9 @@
       }
     }
 
+    // Son yüklenen toplantı taleplerinin önbelleği (düzenleme modalı kimlikten veri bulmak için kullanır)
+    let meetingsListCache = [];
+
     async function loadMeetings() {
       const container = document.getElementById('meetingRequestsList');
       if (!container) return;
@@ -3662,6 +3749,7 @@
         }
         const res = await fetch(url);
         const meetings = await res.json();
+        meetingsListCache = Array.isArray(meetings) ? meetings : [];
 
         if (!Array.isArray(meetings) || meetings.length === 0) {
           container.innerHTML = `<p class="text-xs text-slate-400 text-center py-6 w-full">Toplantı talebi bulunmuyor.</p>`;
@@ -3720,6 +3808,7 @@
               <div class="flex gap-2 mt-2 pt-2 border-t border-slate-200 dark:border-slate-700">
                 <button onclick="reviewMeetingRequest(${m.id}, 'APPROVED')" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md">Onayla</button>
                 <button onclick="reviewMeetingRequest(${m.id}, 'REJECTED')" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold py-1.5 rounded-xl transition-all shadow-md">Reddet</button>
+                <button onclick="openEditMeetingModal(${m.id})" class="bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 text-xs font-semibold px-3 py-1.5 rounded-xl transition-all" title="İçeriği Düzenle"><i class="fa-solid fa-pen"></i></button>
               </div>
             ` : ''}
           </div>
@@ -3743,8 +3832,19 @@
         ? document.getElementById('meetingTargetDepartment').value
         : null;
 
-      // Seçilen hedef rolleri (toplantıya çağrılacaklar / bildirim düşecekler) topla
-      const targetRoles = Array.from(document.querySelectorAll('.meetingTargetRole:checked')).map(cb => cb.value);
+      // Seçilen (aktif hale getirilmiş) roller: her biri için toplu mu, belirli kişiler mi seçilmiş bak
+      const checkedRoles = Array.from(document.querySelectorAll('.meetingTargetRole:checked')).map(cb => cb.value);
+      const targetRoles = [];
+      const targetUserIds = [];
+      checkedRoles.forEach(role => {
+        const mode = document.querySelector(`input.meetingRoleModeRadio[data-role="${role}"]:checked`)?.value || 'ALL';
+        if (mode === 'INDIVIDUAL') {
+          const ids = Array.from(document.querySelectorAll(`.meetingTargetUser[data-role="${role}"]:checked`)).map(cb => Number(cb.value));
+          targetUserIds.push(...ids);
+        } else {
+          targetRoles.push(role);
+        }
+      });
 
       if (currentUser.role === 'ADMIN' && !targetDepartment) {
         alert('Lütfen bir birim seçiniz.');
@@ -3762,7 +3862,8 @@
             preferredDate,
             userRole: currentUser.role,
             targetDepartment,
-            targetRoles
+            targetRoles,
+            targetUserIds
           })
         });
 
@@ -3776,6 +3877,52 @@
         }
       } catch (err) {
         console.error("Toplantı talebi gönderme hatası:", err);
+      }
+    }
+
+    // Toplantı talebinin içeriğini (konu/tarih/açıklama) düzenleme modalını açar
+    function openEditMeetingModal(meetingId) {
+      const m = (meetingsListCache || []).find(x => x.id == meetingId);
+      if (!m) return;
+      document.getElementById('editMeetingId').value = m.id;
+      document.getElementById('editMeetingSubject').value = m.subject || '';
+      document.getElementById('editMeetingDescription').value = m.description || '';
+      const dateEl = document.getElementById('editMeetingDate');
+      dateEl.value = m.preferred_date ? String(m.preferred_date).replace(' ', 'T').substring(0, 16) : '';
+      document.getElementById('editMeetingModal').classList.remove('hidden');
+    }
+
+    function closeEditMeetingModal() {
+      document.getElementById('editMeetingModal').classList.add('hidden');
+    }
+
+    async function submitEditMeeting(e) {
+      e.preventDefault();
+      const meetingId = document.getElementById('editMeetingId').value;
+      const subject = document.getElementById('editMeetingSubject').value;
+      const description = document.getElementById('editMeetingDescription').value;
+      const preferredDate = document.getElementById('editMeetingDate').value;
+      const m = (meetingsListCache || []).find(x => x.id == meetingId);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/meetings/${meetingId}/content`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            subject, description, preferredDate,
+            userRole: currentUser.role,
+            department: m ? m.department : currentUser.department
+          })
+        });
+        const data = await res.json();
+        if (res.ok) {
+          closeEditMeetingModal();
+          await loadMeetings();
+        } else {
+          alert('Hata: ' + data.error);
+        }
+      } catch (err) {
+        console.error('Toplantı talebi düzenleme hatası:', err);
       }
     }
 

@@ -129,6 +129,9 @@ async function initDb() {
 
     // target_roles: toplantının bildirileceği/hedef rol listesi (virgülle ayrık). Eski kayıtlar için güvenli ekleme.
     try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN target_roles TEXT`); } catch (e) {}
+    // target_user_ids: bir role toplu yerine belirli kişiler çağrılmak istenirse, o kişilerin id'leri
+    // ",3,7,15," biçiminde (baş/son virgüllü) saklanır — LIKE ile güvenli tekil eşleşme için.
+    try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN target_user_ids TEXT`); } catch (e) {}
     // Google Takvim etkinlik kimliği (talep edenin takvimindeki etkinlik)
     try { await db.execute(`ALTER TABLE meeting_requests ADD COLUMN google_event_id TEXT`); } catch (e) {}
 
@@ -1502,7 +1505,7 @@ app.post('/api/send-verification-code', async (req, res) => {
 // Yeni Toplantı Talebi Oluşturma (Sadece Mühendis ve üstü roller: ENGINEER, LEADER, MANAGER)
 app.post('/api/meetings', async (req, res) => {
   try {
-    const { requestedBy, subject, description, preferredDate, userRole, targetDepartment, targetRoles } = req.body;
+    const { requestedBy, subject, description, preferredDate, userRole, targetDepartment, targetRoles, targetUserIds } = req.body;
 
     if (!['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(userRole)) {
       return res.status(403).json({ error: 'Toplantı talebi oluşturmak için yetkiniz yok.' });
@@ -1551,12 +1554,28 @@ app.post('/api/meetings', async (req, res) => {
       department = userResult.rows[0].department;
     }
 
+    // Belirli kişiler (toplu yerine tekil çağrı) seçildiyse: sadece izin verilen rollerden VE bu birimden
+    // olanlar kabul edilir (güvenlik amaçlı sunucu tarafı doğrulama).
+    let userIdsArr = Array.isArray(targetUserIds) ? targetUserIds.map(Number).filter(n => Number.isInteger(n)) : [];
+    if (userIdsArr.length > 0 && allowedForRole.length > 0) {
+      const placeholders = userIdsArr.map(() => '?').join(',');
+      const validUsersRes = await db.execute({
+        sql: `SELECT id FROM users WHERE id IN (${placeholders}) AND department = ? AND role IN (${allowedForRole.map(() => '?').join(',')})`,
+        args: [...userIdsArr, department, ...allowedForRole]
+      });
+      const validIds = new Set(validUsersRes.rows.map(r => Number(r.id)));
+      userIdsArr = userIdsArr.filter(id => validIds.has(id));
+    } else {
+      userIdsArr = [];
+    }
+
     const targetRolesStr = rolesArr.length > 0 ? rolesArr.join(',') : null;
+    const targetUserIdsStr = userIdsArr.length > 0 ? `,${userIdsArr.join(',')},` : null;
     const now = new Date().toISOString().replace('T', ' ').substring(0, 19);
 
     const result = await db.execute({
-      sql: `INSERT INTO meeting_requests (requested_by, department, subject, description, preferred_date, status, created_at, target_roles) VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?)`,
-      args: [requestedBy, department || null, subject, description || null, preferredDate || null, now, targetRolesStr]
+      sql: `INSERT INTO meeting_requests (requested_by, department, subject, description, preferred_date, status, created_at, target_roles, target_user_ids) VALUES (?, ?, ?, ?, ?, 'PENDING', ?, ?, ?)`,
+      args: [requestedBy, department || null, subject, description || null, preferredDate || null, now, targetRolesStr, targetUserIdsStr]
     });
 
     const newMeetingId = Number(result.lastInsertRowid);
@@ -1584,15 +1603,16 @@ app.get('/api/meetings', async (req, res) => {
     let args = [];
 
     if (['MANAGER', 'LEADER'].includes(role)) {
-      // Müdür/Ekip Lideri: kendi biriminden gelen talepleri VEYA kendisine (rolüne) yönlendirilen talepleri görür
-      conditions.push(`(meeting_requests.department = ? OR meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ?)`);
-      args.push(department, userId, `%${role}%`);
+      // Müdür/Ekip Lideri: kendi biriminden gelen talepleri VEYA kendisine (rolüne/kişisel olarak) yönlendirilen talepleri görür
+      conditions.push(`(meeting_requests.department = ? OR meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ? OR meeting_requests.target_user_ids LIKE ?)`);
+      args.push(department, userId, `%${role}%`, `%,${userId},%`);
     } else if (role === 'ADMIN') {
       // Admin tüm talepleri görebilir, ek filtre yok
     } else {
-      // Diğer roller (ör. Mühendis): kendi oluşturdukları talepleri VEYA kendilerine yönlendirilen (bildirim düşen) talepleri görür
-      conditions.push(`(meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ?)`);
-      args.push(userId, `%${role}%`);
+      // Diğer roller (ör. Mühendis, Stajyer): kendi oluşturdukları talepleri VEYA kendilerine
+      // (rolüne toplu ya da kişisel olarak) yönlendirilen (bildirim düşen) talepleri görür
+      conditions.push(`(meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ? OR meeting_requests.target_user_ids LIKE ?)`);
+      args.push(userId, `%${role}%`, `%,${userId},%`);
     }
 
     if (conditions.length > 0) {
@@ -1799,6 +1819,55 @@ app.put('/api/meetings/:id/review', async (req, res) => {
     }
 
     res.json({ message: action === 'APPROVED' ? 'Toplantı talebi onaylandı.' : 'Toplantı talebi reddedildi.' });
+  } catch (error) {
+    res.status(500).json({ error: 'Talep güncellenirken hata: ' + error.message });
+  }
+});
+
+// Toplantı talebinin içeriğini (konu / açıklama / tarih) düzenleme — onay/red akışından bağımsız
+app.put('/api/meetings/:id/content', async (req, res) => {
+  try {
+    const meetingId = req.params.id;
+    const { subject, description, preferredDate, userRole, department } = req.body;
+
+    if (!['MANAGER', 'LEADER', 'ADMIN'].includes(userRole)) {
+      return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
+    }
+    if (!subject || !subject.trim()) {
+      return res.status(400).json({ error: 'Konu zorunludur.' });
+    }
+
+    // Aynı hiyerarşi kuralı: inceleyen, talep edenden daha düşük roldeyse düzenleyemez. ADMIN hariç.
+    if (userRole !== 'ADMIN') {
+      const reqRes = await db.execute({
+        sql: `SELECT users.role AS requester_role FROM meeting_requests
+              LEFT JOIN users ON meeting_requests.requested_by = users.id
+              WHERE meeting_requests.id = ?`,
+        args: [meetingId]
+      });
+      if (reqRes.rows.length === 0) return res.status(404).json({ error: 'Talep bulunamadı.' });
+
+      const requesterRole = reqRes.rows[0].requester_role;
+      const reqIdx = ROLE_HIERARCHY.indexOf(requesterRole);
+      const myIdx = ROLE_HIERARCHY.indexOf(userRole);
+      if (reqIdx === -1 || myIdx === -1 || myIdx > reqIdx) {
+        return res.status(403).json({ error: 'Bu talebi düzenleme yetkiniz yok.' });
+      }
+    }
+
+    let sql = `UPDATE meeting_requests SET subject = ?, description = ?, preferred_date = ? WHERE id = ?`;
+    let args = [subject.trim(), description || null, preferredDate || null, meetingId];
+    if (userRole !== 'ADMIN') {
+      sql = `UPDATE meeting_requests SET subject = ?, description = ?, preferred_date = ? WHERE id = ? AND department = ?`;
+      args = [subject.trim(), description || null, preferredDate || null, meetingId, department];
+    }
+
+    const result = await db.execute({ sql, args });
+    if (result.rowsAffected === 0) {
+      return res.status(404).json({ error: 'Talep bulunamadı veya bu talebe erişim yetkiniz yok.' });
+    }
+
+    res.json({ message: 'Toplantı talebi güncellendi.' });
   } catch (error) {
     res.status(500).json({ error: 'Talep güncellenirken hata: ' + error.message });
   }
