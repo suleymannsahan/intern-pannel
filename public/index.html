@@ -337,133 +337,6 @@
       </div>
     </header>
 
-    <!-- GÖREVLER TAM EKRAN MODAL (Alt rollerin, kendisine ATANMAMIŞ görevleri) -->
-    <div id="tasksDropdown" onclick="if(event.target===this) toggleTasksDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-list-check text-cyan-500"></i> Görevler
-            <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">— ekibinizdeki görevler</span>
-          </h3>
-          <button onclick="toggleTasksDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-
-        <!-- FİLTRE BARI -->
-        <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
-          <div class="relative">
-            <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
-            <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya kişi adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-          </div>
-        </div>
-
-        <!-- ADMİN İÇİN: BİRİM → (Elektronikse) ALAN → ROL FİLTRESİ -->
-        <div id="adminTaskFilterWrap" class="hidden bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
-          <select id="filterAdminDept" onchange="handleAdminTaskDeptFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-            <option value="">Tüm Birimler</option>
-            <option value="ELEKTRONIK">Elektronik</option>
-            <option value="MEKANIK">Mekanik</option>
-            <option value="YAZILIM">Yazılım</option>
-          </select>
-          <select id="filterAdminSubArea" onchange="applyTaskFilters()" class="hidden bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-            <option value="">Tüm Alanlar</option>
-          </select>
-          <select id="filterAdminRole" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-            <option value="">Tüm Roller</option>
-            <option value="MANAGER">Müdür</option>
-            <option value="LEADER">Ekip Lideri</option>
-            <option value="ENGINEER">Mühendis</option>
-            <option value="TECHNICIAN">Teknisyen</option>
-            <option value="INTERN">Stajyer</option>
-          </select>
-        </div>
-
-        <!-- EKİP LİDERİ / MÜDÜR İÇİN: KENDİ BİRİMİNDE ROL FİLTRESİ (rol sıralaması mantığına göre) -->
-        <div id="leaderTaskFilterWrap" class="hidden bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3">
-          <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Role Göre Filtrele</label>
-          <div id="leaderTaskRoleToggle" class="inline-flex flex-wrap gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-300 dark:border-slate-700"></div>
-        </div>
-
-        <!-- İKİ BÖLÜM: AKTİF | GEÇMİŞ -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <!-- SOL: AKTİF GÖREVLER -->
-          <section class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500"></i>Aktif Görevler <span id="activeTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">0</span></h4>
-            </div>
-            <select id="filterStatusActive" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-              <option value="">Tüm Aktif Durumlar</option>
-              <option value="IN_PROGRESS">Devam Ediyor</option>
-              <option value="COMPLETED">Tamamlandı (Onay Bekliyor)</option>
-              <option value="REVISION_REQUESTED">Revize İstendi</option>
-            </select>
-            <div id="taskList" class="grid grid-cols-1 gap-4"></div>
-          </section>
-
-          <!-- SAĞ: GEÇMİŞ / TAMAMLANAN GÖREVLER -->
-          <section class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
-            <div class="flex items-center justify-between mb-3">
-              <h4 class="font-bold text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan <span id="pastTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">0</span></h4>
-            </div>
-            <select id="filterStatusPast" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
-              <option value="">Tümü (Onaylanan + Tamamlanan)</option>
-              <option value="APPROVED">Onaylandı</option>
-              <option value="COMPLETED">Tamamlandı</option>
-            </select>
-            <div id="pastTaskList" class="grid grid-cols-1 gap-4"></div>
-          </section>
-        </div>
-      </div>
-    </div>
-
-    <!-- YENİ KAYIT ONAYLARI TAM EKRAN MODAL -->
-    <div id="pendingDropdown" onclick="if(event.target===this) togglePendingDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-user-clock text-amber-500"></i> Yeni Kayıt Onayları
-          </h3>
-          <button onclick="togglePendingDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
-                <th class="py-3 px-2">Ad Soyad</th>
-                <th class="py-3 px-2">Kullanıcı Adı</th>
-                <th class="py-3 px-2">Birim</th>
-                <th class="py-3 px-2">Rol</th>
-                <th class="py-3 px-2">Detay / Tür</th>
-                <th class="py-3 px-2 text-right">İşlem</th>
-              </tr>
-            </thead>
-            <tbody id="adminPendingUsersTable" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
-              <!-- JS tarafında onay bekleyenler buraya render edilecek -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- KULLANICI YÖNETİMİ TAM EKRAN MODAL -->
-    <div id="userMgmtDropdown" onclick="if(event.target===this) toggleUserMgmtDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
-      <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
-        <div class="flex justify-between items-center">
-          <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
-            <i class="fa-solid fa-user-shield text-cyan-500"></i> Kullanıcı Yönetimi
-          </h3>
-          <div class="flex items-center gap-2">
-            <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
-              <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı Ekle
-            </button>
-            <button onclick="toggleUserMgmtDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
-          </div>
-        </div>
-        <div id="adminUsersByTeam" class="space-y-6">
-          <!-- Dinamik doldurulacak: ekip (birim) ve rol bazında gruplandırılmış kullanıcı listesi -->
-        </div>
-      </div>
-    </div>
-
     <div class="flex-1 flex relative overflow-hidden">
       <!-- SOL SIDEBAR -->
       <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
@@ -710,8 +583,150 @@
           </div>
         </div>
 
-        <!-- ADMIN PANELİ EKRANI (istatistikler; Yeni Kayıt Onayı ve Kullanıcı Yönetimi artık header'daki baloncuklarda) -->
-        <section id="adminPanelSection" class="hidden space-y-6">
+        <!-- GÖREVLER TAM EKRAN MODAL (Alt rollerin, kendisine ATANMAMIŞ görevleri) -->
+        <div id="tasksDropdown" onclick="if(event.target===this) toggleTasksDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div id="tasksDropdownCard" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <button type="button" id="tasksDropdownBackBtn" onclick="toggleTasksDropdown()" class="hidden w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-list-check text-cyan-500"></i> Görevler
+                  <span class="text-[11px] font-medium text-slate-400 hidden sm:inline">— ekibinizdeki görevler</span>
+                </h3>
+              </div>
+              <button id="tasksDropdownCloseBtn" onclick="toggleTasksDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <!-- FİLTRE BARI -->
+            <div id="taskFilterBar" class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-3">
+              <div class="relative">
+                <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                <input type="text" id="searchInput" oninput="applyTaskFilters()" placeholder="Görev, veren veya kişi adı ara..." class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+              </div>
+            </div>
+
+            <!-- ADMİN İÇİN: BİRİM → (Elektronikse) ALAN → ROL FİLTRESİ -->
+            <div id="adminTaskFilterWrap" class="hidden bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+              <select id="filterAdminDept" onchange="handleAdminTaskDeptFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                <option value="">Tüm Birimler</option>
+                <option value="ELEKTRONIK">Elektronik</option>
+                <option value="MEKANIK">Mekanik</option>
+                <option value="YAZILIM">Yazılım</option>
+              </select>
+              <select id="filterAdminSubArea" onchange="applyTaskFilters()" class="hidden bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                <option value="">Tüm Alanlar</option>
+              </select>
+              <select id="filterAdminRole" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                <option value="">Tüm Roller</option>
+                <option value="MANAGER">Müdür</option>
+                <option value="LEADER">Ekip Lideri</option>
+                <option value="ENGINEER">Mühendis</option>
+                <option value="TECHNICIAN">Teknisyen</option>
+                <option value="INTERN">Stajyer</option>
+              </select>
+            </div>
+
+            <!-- EKİP LİDERİ / MÜDÜR İÇİN: KENDİ BİRİMİNDE ROL FİLTRESİ (rol sıralaması mantığına göre) -->
+            <div id="leaderTaskFilterWrap" class="hidden bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3">
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Role Göre Filtrele</label>
+              <div id="leaderTaskRoleToggle" class="inline-flex flex-wrap gap-1 bg-white dark:bg-slate-900 p-1 rounded-xl border border-slate-300 dark:border-slate-700"></div>
+            </div>
+
+            <!-- İKİ BÖLÜM: AKTİF | GEÇMİŞ -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <!-- SOL: AKTİF GÖREVLER -->
+              <section class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500"></i>Aktif Görevler <span id="activeTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">0</span></h4>
+                </div>
+                <select id="filterStatusActive" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                  <option value="">Tüm Aktif Durumlar</option>
+                  <option value="IN_PROGRESS">Devam Ediyor</option>
+                  <option value="COMPLETED">Tamamlandı (Onay Bekliyor)</option>
+                  <option value="REVISION_REQUESTED">Revize İstendi</option>
+                </select>
+                <div id="taskList" class="grid grid-cols-1 gap-4"></div>
+              </section>
+
+              <!-- SAĞ: GEÇMİŞ / TAMAMLANAN GÖREVLER -->
+              <section class="bg-slate-100/80 dark:bg-slate-900/40 border border-slate-200 dark:border-slate-800/80 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-3">
+                  <h4 class="font-bold text-sm text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan <span id="pastTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">0</span></h4>
+                </div>
+                <select id="filterStatusPast" onchange="applyTaskFilters()" class="w-full mb-3 bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+                  <option value="">Tümü (Onaylanan + Tamamlanan)</option>
+                  <option value="APPROVED">Onaylandı</option>
+                  <option value="COMPLETED">Tamamlandı</option>
+                </select>
+                <div id="pastTaskList" class="grid grid-cols-1 gap-4"></div>
+              </section>
+            </div>
+          </div>
+        </div>
+
+        <!-- YENİ KAYIT ONAYLARI TAM EKRAN MODAL -->
+        <div id="pendingDropdown" onclick="if(event.target===this) togglePendingDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div id="pendingDropdownCard" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <button type="button" id="pendingDropdownBackBtn" onclick="togglePendingDropdown()" class="hidden w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-user-clock text-amber-500"></i> Yeni Kayıt Onayları
+                </h3>
+              </div>
+              <button id="pendingDropdownCloseBtn" onclick="togglePendingDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse">
+                <thead>
+                  <tr class="border-b border-slate-200 dark:border-slate-700 text-xs text-slate-400">
+                    <th class="py-3 px-2">Ad Soyad</th>
+                    <th class="py-3 px-2">Kullanıcı Adı</th>
+                    <th class="py-3 px-2">Birim</th>
+                    <th class="py-3 px-2">Rol</th>
+                    <th class="py-3 px-2">Detay / Tür</th>
+                    <th class="py-3 px-2 text-right">İşlem</th>
+                  </tr>
+                </thead>
+                <tbody id="adminPendingUsersTable" class="text-sm divide-y divide-slate-100 dark:divide-slate-800">
+                  <!-- JS tarafında onay bekleyenler buraya render edilecek -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- KULLANICI YÖNETİMİ TAM EKRAN MODAL -->
+        <div id="userMgmtDropdown" onclick="if(event.target===this) toggleUserMgmtDropdown();" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50">
+          <div id="userMgmtDropdownCard" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-4xl max-h-[88vh] overflow-y-auto shadow-2xl space-y-4">
+            <div class="flex justify-between items-center">
+              <div class="flex items-center gap-3">
+                <button type="button" id="userMgmtDropdownBackBtn" onclick="toggleUserMgmtDropdown()" class="hidden w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                  <i class="fa-solid fa-arrow-left"></i>
+                </button>
+                <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                  <i class="fa-solid fa-user-shield text-cyan-500"></i> Kullanıcı Yönetimi
+                </h3>
+              </div>
+              <div class="flex items-center gap-2">
+                <button onclick="openAddUserModal()" class="bg-cyan-600 hover:bg-cyan-500 text-white text-xs px-4 py-2 rounded-xl transition-all font-semibold flex items-center gap-2 shadow-md">
+                  <i class="fa-solid fa-user-plus"></i> Yeni Kullanıcı Ekle
+                </button>
+                <button id="userMgmtDropdownCloseBtn" onclick="toggleUserMgmtDropdown()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+              </div>
+            </div>
+            <div id="adminUsersByTeam" class="space-y-6">
+              <!-- Dinamik doldurulacak: ekip (birim) ve rol bazında gruplandırılmış kullanıcı listesi -->
+            </div>
+          </div>
+        </div>
+
+        <!-- ADMİN ANA EKRANI: Lider/Müdür ile aynı düzende, sadece başlıklı kutucuklar; her biri kendi sayfasını açar -->
+        <section id="adminHomeSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div class="bg-white dark:bg-slate-800 p-4 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm flex items-center gap-4">
               <div class="p-3 bg-cyan-500/10 text-cyan-500 rounded-xl"><i class="fa-solid fa-users text-2xl"></i></div>
@@ -742,133 +757,184 @@
               </div>
             </div>
           </div>
-          <p class="text-xs text-slate-400 text-center">Yeni Kayıt Onayları ve Kullanıcı Yönetimi artık üst menüdeki ilgili ikonlardan erişilebilir.</p>
 
-          <!-- ============================================================ -->
-          <!-- PROJE GİDİŞATI PANELİ (fotoğraftaki yeni admin paneli)       -->
-          <!-- ============================================================ -->
-          <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-
-            <!-- SOL/ORTA: Birim → Firma → Proje → Gidişat Grafiği -->
-            <div class="xl:col-span-2 space-y-4">
-
-              <!-- Ekip / Proje Gidişatı ana kartı -->
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-4">
-                <div class="flex flex-wrap items-center justify-between gap-2">
-                  <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
-                    <i class="fa-solid fa-chart-line text-cyan-500"></i> Proje Gidişatı
-                  </h3>
-                  <button onclick="openProjectManageModal()" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all">
-                    <i class="fa-solid fa-plus"></i> Firma / Proje Yönet
-                  </button>
-                </div>
-
-                <!-- ADIM 1: Birim seçimi (elektronik / yazılım / mekanik ...) -->
-                <div>
-                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Birim Seçin</div>
-                  <div id="projDeptChips" class="flex gap-2 scroll-chips"></div>
-                </div>
-
-                <!-- ADIM 2: Firma seçimi -->
-                <div id="projCompanyWrap" class="hidden">
-                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Firma Seçin</div>
-                  <div id="projCompanyChips" class="flex gap-2 scroll-chips"></div>
-                </div>
-
-                <!-- ADIM 3: Proje seçimi (tıklanınca renk değişir) -->
-                <div id="projProjectWrap" class="hidden">
-                  <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Proje Seçin</div>
-                  <div id="projProjectChips" class="flex gap-2 scroll-chips"></div>
-                </div>
-
-                <!-- ADIM 4: Grafik + seçilen proje bilgisi -->
-                <div id="projChartWrap" class="hidden space-y-3 pt-1">
-                  <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
-                    <div class="flex items-center justify-between mb-2">
-                      <div id="projChartTitle" class="text-sm font-bold text-slate-800 dark:text-slate-100"></div>
-                      <div id="projChartBadges" class="flex items-center gap-1.5"></div>
-                    </div>
-                    <div class="relative h-64">
-                      <canvas id="projProgressChart"></canvas>
-                    </div>
-                  </div>
-                  <!-- Sorumlu / not kutusu -->
-                  <div id="projOwnerNote" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 text-sm text-amber-700 dark:text-amber-300 flex items-start gap-3">
-                    <i class="fa-solid fa-circle-info mt-0.5"></i>
-                    <div id="projOwnerNoteText" class="flex-1"></div>
-                  </div>
-                  <!-- İlerleme noktası ekleme (admin) -->
-                  <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5">
-                    <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Yeni İlerleme Noktası Ekle</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
-                      <div class="col-span-2 sm:col-span-1">
-                        <label class="block text-[10px] text-slate-500 mb-1">Tarih</label>
-                        <input type="date" id="progNewDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
-                      </div>
-                      <div>
-                        <label class="block text-[10px] text-slate-500 mb-1">Planlanan %</label>
-                        <input type="number" id="progNewPlanned" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
-                      </div>
-                      <div>
-                        <label class="block text-[10px] text-slate-500 mb-1">Gerçekleşen %</label>
-                        <input type="number" id="progNewActual" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
-                      </div>
-                      <div class="col-span-2 sm:col-span-1">
-                        <label class="block text-[10px] text-slate-500 mb-1">Not (ops.)</label>
-                        <input type="text" id="progNewNote" placeholder="örn: hastaydım" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
-                      </div>
-                      <div class="col-span-2 sm:col-span-5">
-                        <button onclick="handleAddProgress()" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-all">
-                          <i class="fa-solid fa-plus me-1"></i> Kaydet
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div id="projEmptyState" class="text-xs text-slate-400 text-center py-4">
-                  Grafikleri görmek için önce bir birim, firma ve proje seçin.
-                </div>
-              </div>
-
-              <!-- ALT: Aciliyet & Önem Sırası -->
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
-                <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
-                  <i class="fa-solid fa-arrow-up-wide-short text-indigo-500"></i> Projelerin Aciliyet & Önem Sırası
-                </h3>
-                <div id="urgencyRankingList" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
-              </div>
+          <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <button type="button" onclick="openAdminProjectsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
+              </button>
+              <button type="button" onclick="openAdminStatusPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-users"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekiplerin Durum ve İş Yükü</span>
+              </button>
+              <button type="button" onclick="openAdminProgressPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-sitemap"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekiplerin Yapılandırılması</span>
+              </button>
+              <button type="button" onclick="openAdminTasksPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-list-check"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Görevler</span>
+              </button>
+              <button type="button" onclick="openAdminPendingPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-user-clock"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Yeni Kayıt Onayı</span>
+              </button>
+              <button type="button" onclick="openAdminUserMgmtPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-user-shield"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Kullanıcı Yönetimi</span>
+              </button>
+              <button type="button" onclick="openAdminMeetingsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-comments"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Toplantı</span>
+              </button>
+              <button type="button" onclick="openAdminCalendarPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-regular fa-calendar-days"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Takvim</span>
+              </button>
             </div>
 
-            <!-- SAĞ KOLON: Bildirim panelleri -->
+            <!-- SAĞ TARAF: hatırlatıcılar -->
             <div class="space-y-4">
-
-              <!-- Son 3 gün toplantı listesi -->
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
-                  <i class="fa-solid fa-calendar-check text-cyan-500"></i> Yaklaşan Toplantılar
+                  <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
                 </h4>
-                <div id="recentMeetingsList" class="space-y-2 scroll-panel max-h-64 pr-1"></div>
+                <div id="adminWeekMeetingsList" class="space-y-2 scroll-panel max-h-[260px] pr-1"></div>
               </div>
 
-              <!-- Geciken Projeler bildirimi -->
               <div class="bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-triangle-exclamation"></i> Geciken Projeler
                 </h4>
-                <div id="overdueProjectsList" class="space-y-2 scroll-panel max-h-64 pr-1"></div>
-              </div>
-
-              <!-- Yeni kullanıcı bilgilendirme -->
-              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
-                <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
-                  <i class="fa-solid fa-user-plus text-emerald-500"></i> Yeni Kayıtlar & Onay Bekleyenler
-                </h4>
-                <div id="newUserNotifList" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
+                <div id="adminOverdueReminderList" class="space-y-2 scroll-panel max-h-[260px] pr-1"></div>
               </div>
             </div>
           </div>
+        </section>
 
+        <!-- ADMİN: PROJELER (Proje Gidişatı + Aciliyet Sırası) -->
+        <section id="adminPanelSection" class="hidden space-y-6">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="closeLeaderSubPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Projeler</h2>
+          </div>
+
+          <!-- Ekip / Proje Gidişatı ana kartı -->
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm space-y-4">
+            <div class="flex flex-wrap items-center justify-between gap-2">
+              <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-cyan-500"></i> Proje Gidişatı
+              </h3>
+              <button onclick="openProjectManageModal()" class="text-xs font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 hover:bg-cyan-500/20 px-3 py-1.5 rounded-lg flex items-center gap-1.5 transition-all">
+                <i class="fa-solid fa-plus"></i> Firma / Proje Yönet
+              </button>
+            </div>
+
+            <!-- ADIM 1: Birim seçimi (elektronik / yazılım / mekanik ...) -->
+            <div>
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Birim Seçin</div>
+              <div id="projDeptChips" class="flex gap-2 scroll-chips"></div>
+            </div>
+
+            <!-- ADIM 2: Firma seçimi -->
+            <div id="projCompanyWrap" class="hidden">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Firma Seçin</div>
+              <div id="projCompanyChips" class="flex gap-2 scroll-chips"></div>
+            </div>
+
+            <!-- ADIM 3: Proje seçimi (tıklanınca renk değişir) -->
+            <div id="projProjectWrap" class="hidden">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Proje Seçin</div>
+              <div id="projProjectChips" class="flex gap-2 scroll-chips"></div>
+            </div>
+
+            <!-- ADIM 4: Grafik + seçilen proje bilgisi -->
+            <div id="projChartWrap" class="hidden space-y-3 pt-1">
+              <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+                <div class="flex items-center justify-between mb-2">
+                  <div id="projChartTitle" class="text-sm font-bold text-slate-800 dark:text-slate-100"></div>
+                  <div id="projChartBadges" class="flex items-center gap-1.5"></div>
+                </div>
+                <div class="relative h-64">
+                  <canvas id="projProgressChart"></canvas>
+                </div>
+              </div>
+              <!-- Sorumlu / not kutusu -->
+              <div id="projOwnerNote" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-xl p-3.5 text-sm text-amber-700 dark:text-amber-300 flex items-start gap-3">
+                <i class="fa-solid fa-circle-info mt-0.5"></i>
+                <div id="projOwnerNoteText" class="flex-1"></div>
+              </div>
+              <!-- İlerleme noktası ekleme (admin) -->
+              <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5">
+                <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Yeni İlerleme Noktası Ekle</div>
+                <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 items-end">
+                  <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-[10px] text-slate-500 mb-1">Tarih</label>
+                    <input type="date" id="progNewDate" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Planlanan %</label>
+                    <input type="number" id="progNewPlanned" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                  </div>
+                  <div>
+                    <label class="block text-[10px] text-slate-500 mb-1">Gerçekleşen %</label>
+                    <input type="number" id="progNewActual" min="0" max="100" placeholder="0" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                  </div>
+                  <div class="col-span-2 sm:col-span-1">
+                    <label class="block text-[10px] text-slate-500 mb-1">Not (ops.)</label>
+                    <input type="text" id="progNewNote" placeholder="örn: hastaydım" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                  </div>
+                  <div class="col-span-2 sm:col-span-5">
+                    <button onclick="handleAddProgress()" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-4 py-1.5 rounded-lg transition-all">
+                      <i class="fa-solid fa-plus me-1"></i> Kaydet
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div id="projEmptyState" class="text-xs text-slate-400 text-center py-4">
+              Grafikleri görmek için önce bir birim, firma ve proje seçin.
+            </div>
+          </div>
+
+          <!-- ALT: Aciliyet & Önem Sırası -->
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-arrow-up-wide-short text-indigo-500"></i> Projelerin Aciliyet & Önem Sırası
+            </h3>
+            <div id="urgencyRankingList" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
+          </div>
+        </section>
+
+        <!-- ADMİN: EKİPLERİN DURUM VE İŞ YÜKÜ (Birim -> Rol -> durum/iş yükü kartları) -->
+        <section id="adminStatusPageSection" class="hidden space-y-6">
+          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <div class="flex items-center gap-3 mb-4">
+              <button type="button" onclick="closeLeaderSubPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+                <i class="fa-solid fa-arrow-left"></i>
+              </button>
+              <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Ekiplerin Durum ve İş Yükü</h2>
+            </div>
+
+            <div class="mb-4">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Birim Seçin</div>
+              <div id="adminStatusDeptChips" class="flex flex-wrap gap-2"></div>
+            </div>
+
+            <div id="adminStatusRoleWrap" class="hidden mb-4">
+              <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Rol Seçin</div>
+              <div id="adminStatusRoleToggle" class="inline-flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800"></div>
+            </div>
+
+            <div id="adminStatusResultWrap" class="hidden">
+              <div id="adminStatusResultList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+            </div>
+            <p id="adminStatusEmptyHint" class="text-xs text-slate-400 text-center py-6">Durum ve iş yükünü görmek için önce bir birim, sonra rol seçin.</p>
+          </div>
         </section>
 
         <!-- EKİP GİDİŞATI (Admin + alt rolü olan herkes: kendi altındaki rolleri görür) -->
@@ -1783,6 +1849,12 @@
 
     function toggleTasksDropdown() {
       const dropdown = document.getElementById('tasksDropdown');
+      // Sayfa modunda açıldıysa (Admin kutucuğu): kapatınca ana ekrana dön
+      if (dropdown && dropdown.dataset.asPage === '1') {
+        restoreModalOverlay('tasksDropdown');
+        if (typeof showDashboard === 'function') showDashboard();
+        return;
+      }
       dropdown.classList.toggle('hidden');
       if (!dropdown.classList.contains('hidden')) {
         if (typeof loadTasks === 'function') loadTasks();
@@ -1793,6 +1865,11 @@
 
     function togglePendingDropdown() {
       const dropdown = document.getElementById('pendingDropdown');
+      if (dropdown && dropdown.dataset.asPage === '1') {
+        restoreModalOverlay('pendingDropdown');
+        if (typeof showDashboard === 'function') showDashboard();
+        return;
+      }
       dropdown.classList.toggle('hidden');
       if (!dropdown.classList.contains('hidden') && typeof loadPendingUsers === 'function') {
         loadPendingUsers();
@@ -1801,6 +1878,11 @@
 
     function toggleUserMgmtDropdown() {
       const dropdown = document.getElementById('userMgmtDropdown');
+      if (dropdown && dropdown.dataset.asPage === '1') {
+        restoreModalOverlay('userMgmtDropdown');
+        if (typeof showDashboard === 'function') showDashboard();
+        return;
+      }
       dropdown.classList.toggle('hidden');
       if (!dropdown.classList.contains('hidden') && typeof fetchAdminUsers === 'function') {
         fetchAdminUsers();
@@ -1849,10 +1931,7 @@
       if (clickedInsideChildModal) return;
 
       const dropdownConfigs = [
-        { dropdownId: 'settingsDropdown', buttonSelector: 'button[onclick="toggleSettingsDropdown()"]' },
-        { dropdownId: 'tasksDropdown', buttonSelector: '#tasksNavBtn' },
-        { dropdownId: 'pendingDropdown', buttonSelector: '#pendingNavBtn' },
-        { dropdownId: 'userMgmtDropdown', buttonSelector: '#userMgmtNavBtn' }
+        { dropdownId: 'settingsDropdown', buttonSelector: 'button[onclick="toggleSettingsDropdown()"]' }
       ];
 
       dropdownConfigs.forEach(({ dropdownId, buttonSelector }) => {
@@ -2032,29 +2111,18 @@
         return;
       }
 
-      const adminNavBtn = document.getElementById('adminPanelTabBtn');
-
       if (currentUser.role === 'ADMIN') {
-        // 1. Admin ise menüdeki Admin Paneli butonunu görünür yap
-        if (adminNavBtn) adminNavBtn.classList.remove('hidden');
-
-        // 2. Doğrudan Admin Panelini aç ve verilerini yükle
-        showSection('admin');
-        
-        if (typeof loadAdminPanel === 'function') {
-          loadAdminPanel();
-        }
+        // Admin girişte doğrudan kutucuklu ana ekranını görür (adminHomeSection);
+        // bunu showDashboard() zaten gösteriyor, burada ekstra yönlendirme gerekmiyor.
       } else if (currentUser.role === 'HR') {
         // İnsan Kaynakları ise doğrudan İK paneline yönlendir
-        if (adminNavBtn) adminNavBtn.classList.add('hidden');
         showSection('hr');
 
         if (typeof loadHRPanel === 'function') {
           loadHRPanel();
         }
       } else {
-        // 3. Admin/İK değilse Admin butonunu gizle ve normal Görevler panelini göster
-        if (adminNavBtn) adminNavBtn.classList.add('hidden');
+        // Admin/İK değilse normal Görevler panelini göster
         showSection('tasks');
       }
 
@@ -2072,8 +2140,8 @@
       if (!currentUser) return;
       const role = currentUser.role;
       const isAdmin = role === 'ADMIN';
-      // Ekip Lideri ve Müdür ana ekranda kutucukları kullanır; üst menüde tekrar göstermeyiz
-      const usesBoxes = role === 'LEADER' || role === 'MANAGER';
+      // Ekip Lideri, Müdür ve Admin ana ekranda kutucukları kullanır; üst menüde tekrar göstermeyiz
+      const usesBoxes = role === 'LEADER' || role === 'MANAGER' || role === 'ADMIN';
 
       // Görevler: alt rolü olan herkes + admin
       const canAccessTasks = isAdmin || getSubordinateRoles(role).length > 0;
@@ -2089,11 +2157,12 @@
       const calendarNavBtn = document.getElementById('calendarNavBtn');
       if (calendarNavBtn) calendarNavBtn.classList.toggle('hidden', usesBoxes);
 
-      // Yeni Kayıt Onayı & Kullanıcı Yönetimi: sadece Admin
+      // Yeni Kayıt Onayı & Kullanıcı Yönetimi: sadece Admin, ama admin de artık kutucukları kullandığı için
+      // (Yeni Kayıt Onayı / Kullanıcı Yönetimi kutucukları) header'da hiç gösterilmez.
       const pendingNavBtn = document.getElementById('pendingNavBtn');
       const userMgmtNavBtn = document.getElementById('userMgmtNavBtn');
-      if (pendingNavBtn) pendingNavBtn.classList.toggle('hidden', !isAdmin);
-      if (userMgmtNavBtn) userMgmtNavBtn.classList.toggle('hidden', !isAdmin);
+      if (pendingNavBtn) pendingNavBtn.classList.toggle('hidden', !isAdmin || usesBoxes);
+      if (userMgmtNavBtn) userMgmtNavBtn.classList.toggle('hidden', !isAdmin || usesBoxes);
     }
 
     function showSection(sectionName) {
@@ -2269,27 +2338,6 @@
       if (internRegisterFields) {
         internRegisterFields.classList.toggle('hidden', roleSelect.value !== 'INTERN');
       }
-    }
-
-    async function loadAdminPanel() {
-      // Admin paneli bölümünü (istatistikler) göster
-      showSection('admin');
-
-      // Admin verilerini (bekleyen onaylar, istatistikler, kullanıcı listesi) çek
-      loadPendingUsers();
-      fetchAdminStats();
-      fetchAdminUsers();
-
-      // Admin için Ekip Gidişatı bölümünü görünür yap
-      const tps = document.getElementById('teamProgressSection');
-      if (tps) tps.classList.remove('hidden');
-
-      // Ekip Gidişatı, usersList'e ihtiyaç duyduğu için önce onu tazeleyip sonra render ediyoruz
-      await loadUsers();
-      if (typeof loadTeamProgress === 'function') loadTeamProgress();
-
-      // Yeni Proje Gidişatı paneli (fotoğraftaki admin paneli)
-      if (typeof loadProjectDashboard === 'function') loadProjectDashboard();
     }
 
     // ============================================================
@@ -2605,55 +2653,28 @@
       } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
-    // Sağ kolon + alt aciliyet listesi
+    // Alt aciliyet listesi + admin ana ekranının sağ kolon "Geciken Projeler" hatırlatıcısı
     async function refreshDashboardSummary() {
       try {
         const res = await fetch(`${API_BASE_URL}/api/admin/dashboard?userRole=${currentUser.role}`);
         if (!res.ok) return;
         const data = await safeJson(res);
-        renderRecentMeetings(data.recentMeetings || []);
-        renderOverdueProjects(data.overdueProjects || []);
-        renderNewUserNotifs(data.pendingUsers || []);
         renderUrgencyRanking(data.urgencyRanking || []);
+        renderAdminOverdueReminder(data.urgencyRanking || []);
       } catch (e) { console.error('Dashboard özeti alınamadı:', e); }
     }
 
-    function renderRecentMeetings(meetings) {
-      const el = document.getElementById('recentMeetingsList');
+    // Admin ana ekranı sağ kolon: bitişine 14 gün veya daha az kalan (henüz tamamlanmamış)
+    // projeler, kalan/geciken gün sayısıyla birlikte. 14 günden fazla kalanlar hiç girmez.
+    function renderAdminOverdueReminder(projects) {
+      const el = document.getElementById('adminOverdueReminderList');
       if (!el) return;
-      if (meetings.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Yaklaşan toplantı yok.</p>`; return; }
-      const statusLabels = { APPROVED: 'Onaylı', PENDING: 'Bekliyor', REJECTED: 'Reddedildi' };
-      const todayStr = new Date().toISOString().substring(0, 10);
-      el.innerHTML = meetings.slice(0, 6).map(m => {
-        const st = m.status === 'APPROVED' ? 'text-emerald-500' : m.status === 'REJECTED' ? 'text-rose-500' : 'text-amber-500';
-        const rawDate = (m.preferred_date || m.created_at || '');
-        const dOnly = rawDate.substring(0, 10);
-        // Tarih + saat gösterimi
-        let when = dOnly;
-        if (m.preferred_date && m.preferred_date.length > 10) {
-          when = m.preferred_date.substring(0, 16).replace('T', ' ');
-        }
-        const isToday = dOnly === todayStr;
-        return `<div class="bg-slate-50 dark:bg-slate-900/50 border ${isToday ? 'border-cyan-400 dark:border-cyan-600' : 'border-slate-200 dark:border-slate-700'} rounded-lg p-2.5">
-          <div class="flex items-center justify-between gap-2">
-            <div class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
-            ${isToday ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 shrink-0">BUGÜN</span>' : ''}
-          </div>
-          <div class="text-[10px] text-slate-400 flex items-center justify-between mt-1">
-            <span><i class="fa-regular fa-clock me-1"></i>${when}</span>
-            <span class="${st} font-bold">${statusLabels[m.status] || m.status || ''}</span>
-          </div>
-          ${m.requester_name ? `<div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlProj(m.requester_name)}${m.department ? ' · ' + (DEPARTMENT_LABELS[m.department] || m.department) : ''}</div>` : ''}
-        </div>`;
-      }).join('');
-    }
-
-    function renderOverdueProjects(projects) {
-      const el = document.getElementById('overdueProjectsList');
-      if (!el) return;
-      if (projects.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Geciken proje yok. 🎉</p>`; return; }
-      el.innerHTML = projects.slice(0, 8).map(p => {
-        const late = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `Son ${p.days_left} gün`;
+      const soon = (projects || [])
+        .filter(p => p.days_left <= 14)
+        .sort((a, b) => a.days_left - b.days_left);
+      if (soon.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Süresi yakında dolan proje yok. 🎉</p>`; return; }
+      el.innerHTML = soon.slice(0, 8).map(p => {
+        const late = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
         return `<button onclick="jumpToProject('${p.department}', ${p.id})" class="w-full text-left bg-rose-500/5 border border-rose-200 dark:border-rose-900/40 rounded-lg p-2.5 hover:bg-rose-500/10 transition-all">
           <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
           <div class="text-[10px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-0.5">
@@ -2662,32 +2683,6 @@
           </div>
         </button>`;
       }).join('');
-    }
-
-    function renderNewUserNotifs(users) {
-      const el = document.getElementById('newUserNotifList');
-      if (!el) return;
-      if (users.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Onay bekleyen yeni kullanıcı yok.</p>`; return; }
-      el.innerHTML = users.slice(0, 8).map(u => `
-        <div class="bg-emerald-500/5 border border-emerald-200 dark:border-emerald-900/40 rounded-lg p-2.5">
-          <div class="flex items-start justify-between gap-2">
-            <div class="min-w-0">
-              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(u.name)}</div>
-              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">${ROLE_LABELS_TR[u.role] || u.role || ''} · ${DEPARTMENT_LABELS[u.department] || u.department || '-'}</div>
-              ${u.email ? `<div class="text-[10px] text-slate-400 truncate">${escapeHtmlProj(u.email)}</div>` : ''}
-            </div>
-            <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">ONAY BEKLİYOR</span>
-          </div>
-          <div class="flex items-center gap-2 mt-2">
-            <button onclick="approveUser(${u.id})" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
-              <i class="fa-solid fa-check"></i> Onayla
-            </button>
-            <button onclick="rejectPendingUser(${u.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
-              <i class="fa-solid fa-xmark"></i> Reddet
-            </button>
-          </div>
-        </div>
-      `).join('');
     }
 
     function renderUrgencyRanking(projects) {
@@ -2720,6 +2715,12 @@
 
     // Geciken/aciliyet listesinden projeye zıpla
     async function jumpToProject(dept, projectId) {
+      // "Geciken Projeler" hatırlatıcısı artık admin ana ekranında (adminHomeSection); Projeler
+      // sayfası henüz açık değilse önce onu açıp verilerini yükleriz.
+      const projectsPage = document.getElementById('adminPanelSection');
+      if (projectsPage && projectsPage.classList.contains('hidden') && typeof openAdminProjectsPage === 'function') {
+        await openAdminProjectsPage();
+      }
       if (dept) await selectProjectDept(dept);
       // Projenin firmasını bul
       try {
@@ -3313,11 +3314,9 @@
     function closePersonDetailPage() {
       const detailSec = document.getElementById('personDetailSection');
       if (detailSec) detailSec.classList.add('hidden');
-      // Admin ise admin paneli + ekip gidişatını geri getir
-      if (currentUser.role === 'ADMIN') {
-        const adminSec = document.getElementById('adminPanelSection');
-        if (adminSec) adminSec.classList.remove('hidden');
-      }
+      // Kişi detayına her rol Ekip Gidişatı'ndan (teamProgressSection) girdiği için oraya döneriz;
+      // geri okunun görünürlüğü de aynı akışın parçası (Admin için openAdminProgressPage,
+      // Lider/Müdür için openLeaderProgressPage bunu zaten açmıştı).
       const teamSec = document.getElementById('teamProgressSection');
       if (teamSec) teamSec.classList.remove('hidden');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -3953,8 +3952,8 @@
 
     // Müdür/Ekip Lideri ana ekranındaki sağ kolon hatırlatıcısı: sadece bulunulan hafta
     // (bugünden Pazar'a kadar) içinde gerçekleşecek toplantıları listeler.
-    async function renderLeaderWeekMeetings() {
-      const el = document.getElementById('leaderWeekMeetingsList');
+    async function renderLeaderWeekMeetings(containerId = 'leaderWeekMeetingsList') {
+      const el = document.getElementById(containerId);
       if (!el) return;
       try {
         let url = `${API_BASE_URL}/api/meetings?userId=${currentUser.id}&role=${currentUser.role}`;
@@ -4873,14 +4872,16 @@
 
       // İlgili bölümlere kısayol
       const leaderSection = document.getElementById('leaderSection');
+      const adminHomeSection = document.getElementById('adminHomeSection');
       const engineerSection = document.getElementById('engineerSection');
       const mainTasksSection = document.getElementById('mainTasksSection');
       const teamProgressSection = document.getElementById('teamProgressSection');
       const warningBanner = document.getElementById('dailyWarningBanner');
 
-      // Önce tüm dinamik bölümleri gizle (Müdür/Ekip Lideri'nin alt sayfaları dahil —
+      // Önce tüm dinamik bölümleri gizle (Müdür/Ekip Lideri/Admin'in alt sayfaları dahil —
       // ana ekranları her zaman kutucuklu "ev" görünümüyle başlar)
       if (leaderSection) leaderSection.classList.add('hidden');
+      if (adminHomeSection) adminHomeSection.classList.add('hidden');
       if (engineerSection) engineerSection.classList.add('hidden');
       if (mainTasksSection) mainTasksSection.classList.add('hidden');
       if (teamProgressSection) teamProgressSection.classList.add('hidden');
@@ -4890,23 +4891,38 @@
       if (leaderTasksPageSec) leaderTasksPageSec.classList.add('hidden');
       const personDetailSec = document.getElementById('personDetailSection');
       if (personDetailSec) personDetailSec.classList.add('hidden');
+      const adminPanelSec = document.getElementById('adminPanelSection');
+      if (adminPanelSec) adminPanelSec.classList.add('hidden');
+      const adminStatusPageSec = document.getElementById('adminStatusPageSection');
+      if (adminStatusPageSec) adminStatusPageSec.classList.add('hidden');
       // Kutucuk akışından açılan "geri" butonları: her dashboard render'ında varsayılan
       // (gizli) duruma dönsün — bir sonraki oturumda yanlış role sızmasın.
       const teamProgressBackBtn = document.getElementById('teamProgressBackBtn');
       if (teamProgressBackBtn) teamProgressBackBtn.classList.add('hidden');
-      // Sayfa modunda açılmış olabilecek Toplantı/Takvim modallarını normal (gizli overlay) haline döndür
+      // Sayfa modunda açılmış olabilecek Toplantı/Takvim/Görevler/Yeni Kayıt Onayı/Kullanıcı
+      // Yönetimi modallarını normal (gizli overlay) haline döndür
       if (typeof restoreModalOverlay === 'function') {
         restoreModalOverlay('meetingsModal');
         restoreModalOverlay('calendarModal');
+        restoreModalOverlay('tasksDropdown');
+        restoreModalOverlay('pendingDropdown');
+        restoreModalOverlay('userMgmtDropdown');
       }
       const meetingsModalEl = document.getElementById('meetingsModal');
       if (meetingsModalEl) meetingsModalEl.classList.add('hidden');
       const calendarModalEl = document.getElementById('calendarModal');
       if (calendarModalEl) calendarModalEl.classList.add('hidden');
+      const tasksDropdownEl = document.getElementById('tasksDropdown');
+      if (tasksDropdownEl) tasksDropdownEl.classList.add('hidden');
+      const pendingDropdownEl = document.getElementById('pendingDropdown');
+      if (pendingDropdownEl) pendingDropdownEl.classList.add('hidden');
+      const userMgmtDropdownEl = document.getElementById('userMgmtDropdown');
+      if (userMgmtDropdownEl) userMgmtDropdownEl.classList.add('hidden');
 
       // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri).
       // Mühendisler için Ekip Gidişatı kaldırıldı.
-      // Admin kendi panelindeki (adminPanelSection içindeki modal) akışıyla görür; burada tekrar göstermeyiz.
+      // Admin de artık "Ekiplerin Yapılandırılması" kutucuğuna tıklayınca openAdminProgressPage()
+      // ile görür; burada önden göstermiyoruz.
       // Müdür/Ekip Lideri için artık ana ekranda inline görünmez; verisini önden hazırlarız,
       // "Ekip Gidişatı" kutucuğuna tıklayınca openLeaderProgressPage() gösterir.
       const canSeeTeamProgress = getSubordinateRoles(role).length > 0 && role !== 'ADMIN' && role !== 'ENGINEER';
@@ -4939,11 +4955,12 @@
         if (typeof checkDailyLogWarning === 'function') checkDailyLogWarning();
 
       } else if (role === 'ADMIN' || role === 'HR') {
-        // Admin ve İK: ana ekranda "Görevlerim" paneli gösterilmez.
-        // Admin, Ekip Gidişatı'nı doğrudan burada görür (yenilemede kaybolmaması için showDashboard yönetir).
-        if (role === 'ADMIN' && teamProgressSection) {
-          teamProgressSection.classList.remove('hidden');
-          if (typeof loadTeamProgress === 'function') loadTeamProgress();
+        // Admin: Müdür/Ekip Lideri ile aynı düzende, kutucuklu ana ekranı (adminHomeSection) görür.
+        if (role === 'ADMIN') {
+          if (adminHomeSection) adminHomeSection.classList.remove('hidden');
+          if (typeof fetchAdminStats === 'function') fetchAdminStats();
+          if (typeof renderLeaderWeekMeetings === 'function') renderLeaderWeekMeetings('adminWeekMeetingsList');
+          if (typeof refreshDashboardSummary === 'function') refreshDashboardSummary();
         }
 
       } else {
@@ -5418,11 +5435,32 @@
         closeBtnId: 'calendarModalCloseBtn',
         modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'shadow-2xl', 'max-w-5xl', 'max-h-[92vh]', 'overflow-hidden'],
         pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'shadow-xl', 'backdrop-blur-md']
+      },
+      tasksDropdown: {
+        cardId: 'tasksDropdownCard',
+        backBtnId: 'tasksDropdownBackBtn',
+        closeBtnId: 'tasksDropdownCloseBtn',
+        modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'border-slate-300', 'max-w-5xl', 'max-h-[90vh]', 'overflow-y-auto', 'shadow-2xl'],
+        pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'border-slate-200', 'shadow-xl', 'backdrop-blur-md']
+      },
+      pendingDropdown: {
+        cardId: 'pendingDropdownCard',
+        backBtnId: 'pendingDropdownBackBtn',
+        closeBtnId: 'pendingDropdownCloseBtn',
+        modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'border-slate-300', 'max-w-4xl', 'max-h-[88vh]', 'overflow-y-auto', 'shadow-2xl'],
+        pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'border-slate-200', 'shadow-xl', 'backdrop-blur-md']
+      },
+      userMgmtDropdown: {
+        cardId: 'userMgmtDropdownCard',
+        backBtnId: 'userMgmtDropdownBackBtn',
+        closeBtnId: 'userMgmtDropdownCloseBtn',
+        modalOnlyClasses: ['bg-white', 'dark:bg-slate-900', 'border-slate-300', 'max-w-4xl', 'max-h-[88vh]', 'overflow-y-auto', 'shadow-2xl'],
+        pageOnlyClasses: ['bg-white/80', 'dark:bg-slate-900/80', 'border-slate-200', 'shadow-xl', 'backdrop-blur-md']
       }
     };
 
-    function openModalAsPage(modalId, opener) {
-      const home = document.getElementById('leaderSection');
+    function openModalAsPage(modalId, opener, homeSectionId = 'leaderSection') {
+      const home = document.getElementById(homeSectionId);
       if (home) home.classList.add('hidden');
       const modal = document.getElementById(modalId);
       if (modal) {
@@ -5492,6 +5530,89 @@
         if (typeof loadCalendarData === 'function') loadCalendarData();
         if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus();
       });
+    }
+
+    // ============================================================
+    // ADMİN: kutucuk -> alt sayfa geçişleri. Lider/Müdür ile birebir aynı
+    // mekanizma (openModalAsPage, closeLeaderSubPage -> showDashboard),
+    // sadece "ana ekran" olarak leaderSection yerine adminHomeSection kullanılır.
+    // ============================================================
+    async function openAdminProjectsPage() {
+      const home = document.getElementById('adminHomeSection');
+      if (home) home.classList.add('hidden');
+      showSection('admin');
+      if (typeof loadProjectDashboard === 'function') await loadProjectDashboard();
+    }
+
+    function openAdminStatusPage() {
+      const home = document.getElementById('adminHomeSection');
+      if (home) home.classList.add('hidden');
+      const section = document.getElementById('adminStatusPageSection');
+      if (section) section.classList.remove('hidden');
+      if (typeof populateAdminStatusDeptChips === 'function') populateAdminStatusDeptChips();
+    }
+
+    function openAdminProgressPage() {
+      const home = document.getElementById('adminHomeSection');
+      if (home) home.classList.add('hidden');
+      const backBtn = document.getElementById('teamProgressBackBtn');
+      if (backBtn) backBtn.classList.remove('hidden');
+      const section = document.getElementById('teamProgressSection');
+      if (section) section.classList.remove('hidden');
+      if (typeof loadTeamProgress === 'function') loadTeamProgress();
+    }
+
+    function openAdminTasksPage() {
+      openModalAsPage('tasksDropdown', () => {
+        const modal = document.getElementById('tasksDropdown');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof loadTasks === 'function') loadTasks();
+        if (typeof populateAdminTaskFilters === 'function') populateAdminTaskFilters();
+        if (typeof populateLeaderTaskFilter === 'function') populateLeaderTaskFilter();
+      }, 'adminHomeSection');
+    }
+
+    function openAdminPendingPage() {
+      openModalAsPage('pendingDropdown', () => {
+        const modal = document.getElementById('pendingDropdown');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof loadPendingUsers === 'function') loadPendingUsers();
+      }, 'adminHomeSection');
+    }
+
+    function openAdminUserMgmtPage() {
+      openModalAsPage('userMgmtDropdown', () => {
+        const modal = document.getElementById('userMgmtDropdown');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof fetchAdminUsers === 'function') fetchAdminUsers();
+      }, 'adminHomeSection');
+    }
+
+    function openAdminMeetingsPage() {
+      openModalAsPage('meetingsModal', () => {
+        const modal = document.getElementById('meetingsModal');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof populateMeetingTargetRoles === 'function') populateMeetingTargetRoles();
+        if (typeof loadMeetings === 'function') loadMeetings();
+        const track = document.getElementById('meetingRequestsList');
+        if (track && !track.dataset.scrollBound) {
+          track.addEventListener('scroll', () => {
+            if (typeof updateMeetingCarouselControls === 'function') updateMeetingCarouselControls();
+          });
+          track.dataset.scrollBound = '1';
+        }
+        if (typeof updateMeetingCarouselControls === 'function') setTimeout(updateMeetingCarouselControls, 0);
+      }, 'adminHomeSection');
+    }
+
+    function openAdminCalendarPage() {
+      openModalAsPage('calendarModal', () => {
+        const modal = document.getElementById('calendarModal');
+        if (modal) modal.classList.remove('hidden');
+        calendarViewDate = new Date();
+        if (typeof loadCalendarData === 'function') loadCalendarData();
+        if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus();
+      }, 'adminHomeSection');
     }
 
     // "Görevler" kutucuğu: Müdür/Ekip Lideri'nin hem kendi görevlerini hem de
@@ -5647,11 +5768,11 @@
     }
 
     // Ortak durum kartı oluşturucu (verilen role göre listeyi bir konteynere basar)
-    function renderStatusCards(listEl, wantedRole) {
+    function renderStatusCards(listEl, wantedRole, wantedDept) {
       if (!listEl) return;
       listEl.innerHTML = '';
 
-      const people = usersList.filter(u => u.role === wantedRole);
+      const people = usersList.filter(u => u.role === wantedRole && (!wantedDept || u.department === wantedDept));
 
       const data = people.map(person => {
         const activeTasks = tasksList.filter(t => (t.assigned_to == person.id) && t.status !== 'APPROVED');
@@ -5717,6 +5838,71 @@
       if (titleEl) titleEl.innerText = `${ROLE_LABELS_TR[wantedRole] || wantedRole} Durum ve İş Yükü`;
 
       renderStatusCards(listEl, wantedRole);
+    }
+
+    // ============================================================
+    // ADMİN: "Ekiplerin Durum ve İş Yükü" sayfası — Birim seç -> Rol seç ->
+    // seçilen birim+rol için durum/iş yükü kartları (renderStatusCards'ı
+    // birim filtresiyle tekrar kullanır).
+    // ============================================================
+    let adminStatusSelectedDept = '';
+    let adminStatusSelectedRole = '';
+    const ADMIN_STATUS_DEPTS = [
+      ['ELEKTRONIK', 'Elektronik'], ['MEKANIK', 'Mekanik'], ['YAZILIM', 'Yazılım'], ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']
+    ];
+    const ADMIN_STATUS_ROLES = [
+      ['INTERN', 'Stajyer'], ['TECHNICIAN', 'Teknisyen'], ['ENGINEER', 'Mühendis'], ['LEADER', 'Ekip Lideri'], ['MANAGER', 'Müdür']
+    ];
+
+    function populateAdminStatusDeptChips() {
+      const el = document.getElementById('adminStatusDeptChips');
+      if (!el) return;
+      el.innerHTML = ADMIN_STATUS_DEPTS.map(([key, label]) => {
+        const active = adminStatusSelectedDept === key;
+        return `<button type="button" onclick="selectAdminStatusDept('${key}')" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+          ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-500/20'
+          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-cyan-500'}">${label}</button>`;
+      }).join('');
+      populateAdminStatusRoleToggle();
+      renderAdminStatusResults();
+    }
+
+    function selectAdminStatusDept(dept) {
+      adminStatusSelectedDept = dept;
+      adminStatusSelectedRole = '';
+      populateAdminStatusDeptChips();
+    }
+
+    function populateAdminStatusRoleToggle() {
+      const wrap = document.getElementById('adminStatusRoleWrap');
+      const toggle = document.getElementById('adminStatusRoleToggle');
+      if (!wrap || !toggle) return;
+      if (!adminStatusSelectedDept) { wrap.classList.add('hidden'); return; }
+      wrap.classList.remove('hidden');
+      toggle.innerHTML = ADMIN_STATUS_ROLES.map(([key, label]) => `
+        <button type="button" onclick="selectAdminStatusRole('${key}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all ${adminStatusSelectedRole === key ? 'bg-cyan-600 text-white' : 'text-slate-500 dark:text-slate-400'}">${label}</button>
+      `).join('');
+    }
+
+    function selectAdminStatusRole(role) {
+      adminStatusSelectedRole = role;
+      populateAdminStatusRoleToggle();
+      renderAdminStatusResults();
+    }
+
+    function renderAdminStatusResults() {
+      const resultWrap = document.getElementById('adminStatusResultWrap');
+      const emptyHint = document.getElementById('adminStatusEmptyHint');
+      const listEl = document.getElementById('adminStatusResultList');
+      if (!resultWrap || !emptyHint || !listEl) return;
+      if (!adminStatusSelectedDept || !adminStatusSelectedRole) {
+        resultWrap.classList.add('hidden');
+        emptyHint.classList.remove('hidden');
+        return;
+      }
+      resultWrap.classList.remove('hidden');
+      emptyHint.classList.add('hidden');
+      renderStatusCards(listEl, adminStatusSelectedRole, adminStatusSelectedDept);
     }
 
     // Mühendis: kendi birimindeki stajyerlerin durum listesi

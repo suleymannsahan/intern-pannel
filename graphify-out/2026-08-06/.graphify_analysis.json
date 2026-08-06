@@ -1,0 +1,173 @@
+{
+  "communities": {
+    "0": [
+      "package",
+      "package_author",
+      "package_description",
+      "package_engines",
+      "package_engines_node",
+      "package_keywords",
+      "package_license",
+      "package_main",
+      "package_name",
+      "package_scripts",
+      "package_scripts_start",
+      "package_scripts_test",
+      "package_type",
+      "package_version"
+    ],
+    "1": [
+      "server",
+      "server_app",
+      "server_bcrypt",
+      "server_cors",
+      "server_createclient",
+      "server_daysbetween",
+      "server_db",
+      "server_express",
+      "server_gcal",
+      "server_initdb",
+      "server_initdbmigration",
+      "server_isadmin",
+      "server_path",
+      "server_todayiso"
+    ],
+    "2": [
+      "googlecalendar",
+      "googlecalendar_buildeventbody",
+      "googlecalendar_clientfromrefreshtoken",
+      "googlecalendar_createevent",
+      "googlecalendar_deleteevent",
+      "googlecalendar_exchangecodefortokens",
+      "googlecalendar_getauthurl",
+      "googlecalendar_google",
+      "googlecalendar_isconfigured",
+      "googlecalendar_makeoauthclient",
+      "googlecalendar_scopes",
+      "googlecalendar_updateevent"
+    ],
+    "3": [
+      "bcryptjs",
+      "googleapis",
+      "package_dependencies",
+      "package_dependencies_bcryptjs",
+      "package_dependencies_googleapis"
+    ],
+    "4": [
+      "server_getusergoogletoken",
+      "server_normalizedateforgcal",
+      "server_removetaskfromgoogle",
+      "server_syncmeetingtogoogle",
+      "server_synctasktogoogle"
+    ],
+    "5": [
+      "better_sqlite3",
+      "package_dependencies_better_sqlite3"
+    ],
+    "6": [
+      "cors",
+      "package_dependencies_cors"
+    ],
+    "7": [
+      "express",
+      "package_dependencies_express"
+    ],
+    "8": [
+      "getbrevo_brevo",
+      "package_dependencies_getbrevo_brevo"
+    ],
+    "9": [
+      "jsonwebtoken",
+      "package_dependencies_jsonwebtoken"
+    ],
+    "10": [
+      "libsql_client",
+      "package_dependencies_libsql_client"
+    ],
+    "11": [
+      "nodemailer",
+      "package_dependencies_nodemailer"
+    ],
+    "12": [
+      "package_dependencies_resend",
+      "resend"
+    ],
+    "13": [
+      "server_getsubordinateroles",
+      "server_role_hierarchy"
+    ]
+  },
+  "cohesion": {
+    "0": 0.14285714285714285,
+    "1": 0.14285714285714285,
+    "2": 0.2878787878787879,
+    "3": 0.4,
+    "4": 0.5,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0,
+    "11": 1.0,
+    "12": 1.0,
+    "13": 1.0
+  },
+  "gods": [
+    {
+      "id": "googlecalendar_clientfromrefreshtoken",
+      "label": "clientFromRefreshToken()",
+      "degree": 5
+    },
+    {
+      "id": "googlecalendar_makeoauthclient",
+      "label": "makeOAuthClient()",
+      "degree": 4
+    },
+    {
+      "id": "server_getusergoogletoken",
+      "label": "getUserGoogleToken()",
+      "degree": 4
+    },
+    {
+      "id": "googlecalendar_buildeventbody",
+      "label": "buildEventBody()",
+      "degree": 3
+    },
+    {
+      "id": "googlecalendar_createevent",
+      "label": "createEvent()",
+      "degree": 3
+    },
+    {
+      "id": "googlecalendar_updateevent",
+      "label": "updateEvent()",
+      "degree": 3
+    },
+    {
+      "id": "package_scripts",
+      "label": "scripts",
+      "degree": 3
+    },
+    {
+      "id": "server_normalizedateforgcal",
+      "label": "normalizeDateForGcal()",
+      "degree": 3
+    },
+    {
+      "id": "server_synctasktogoogle",
+      "label": "syncTaskToGoogle()",
+      "degree": 3
+    },
+    {
+      "id": "server_syncmeetingtogoogle",
+      "label": "syncMeetingToGoogle()",
+      "degree": 3
+    }
+  ],
+  "surprises": [],
+  "tokens": {
+    "input": 0,
+    "output": 0
+  }
+}
