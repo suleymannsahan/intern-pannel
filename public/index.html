@@ -522,50 +522,10 @@
             <div id="internStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
 
-          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-            <h3 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama</h3>
-
-            <!-- Hedef tipi seçimi: görev stajyere mi yoksa mühendise mi atanacak -->
-            <div class="mb-4">
-              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Kime Atanacak?</label>
-              <div class="inline-flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
-                <button type="button" id="taskTargetInternBtn" onclick="setTaskTargetType('INTERN')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600 text-white transition-all">Stajyer</button>
-                <button type="button" id="taskTargetEngineerBtn" onclick="setTaskTargetType('ENGINEER')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400 transition-all">Mühendis</button>
-              </div>
-            </div>
-
-            <form onsubmit="handleCreateTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label id="taskTitleLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
-                <input type="text" id="taskTitle" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-              </div>
-              <div>
-                <label id="taskAssigneeLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Atanacağı Stajyer</label>
-                <select id="taskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
-              </div>
-              <div class="md:col-span-2">
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Açıklaması</label>
-                <textarea id="taskDescription" rows="2" placeholder="Görev detaylarını ve yönergeleri giriniz..." class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Alan / Departman</label>
-                <select id="taskCategory" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-                  <option value="Yazılım">Yazılım</option>
-                  <option value="Donanım">Donanım</option>
-                  <option value="Ağ & Sistem">Ağ & Sistem</option>
-                  <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
-                </select>
-              </div>
-              <div>
-                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Bitiş Tarihi</label>
-                <input type="date" id="taskEndDate" required onchange="updateCalculatedWorkDays()" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
-              </div>
-              <div class="md:col-span-2 flex justify-between items-center bg-slate-100 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-300 dark:border-slate-800">
-                <span class="text-xs text-slate-500 dark:text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-cyan-600 dark:text-cyan-400 text-sm">0 gün</strong></span>
-                <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
-              </div>
-            </form>
-          </div>
+          <button type="button" onclick="openNewTaskPage()" class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex items-center justify-between gap-3 text-left hover:border-cyan-500 dark:hover:border-cyan-500 transition-all group">
+            <span class="font-bold text-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-cyan-500 flex items-center gap-1">Aç <i class="fa-solid fa-arrow-right"></i></span>
+          </button>
         </section>
 
         <!-- ADMIN PANELİ EKRANI (istatistikler; Yeni Kayıt Onayı ve Kullanıcı Yönetimi artık header'daki baloncuklarda) -->
@@ -824,8 +784,67 @@
             <div id="engineerInternStatusList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
           </div>
 
-          <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
-            <h3 class="font-bold text-sm mb-4 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama (Stajyer)</h3>
+          <button type="button" onclick="openNewTaskPage()" class="w-full bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md flex items-center justify-between gap-3 text-left hover:border-cyan-500 dark:hover:border-cyan-500 transition-all group">
+            <span class="font-bold text-sm text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-plus-circle"></i>Yeni Görev Atama (Stajyer)</span>
+            <span class="text-xs text-slate-500 dark:text-slate-400 group-hover:text-cyan-500 flex items-center gap-1">Aç <i class="fa-solid fa-arrow-right"></i></span>
+          </button>
+        </section>
+
+        <!-- YENİ GÖREV ATAMA (AYRI SAYFA) -->
+        <section id="newTaskPageSection" class="hidden space-y-6">
+          <div class="flex items-center gap-3">
+            <button type="button" onclick="closeNewTaskPage()" class="w-9 h-9 shrink-0 flex items-center justify-center rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-cyan-500 hover:border-cyan-500 transition-all">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <h2 class="font-bold text-lg text-slate-900 dark:text-slate-100">Yeni Görev Atama</h2>
+          </div>
+
+          <!-- Müdür / Ekip Lideri formu -->
+          <div id="newTaskFormLeaderWrap" class="hidden bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
+            <!-- Hedef tipi seçimi: görev stajyere mi yoksa mühendise mi atanacak -->
+            <div class="mb-4">
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Kime Atanacak?</label>
+              <div class="inline-flex bg-slate-200 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800">
+                <button type="button" id="taskTargetInternBtn" onclick="setTaskTargetType('INTERN')" class="px-4 py-1.5 text-xs font-semibold rounded-lg bg-cyan-600 text-white transition-all">Stajyer</button>
+                <button type="button" id="taskTargetEngineerBtn" onclick="setTaskTargetType('ENGINEER')" class="px-4 py-1.5 text-xs font-semibold rounded-lg text-slate-500 dark:text-slate-400 transition-all">Mühendis</button>
+              </div>
+            </div>
+
+            <form onsubmit="handleCreateTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label id="taskTitleLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
+                <input type="text" id="taskTitle" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label id="taskAssigneeLabel" class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Atanacağı Stajyer</label>
+                <select id="taskAssignee" required class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
+              </div>
+              <div class="md:col-span-2">
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Açıklaması</label>
+                <textarea id="taskDescription" rows="2" placeholder="Görev detaylarını ve yönergeleri giriniz..." class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500"></textarea>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Alan / Departman</label>
+                <select id="taskCategory" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+                  <option value="Yazılım">Yazılım</option>
+                  <option value="Donanım">Donanım</option>
+                  <option value="Ağ & Sistem">Ağ & Sistem</option>
+                  <option value="Test / Dokümantasyon">Test / Dokümantasyon</option>
+                </select>
+              </div>
+              <div>
+                <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görevin Bitiş Tarihi</label>
+                <input type="date" id="taskEndDate" required onchange="updateCalculatedWorkDays()" class="w-full bg-slate-100 dark:bg-slate-800/90 border border-slate-300 dark:border-slate-700/80 rounded-xl px-3.5 py-2 text-sm focus:outline-none focus:border-cyan-500">
+              </div>
+              <div class="md:col-span-2 flex justify-between items-center bg-slate-100 dark:bg-slate-950/70 p-3.5 rounded-xl border border-slate-300 dark:border-slate-800">
+                <span class="text-xs text-slate-500 dark:text-slate-400">Hesaplanan Net İş Günü: <strong id="calculatedDaysText" class="text-cyan-600 dark:text-cyan-400 text-sm">0 gün</strong></span>
+                <button type="submit" class="bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold px-5 py-2 rounded-xl text-sm transition-all shadow-lg shadow-cyan-500/20">Görevi Ata</button>
+              </div>
+            </form>
+          </div>
+
+          <!-- Mühendis formu (sadece stajyere atar) -->
+          <div id="newTaskFormEngineerWrap" class="hidden bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <form onsubmit="handleCreateEngineerTask(event)" class="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
                 <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Görev Tanımı</label>
@@ -1470,6 +1489,20 @@
 
     // 1. Dışarıya Tıklandığında Açık Baloncuk Menülerini Kapatma
     document.addEventListener('click', function(e) {
+      // Görev detayı / düzenleme / revize / not gibi baloncuğun ÜSTÜNDE açılan alt modallar
+      // kendi DOM ağacında baloncuğun içinde değildir (ayrı, üstte duran modallardır).
+      // Bu yüzden içlerine (ör. kapatma çarpısına) tıklamak "dışarı tıklama" sayılıp
+      // arkadaki baloncuğu da kapatmasın diye burada hariç tutuyoruz.
+      const childModalIds = [
+        'taskDetailModal', 'editTaskModal', 'revisionModal', 'logModal',
+        'personProgressModal', 'internProfileModal', 'manageUserModal', 'addUserModal'
+      ];
+      const clickedInsideChildModal = childModalIds.some(id => {
+        const modal = document.getElementById(id);
+        return modal && modal.contains(e.target);
+      });
+      if (clickedInsideChildModal) return;
+
       const dropdownConfigs = [
         { dropdownId: 'settingsDropdown', buttonSelector: 'button[onclick="toggleSettingsDropdown()"]' },
         { dropdownId: 'tasksDropdown', buttonSelector: '#tasksNavBtn' },
@@ -4610,6 +4643,38 @@
       } else {
         document.getElementById('dailyWarningBanner').classList.add('hidden');
       }
+    }
+
+    // "Yeni Görev Atama" panelini kendi sayfasında açar (Müdür/Ekip Lideri veya Mühendis).
+    // O anki role göre doğru formu gösterir, diğer tüm ana panel bölümlerini gizler.
+    function openNewTaskPage() {
+      const sectionsToHide = ['leaderSection', 'engineerSection', 'mainTasksSection', 'teamProgressSection'];
+      sectionsToHide.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.add('hidden');
+      });
+
+      const newTaskSection = document.getElementById('newTaskPageSection');
+      const leaderWrap = document.getElementById('newTaskFormLeaderWrap');
+      const engineerWrap = document.getElementById('newTaskFormEngineerWrap');
+      if (newTaskSection) newTaskSection.classList.remove('hidden');
+
+      const isLeaderOrAbove = currentUser && (currentUser.role === 'MANAGER' || currentUser.role === 'LEADER');
+      if (leaderWrap) leaderWrap.classList.toggle('hidden', !isLeaderOrAbove);
+      if (engineerWrap) engineerWrap.classList.toggle('hidden', isLeaderOrAbove);
+
+      if (isLeaderOrAbove) {
+        setTaskTargetType('INTERN');
+      } else {
+        populateEngineerAssigneeOptions();
+      }
+    }
+
+    // "Yeni Görev Atama" sayfasını kapatıp ana paneli role göre eski haline döndürür
+    function closeNewTaskPage() {
+      const newTaskSection = document.getElementById('newTaskPageSection');
+      if (newTaskSection) newTaskSection.classList.add('hidden');
+      if (typeof showDashboard === 'function') showDashboard();
     }
 
     // Görev atama hedef tipi (INTERN / ENGINEER) - Müdür/Ekip Lideri formu için
