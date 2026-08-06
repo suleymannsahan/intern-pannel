@@ -18,9 +18,8 @@
     "@getbrevo/brevo": "^6.0.2",
     "@libsql/client": "^0.17.4",
     "bcryptjs": "^3.0.3",
-    "better-sqlite3": "^13.0.1",
     "cors": "^2.8.6",
-    "express": "^4.18.2",
+    "express": "^4.22.2",
     "jsonwebtoken": "^9.0.3",
     "nodemailer": "^9.0.3",
     "resend": "^6.18.1"
