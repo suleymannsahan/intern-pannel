@@ -1133,6 +1133,36 @@
     </div>
   </div>
 
+  <!-- KİŞİ DETAY SAYFASI: SORUMLU PROJE İLERLEME/TAKİP MODALI -->
+  <div id="personProjectModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-[65]" onclick="if(event.target===this) closePersonProjectModal();">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl">
+      <div class="flex justify-between items-start gap-3 p-6 pb-3 border-b border-slate-200 dark:border-slate-800 sticky top-0 bg-white dark:bg-slate-900 z-10">
+        <div class="min-w-0">
+          <h3 id="ppTitle" class="font-bold text-lg text-indigo-600 dark:text-indigo-400 break-words"></h3>
+          <div id="ppBadges" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+        </div>
+        <button onclick="closePersonProjectModal()" class="shrink-0 text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+      <div class="p-6 space-y-4">
+        <canvas id="ppChart" height="90"></canvas>
+        <div>
+          <h4 class="text-xs font-bold text-slate-500 dark:text-slate-400 mb-2">İlerleme Notları</h4>
+          <div id="ppLogs" class="space-y-2 max-h-40 overflow-y-auto"></div>
+        </div>
+        <div id="ppAddForm" class="hidden pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">Yeni İlerleme Ekle</h4>
+          <div class="grid grid-cols-3 gap-2">
+            <input type="date" id="ppDate" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            <input type="number" id="ppPlanned" min="0" max="100" placeholder="Planlanan %" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            <input type="number" id="ppActual" min="0" max="100" placeholder="Gerçekleşen %" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+          </div>
+          <input type="text" id="ppNote" placeholder="Not (opsiyonel)" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+          <button onclick="submitPersonProjectProgress()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-2 rounded-lg transition-all">Kaydet</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <!-- EKİP GİDİŞATI KİŞİ DETAY MODALI (Büyük, açılır-kapanır) -->
           <div id="personProgressModal" class="hidden fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50" onclick="if(event.target===this) closePersonProgressModal();">
             <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-5xl max-h-[90vh] overflow-y-auto shadow-2xl space-y-5">
@@ -3091,7 +3121,7 @@
         projEl.innerHTML = projects.map(p => {
           const daysTxt = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
           const daysCls = p.days_left < 0 ? 'text-rose-500' : p.days_left <= 3 ? 'text-amber-500' : 'text-emerald-500';
-          return `<div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+          return `<button type="button" onclick="openPersonProjectModal(${p.id}, ${u.id})" class="w-full text-left bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-indigo-500 dark:hover:border-indigo-500 rounded-lg p-3 transition-all">
             <div class="flex items-center justify-between gap-2">
               <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
               <span class="text-[10px] font-bold ${daysCls} shrink-0">${daysTxt}</span>
@@ -3103,33 +3133,24 @@
               <span class="text-[10px] text-slate-400 shrink-0">%${p.actual}${p.planned ? ' / hedef %' + p.planned : ''}</span>
             </div>
             ${p.note ? `<div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">${escapeHtmlProj(p.note)}</div>` : ''}
-          </div>`;
+            <div class="text-[10px] font-semibold text-indigo-500 mt-1.5"><i class="fa-solid fa-chart-line me-1"></i>İlerlemeyi görüntüle / takip et</div>
+          </button>`;
         }).join('');
       }
 
-      // Görevler
+      // Görevler: kart olarak gösterilir, tıklanınca aynı görev detay modalı açılır
       const taskEl = document.getElementById('pdTasks');
-      if (tasks.length === 0) {
+      taskEl.innerHTML = '';
+      const personTasks = (tasksList || []).filter(t => t.assigned_to == u.id)
+        .slice().sort((a, b) => (a.end_date || '').localeCompare(b.end_date || ''));
+      if (personTasks.length === 0) {
         taskEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Bu kişide görev yok.</p>`;
       } else {
-        const statusBadge = {
-          IN_PROGRESS: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
-          COMPLETED: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
-          APPROVED: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
-          REVISION_REQUESTED: 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
-        };
-        taskEl.innerHTML = tasks.map(t => `
-          <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
-            <div class="flex items-start justify-between gap-2">
-              <div class="min-w-0">
-                <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(t.title)}</div>
-                <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlProj(t.category || '')} · Bitiş: ${t.end_date || '-'}</div>
-              </div>
-              <span class="text-[9px] font-bold px-2 py-0.5 rounded ${statusBadge[t.status] || 'bg-slate-500/15 text-slate-500'} shrink-0">${TASK_STATUS_LABELS_TR[t.status] || t.status}</span>
-            </div>
-            ${t.description ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">${escapeHtmlProj(t.description)}</div>` : ''}
-          </div>
-        `).join('');
+        const isManagerView = ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(currentUser.role) && u.id != currentUser.id;
+        personTasks.forEach(t => {
+          const isPast = t.status === 'APPROVED' || t.status === 'COMPLETED';
+          taskEl.appendChild(createTaskCard(t, isPast, isManagerView));
+        });
       }
 
       // Günlük loglar
@@ -3144,6 +3165,114 @@
           </div>
         `).join('');
       }
+    }
+
+    // Kişi detay sayfasındaki "Sorumlu Olduğu Projeler" kartına tıklayınca açılan
+    // ilerleme grafiği + takip modalı. Sahibi veya Admin ise yeni ilerleme ekleyebilir.
+    let personProjectChartInstance = null;
+    let personProjectCurrentId = null;
+    let personProjectOwnerId = null;
+
+    async function openPersonProjectModal(projectId, ownerId) {
+      personProjectCurrentId = projectId;
+      personProjectOwnerId = ownerId;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
+        const data = await safeJson(res);
+        if (!res.ok) { showToast(data.error || 'Proje yüklenemedi.', 'error'); return; }
+        renderPersonProjectModal(data);
+        document.getElementById('personProjectModal').classList.remove('hidden');
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    function closePersonProjectModal() {
+      document.getElementById('personProjectModal').classList.add('hidden');
+    }
+
+    function renderPersonProjectModal(data) {
+      const project = data.project;
+      const progress = data.progress || [];
+      document.getElementById('ppTitle').innerText = `${project.company_name || ''} — ${project.name}`;
+
+      const today = new Date().toISOString().substring(0, 10);
+      const daysLeft = Math.round((new Date(project.end_date + 'T00:00:00') - new Date(today + 'T00:00:00')) / 86400000);
+      const sorted = [...progress].sort((a, b) => a.log_date.localeCompare(b.log_date));
+      const last = sorted.length ? sorted[sorted.length - 1] : null;
+      const actual = last ? Number(last.actual) : 0;
+      const planned = last ? Number(last.planned) : 0;
+      const behind = actual < planned - 5;
+
+      let daysBadge, daysCls;
+      if (daysLeft < 0) { daysBadge = `${Math.abs(daysLeft)} gün gecikti`; daysCls = 'bg-rose-500/15 text-rose-600 dark:text-rose-400'; }
+      else if (daysLeft <= 3) { daysBadge = `Son ${daysLeft} gün`; daysCls = 'bg-amber-500/15 text-amber-600 dark:text-amber-400'; }
+      else { daysBadge = `${daysLeft} gün kaldı`; daysCls = 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400'; }
+
+      document.getElementById('ppBadges').innerHTML = `
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${daysCls}">${daysBadge}</span>
+        <span class="text-[10px] font-bold px-2 py-0.5 rounded-md ${behind ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400' : 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400'}">${behind ? 'Planın gerisinde' : 'Yolunda'} · %${actual}</span>
+      `;
+
+      // Grafik: zaman içinde planlanan vs. gerçekleşen %
+      const canvas = document.getElementById('ppChart');
+      const ctx = canvas.getContext('2d');
+      if (personProjectChartInstance) { personProjectChartInstance.destroy(); personProjectChartInstance = null; }
+      personProjectChartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: sorted.map(p => p.log_date),
+          datasets: [
+            { label: 'Planlanan %', data: sorted.map(p => Number(p.planned)), borderColor: '#6366f1', backgroundColor: 'transparent', tension: 0.3 },
+            { label: 'Gerçekleşen %', data: sorted.map(p => Number(p.actual)), borderColor: '#06b6d4', backgroundColor: 'transparent', tension: 0.3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          scales: { y: { min: 0, max: 100 } },
+          plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } } }
+        }
+      });
+
+      // İlerleme notları (en yeni üstte)
+      const logsEl = document.getElementById('ppLogs');
+      if (sorted.length === 0) {
+        logsEl.innerHTML = `<p class="text-xs text-slate-400">Henüz ilerleme kaydı yok.</p>`;
+      } else {
+        logsEl.innerHTML = sorted.slice().reverse().map(p => `
+          <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5 text-xs">
+            <div class="flex justify-between text-slate-500 dark:text-slate-400"><span>${p.log_date}</span><span>Plan %${p.planned} · Gerçek %${p.actual}</span></div>
+            ${p.note ? `<div class="mt-1 text-slate-700 dark:text-slate-300">${escapeHtmlProj(p.note)}</div>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // İlerleme ekleme formu: sadece projenin sahibi veya Admin görür (server de aynı kuralı uygular)
+      const addForm = document.getElementById('ppAddForm');
+      const canAdd = currentUser.role === 'ADMIN' || (personProjectOwnerId && currentUser.id == personProjectOwnerId);
+      addForm.classList.toggle('hidden', !canAdd);
+      const dEl = document.getElementById('ppDate');
+      if (dEl) dEl.value = today;
+    }
+
+    async function submitPersonProjectProgress() {
+      if (!personProjectCurrentId) return;
+      const log_date = document.getElementById('ppDate').value;
+      const planned = document.getElementById('ppPlanned').value;
+      const actual = document.getElementById('ppActual').value;
+      const note = document.getElementById('ppNote').value.trim();
+      if (!log_date) { showToast('Tarih gerekli.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/projects/${personProjectCurrentId}/progress`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ log_date, planned, actual, note, userRole: currentUser.role, userId: currentUser.id })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
+        showToast('İlerleme kaydedildi.', 'success');
+        document.getElementById('ppPlanned').value = '';
+        document.getElementById('ppActual').value = '';
+        document.getElementById('ppNote').value = '';
+        await openPersonProjectModal(personProjectCurrentId, personProjectOwnerId);
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
     // Admin: telefon / alt alan hızlı kaydet
