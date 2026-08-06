@@ -319,6 +319,27 @@
           </select>
         </div>
 
+        <!-- ADMİN İÇİN: BİRİM → (Elektronikse) ALAN → ROL FİLTRESİ -->
+        <div id="adminTaskFilterWrap" class="hidden bg-cyan-50/60 dark:bg-cyan-950/20 border border-cyan-200 dark:border-cyan-900/50 rounded-xl p-3 grid grid-cols-1 sm:grid-cols-3 gap-2 items-center">
+          <select id="filterAdminDept" onchange="handleAdminTaskDeptFilterChange()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Birimler</option>
+            <option value="ELEKTRONIK">Elektronik</option>
+            <option value="MEKANIK">Mekanik</option>
+            <option value="YAZILIM">Yazılım</option>
+          </select>
+          <select id="filterAdminSubArea" onchange="applyTaskFilters()" class="hidden bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Alanlar</option>
+          </select>
+          <select id="filterAdminRole" onchange="applyTaskFilters()" class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">Tüm Roller</option>
+            <option value="MANAGER">Müdür</option>
+            <option value="LEADER">Ekip Lideri</option>
+            <option value="ENGINEER">Mühendis</option>
+            <option value="TECHNICIAN">Teknisyen</option>
+            <option value="INTERN">Stajyer</option>
+          </select>
+        </div>
+
         <!-- İKİ BÖLÜM: AKTİF | GEÇMİŞ -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <!-- SOL: AKTİF GÖREVLER -->
@@ -747,6 +768,13 @@
                 </h3>
                 <div id="pdPersonalInfo" class="space-y-2.5 text-sm"></div>
               </div>
+              <!-- Atanmış stajyerler (sadece Mühendis rolünde ve stajyeri varsa görünür) -->
+              <div id="pdAssignedInternsWrap" class="hidden bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-graduation-cap text-amber-500"></i> Atanmış Stajyerler
+                </h3>
+                <div id="pdAssignedInterns" class="space-y-2"></div>
+              </div>
               <!-- Günlük loglar -->
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
                 <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
@@ -948,6 +976,30 @@
           <input type="tel" id="cpPhone" required placeholder="05XX XXX XX XX" class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
         </div>
         <button onclick="submitCompleteProfile()" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">
+          Kaydet ve Devam Et
+        </button>
+        <p class="text-[10px] text-slate-400 text-center">Bu adım zorunludur ve atlanamaz.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SORUMLU MÜHENDİS SEÇİMİ (Stajyer için zorunlu, ilk girişte) -->
+  <div id="supervisorEngineerModal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-[80]">
+    <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl w-full max-w-md shadow-2xl">
+      <div class="p-6 pb-3 border-b border-slate-200 dark:border-slate-800">
+        <h3 class="font-bold text-lg text-slate-900 dark:text-slate-100 flex items-center gap-2">
+          <i class="fa-solid fa-user-tie text-cyan-500"></i> Sorumlu Mühendis Seç
+        </h3>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1.5">Devam edebilmek için biriminizdeki mühendislerden bir sorumlu mühendis seçmeniz gerekiyor.</p>
+      </div>
+      <div class="p-6 space-y-4">
+        <div>
+          <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Sorumlu Mühendis <span class="text-rose-500">*</span></label>
+          <select id="seEngineerSelect" required class="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-sm focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
+            <option value="">-- Mühendis Seçiniz --</option>
+          </select>
+        </div>
+        <button onclick="submitSupervisorEngineer()" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">
           Kaydet ve Devam Et
         </button>
         <p class="text-[10px] text-slate-400 text-center">Bu adım zorunludur ve atlanamaz.</p>
@@ -1441,8 +1493,9 @@
     function toggleTasksDropdown() {
       const dropdown = document.getElementById('tasksDropdown');
       dropdown.classList.toggle('hidden');
-      if (!dropdown.classList.contains('hidden') && typeof loadTasks === 'function') {
-        loadTasks();
+      if (!dropdown.classList.contains('hidden')) {
+        if (typeof loadTasks === 'function') loadTasks();
+        if (typeof populateAdminTaskFilters === 'function') populateAdminTaskFilters();
       }
     }
 
@@ -1569,7 +1622,7 @@
     function populateEditProfileEngineers() {
       const select = document.getElementById('editProfileEngineer');
       select.innerHTML = '<option value="">-- Mühendis Seçiniz --</option>';
-      const engineers = usersList.filter(u => u.role === 'ENGINEER');
+      const engineers = usersList.filter(u => u.role === 'ENGINEER' && u.department === currentUser.department);
       engineers.forEach(eng => {
         const opt = document.createElement('option');
         opt.value = eng.id;
@@ -2860,6 +2913,9 @@
                   ${byRole[role].map(u => {
                     const active = tasksList.filter(t => t.assigned_to == u.id && t.status !== 'APPROVED').length;
                     const done = tasksList.filter(t => t.assigned_to == u.id && t.status === 'APPROVED').length;
+                    const assignedInternCount = u.role === 'ENGINEER'
+                      ? (usersList || []).filter(x => x.role === 'INTERN' && x.engineer_id == u.id).length
+                      : 0;
                     return `
                       <button onclick="openPersonDetailPage(${u.id})" class="group w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
                         <div class="flex items-center gap-3">
@@ -2871,9 +2927,10 @@
                             <div class="text-[10px] text-slate-400 truncate">${ROLE_LABELS_TR[u.role] || u.role}</div>
                           </div>
                         </div>
-                        <div class="flex items-center gap-2 mt-3">
+                        <div class="flex items-center gap-2 mt-3 flex-wrap">
                           <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-600 dark:text-amber-400">${active} aktif</span>
                           <span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">${done} tamamlandı</span>
+                          ${assignedInternCount > 0 ? `<span class="text-[10px] font-semibold px-2 py-0.5 rounded-md bg-cyan-500/10 text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-graduation-cap me-1"></i>${assignedInternCount} stajyer</span>` : ''}
                         </div>
                       </button>
                     `;
@@ -2911,6 +2968,7 @@
       document.getElementById('pdProjects').innerHTML = '';
       document.getElementById('pdTasks').innerHTML = '';
       document.getElementById('pdLogs').innerHTML = '';
+      document.getElementById('pdAssignedInternsWrap').classList.add('hidden');
 
       try {
         const res = await fetch(`${API_BASE_URL}/api/person/${userId}/detail`);
@@ -2984,6 +3042,7 @@
         </div>`;
       const infoEl = document.getElementById('pdPersonalInfo');
       let infoHtml = '';
+      infoHtml += infoRow('fa-user-tag', 'Rol', escapeHtmlProj(ROLE_LABELS_TR[u.role] || u.role || '—'));
       infoHtml += infoRow('fa-envelope', 'E-posta', u.email ? escapeHtmlProj(u.email) : '—');
       infoHtml += infoRow('fa-phone', 'Telefon', u.phone ? escapeHtmlProj(u.phone) : '—');
       infoHtml += infoRow('fa-at', 'Kullanıcı Adı', u.username ? escapeHtmlProj(u.username) : '—');
@@ -2991,6 +3050,9 @@
       if (u.sub_area) infoHtml += infoRow('fa-layer-group', 'Alt Alan', escapeHtmlProj(u.sub_area));
       if (u.intern_start_date || u.intern_end_date) {
         infoHtml += infoRow('fa-calendar', 'Staj Dönemi', `${u.intern_start_date || '?'} → ${u.intern_end_date || '?'}`);
+      }
+      if (u.role === 'INTERN') {
+        infoHtml += infoRow('fa-user-tie', 'Sorumlu Mühendis', data.supervisorEngineerName ? escapeHtmlProj(data.supervisorEngineerName) : '—');
       }
       // Admin için düzenleme (telefon / alt alan)
       if (currentUser.role === 'ADMIN') {
@@ -3005,6 +3067,21 @@
           </div>`;
       }
       infoEl.innerHTML = infoHtml;
+
+      // Atanmış stajyerler (sadece Mühendis rolünde ve en az bir stajyeri varsa gösterilir)
+      const assignedInterns = data.assignedInterns || [];
+      const assignedWrap = document.getElementById('pdAssignedInternsWrap');
+      if (u.role === 'ENGINEER' && assignedInterns.length > 0) {
+        assignedWrap.classList.remove('hidden');
+        document.getElementById('pdAssignedInterns').innerHTML = assignedInterns.map(i => `
+          <button onclick="openPersonDetailPage(${i.id})" class="w-full flex items-center gap-2.5 p-2.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 text-left transition-all">
+            <div class="h-7 w-7 shrink-0 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 flex items-center justify-center text-xs font-bold">${(i.name || '?').trim().charAt(0).toUpperCase()}</div>
+            <span class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(i.name)}</span>
+          </button>
+        `).join('');
+      } else {
+        assignedWrap.classList.add('hidden');
+      }
 
       // Projeler
       const projEl = document.getElementById('pdProjects');
@@ -4369,6 +4446,12 @@
       if (currentUser.role !== 'ADMIN') {
         maybePromptCompleteProfile();
       }
+
+      // Stajyer, iletişim bilgileri tamamsa sorumlu mühendis seçimini yapmadıysa şimdi zorunlu tutulur
+      // (iletişim bilgileri eksikse önce o modal gösterilir, tamamlandığında bu adıma zincirlenir).
+      if (currentUser.role === 'INTERN' && !isProfileIncomplete()) {
+        maybePromptSupervisorEngineer();
+      }
     }
 
     // Telefon/e-posta eksik mi kontrol eder; eksikse zorunlu modalı açar.
@@ -4413,6 +4496,45 @@
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
         document.getElementById('completeProfileModal').classList.add('hidden');
         showToast('Profil bilgileriniz kaydedildi.', 'success');
+        // İletişim bilgileri tamamlandı; stajyerse şimdi sorumlu mühendis adımına geç
+        if (currentUser.role === 'INTERN') maybePromptSupervisorEngineer();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // Stajyerin sorumlu mühendisi seçilmemiş mi?
+    function isSupervisorEngineerMissing() {
+      return currentUser && currentUser.role === 'INTERN' && !currentUser.engineer_id;
+    }
+
+    // İlk girişte (veya iletişim bilgileri tamamlandıktan sonra) stajyerden zorunlu
+    // sorumlu mühendis seçimini ister. Kendi birimindeki mühendisler listelenir.
+    function maybePromptSupervisorEngineer() {
+      if (!isSupervisorEngineerMissing()) return;
+      const modal = document.getElementById('supervisorEngineerModal');
+      const select = document.getElementById('seEngineerSelect');
+      if (!modal || !select) return;
+
+      const engineers = (usersList || []).filter(u => u.role === 'ENGINEER' && u.department === currentUser.department);
+      select.innerHTML = '<option value="">-- Mühendis Seçiniz --</option>' +
+        engineers.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+
+      modal.classList.remove('hidden');
+    }
+
+    async function submitSupervisorEngineer() {
+      const engineerId = document.getElementById('seEngineerSelect').value;
+      if (!engineerId) { showToast('Lütfen bir mühendis seçin.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${currentUser.id}/engineer`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ engineerId })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
+        currentUser.engineer_id = Number(engineerId);
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        document.getElementById('supervisorEngineerModal').classList.add('hidden');
+        showToast('Sorumlu mühendisiniz kaydedildi.', 'success');
       } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
@@ -4994,6 +5116,54 @@
       }
     }
 
+    // Admin'in "Görevler" panelinde kullandığı Birim → Alan → Rol filtresi için alt alan önbelleği
+    let adminTaskFilterSubareas = null;
+
+    // Admin ise Birim/Alan/Rol filtresini gösterir ve doldurur; admin değilse gizli kalır
+    async function populateAdminTaskFilters() {
+      const wrap = document.getElementById('adminTaskFilterWrap');
+      if (!wrap) return;
+
+      const isAdmin = currentUser && currentUser.role === 'ADMIN';
+      wrap.classList.toggle('hidden', !isAdmin);
+      if (!isAdmin) return;
+
+      if (adminTaskFilterSubareas === null) {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/subareas`);
+          adminTaskFilterSubareas = await res.json();
+        } catch (e) { adminTaskFilterSubareas = []; }
+      }
+
+      renderAdminTaskSubAreaOptions();
+    }
+
+    // Seçili birime göre "Alan" seçeneklerini doldurur (sadece Elektronik'te alt alan var)
+    function renderAdminTaskSubAreaOptions() {
+      const deptSel = document.getElementById('filterAdminDept');
+      const subSel = document.getElementById('filterAdminSubArea');
+      if (!deptSel || !subSel) return;
+
+      const dept = deptSel.value;
+      const subs = (adminTaskFilterSubareas || []).filter(s => s.department_key === dept);
+
+      if (dept === 'ELEKTRONIK' && subs.length > 0) {
+        subSel.innerHTML = ['<option value="">Tüm Alanlar</option>']
+          .concat(subs.map(s => `<option value="${s.label}">${s.label}</option>`))
+          .join('');
+        subSel.classList.remove('hidden');
+      } else {
+        subSel.innerHTML = '<option value="">Tüm Alanlar</option>';
+        subSel.classList.add('hidden');
+      }
+    }
+
+    // Admin filtresinde Birim değişince: Alan seçeneklerini yeniler ve listeyi filtreler
+    function handleAdminTaskDeptFilterChange() {
+      renderAdminTaskSubAreaOptions();
+      applyTaskFilters();
+    }
+
     function applyTaskFilters() {
       renderTaskList();
     }
@@ -5059,6 +5229,12 @@
       const filterStatActive = document.getElementById('filterStatusActive')?.value || '';
       const filterStatPast = document.getElementById('filterStatusPast')?.value || '';
 
+      // Sadece Admin için: Birim → Alan → Rol filtresi
+      const isAdminFilter = currentUser && currentUser.role === 'ADMIN';
+      const filterDept = isAdminFilter ? (document.getElementById('filterAdminDept')?.value || '') : '';
+      const filterSubArea = isAdminFilter ? (document.getElementById('filterAdminSubArea')?.value || '') : '';
+      const filterRole = isAdminFilter ? (document.getElementById('filterAdminRole')?.value || '') : '';
+
       // Ortak filtreler (arama, kategori, kişi)
       let filtered = base.filter(t => {
         const matchesSearch = t.title.toLowerCase().includes(searchVal) ||
@@ -5066,7 +5242,10 @@
                               (t.created_by && t.created_by.toLowerCase().includes(searchVal));
         const matchesCategory = filterCat === '' || t.category === filterCat;
         const matchesAssignee = filterAssignee === '' || String(t.assigned_to) === filterAssignee;
-        return matchesSearch && matchesCategory && matchesAssignee;
+        const matchesDept = filterDept === '' || t.assignee_department === filterDept;
+        const matchesSubArea = filterSubArea === '' || t.assignee_sub_area === filterSubArea;
+        const matchesRole = filterRole === '' || t.assignee_role === filterRole;
+        return matchesSearch && matchesCategory && matchesAssignee && matchesDept && matchesSubArea && matchesRole;
       });
 
       // Sıralama

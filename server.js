@@ -30,7 +30,9 @@ async function initDbMigration() {
     { name: 'phone', type: 'TEXT' },
     // Google Takvim entegrasyonu: kullanıcı başına refresh token ve bağlı durumu
     { name: 'google_refresh_token', type: 'TEXT' },
-    { name: 'google_calendar_connected', type: 'INTEGER DEFAULT 0' }
+    { name: 'google_calendar_connected', type: 'INTEGER DEFAULT 0' },
+    // Stajyerin sorumlu olduğu mühendis (birimindeki mühendislerden seçilir)
+    { name: 'engineer_id', type: 'INTEGER' }
   ];
 
   for (const col of columnsToAdd) {
@@ -610,7 +612,10 @@ app.post('/api/login', async (req, res) => {
       role: user.role,
       department: user.department,
       leaderType: user.leader_sub_type,
-      status: user.status
+      status: user.status,
+      intern_start_date: user.intern_start_date,
+      intern_end_date: user.intern_end_date,
+      engineer_id: user.engineer_id
     });
   } catch (err) {
     console.error('Giriş Hatası:', err);
@@ -704,6 +709,29 @@ app.put('/api/users/:id/complete-profile', async (req, res) => {
   }
 });
 
+// Stajyerin sorumlu mühendisini kaydetme: ilk girişte zorunlu seçim adımı için kullanılır
+app.put('/api/users/:id/engineer', async (req, res) => {
+  try {
+    const uid = req.params.id;
+    const { engineerId } = req.body;
+    if (!engineerId) return res.status(400).json({ error: 'Sorumlu mühendis seçimi zorunludur.' });
+
+    const engRes = await db.execute({
+      sql: `SELECT id, name FROM users WHERE id = ? AND role = 'ENGINEER'`,
+      args: [engineerId]
+    });
+    if (engRes.rows.length === 0) return res.status(400).json({ error: 'Geçersiz mühendis seçimi.' });
+
+    await db.execute({
+      sql: `UPDATE users SET engineer_id = ? WHERE id = ?`,
+      args: [engineerId, uid]
+    });
+    res.json({ message: 'Sorumlu mühendis kaydedildi.', engineerId: Number(engineerId), engineerName: engRes.rows[0].name });
+  } catch (error) {
+    res.status(500).json({ error: 'Kaydedilemedi: ' + error.message });
+  }
+});
+
 app.put('/api/users/profile', async (req, res) => {
   try {
     const { userId, name, email, password, startDate, endDate, engineerId } = req.body;
@@ -715,13 +743,13 @@ app.put('/api/users/profile', async (req, res) => {
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ?, password = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?`,
-        args: [name, email, hashedPassword, startDate || null, endDate || null, userId]
+        sql: `UPDATE users SET name = ?, email = ?, password = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ? WHERE id = ?`,
+        args: [name, email, hashedPassword, startDate || null, endDate || null, engineerId || null, userId]
       });
     } else {
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ?, intern_start_date = ?, intern_end_date = ? WHERE id = ?`,
-        args: [name, email, startDate || null, endDate || null, userId]
+        sql: `UPDATE users SET name = ?, email = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ? WHERE id = ?`,
+        args: [name, email, startDate || null, endDate || null, engineerId || null, userId]
       });
     }
 
@@ -739,7 +767,7 @@ app.get('/api/users', async (req, res) => {
   try {
     const { department, role } = req.query;
 
-    let sql = `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date FROM users`;
+    let sql = `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date, engineer_id FROM users`;
     let args = [];
 
     // Departman bazlı görünürlük: ADMIN ve HR hariç herkes sadece kendi biriminin personelini görür
@@ -899,8 +927,11 @@ app.get('/api/tasks', async (req, res) => {
     const { userId, role, department } = req.query;
 
     let sql = `
-      SELECT tasks.*, users.name as assignee_name 
-      FROM tasks 
+      SELECT tasks.*, users.name as assignee_name,
+        users.department as assignee_department,
+        users.sub_area as assignee_sub_area,
+        users.role as assignee_role
+      FROM tasks
       LEFT JOIN users ON tasks.assigned_to = users.id
     `;
     let conditions = [];
@@ -2138,11 +2169,31 @@ app.get('/api/person/:id/detail', async (req, res) => {
   try {
     const uid = req.params.id;
     const uRes = await db.execute({
-      sql: `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date FROM users WHERE id = ?`,
+      sql: `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date, engineer_id FROM users WHERE id = ?`,
       args: [uid]
     });
     if (uRes.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
     const user = uRes.rows[0];
+
+    // Stajyer ise: sorumlu mühendisin adını çöz
+    let supervisorEngineerName = null;
+    if (user.role === 'INTERN' && user.engineer_id) {
+      const engRes = await db.execute({
+        sql: `SELECT name FROM users WHERE id = ?`,
+        args: [user.engineer_id]
+      });
+      if (engRes.rows.length > 0) supervisorEngineerName = engRes.rows[0].name;
+    }
+
+    // Mühendis ise: kendisine sorumlu mühendis olarak atanmış stajyerleri getir
+    let assignedInterns = [];
+    if (user.role === 'ENGINEER') {
+      const internsRes = await db.execute({
+        sql: `SELECT id, name, status FROM users WHERE engineer_id = ? AND role = 'INTERN' ORDER BY name`,
+        args: [uid]
+      });
+      assignedInterns = internsRes.rows;
+    }
 
     // Kişiye atanmış görevler
     const tRes = await db.execute({
@@ -2190,7 +2241,7 @@ app.get('/api/person/:id/detail', async (req, res) => {
       logs = lRes.rows;
     } catch (e) {}
 
-    res.json({ user, tasks: tRes.rows, projects, logs });
+    res.json({ user, tasks: tRes.rows, projects, logs, supervisorEngineerName, assignedInterns });
   } catch (e) {
     res.status(500).json({ error: e.message });
   }
