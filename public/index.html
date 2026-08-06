@@ -595,11 +595,11 @@
               <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-list-check"></i></div>
               <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Görevler</span>
             </button>
-            <button type="button" onclick="toggleMeetingsModal()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+            <button type="button" onclick="openLeaderMeetingsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
               <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-comments"></i></div>
               <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Toplantı</span>
             </button>
-            <button type="button" onclick="toggleCalendarModal()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
+            <button type="button" onclick="openLeaderCalendarPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
               <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-regular fa-calendar-days"></i></div>
               <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Takvim</span>
             </button>
@@ -1609,6 +1609,12 @@
 
     function toggleMeetingsModal() {
       const modal = document.getElementById('meetingsModal');
+      // Sayfa modunda açıldıysa (Ekip Lideri/Müdür kutucuğu): kapatınca ana ekrana dön
+      if (modal && modal.dataset.asPage === '1') {
+        restoreModalOverlay('meetingsModal');
+        if (typeof showDashboard === 'function') showDashboard();
+        return;
+      }
       modal.classList.toggle('hidden');
       if (!modal.classList.contains('hidden')) {
         if (typeof populateMeetingTargetRoles === 'function') populateMeetingTargetRoles();
@@ -2005,20 +2011,22 @@
       if (!currentUser) return;
       const role = currentUser.role;
       const isAdmin = role === 'ADMIN';
+      // Ekip Lideri ve Müdür ana ekranda kutucukları kullanır; üst menüde tekrar göstermeyiz
+      const usesBoxes = role === 'LEADER' || role === 'MANAGER';
 
       // Görevler: alt rolü olan herkes + admin
       const canAccessTasks = isAdmin || getSubordinateRoles(role).length > 0;
       const tasksNavBtn = document.getElementById('tasksNavBtn');
-      if (tasksNavBtn) tasksNavBtn.classList.toggle('hidden', !canAccessTasks);
+      if (tasksNavBtn) tasksNavBtn.classList.toggle('hidden', !canAccessTasks || usesBoxes);
 
       // Toplantı
       const canAccessMeetings = ['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(role);
       const meetingsNavBtn = document.getElementById('meetingsNavBtn');
-      if (meetingsNavBtn) meetingsNavBtn.classList.toggle('hidden', !canAccessMeetings);
+      if (meetingsNavBtn) meetingsNavBtn.classList.toggle('hidden', !canAccessMeetings || usesBoxes);
 
       // Takvim: herkes
       const calendarNavBtn = document.getElementById('calendarNavBtn');
-      if (calendarNavBtn) calendarNavBtn.classList.remove('hidden');
+      if (calendarNavBtn) calendarNavBtn.classList.toggle('hidden', usesBoxes);
 
       // Yeni Kayıt Onayı & Kullanıcı Yönetimi: sadece Admin
       const pendingNavBtn = document.getElementById('pendingNavBtn');
@@ -4766,6 +4774,15 @@
       if (teamProgressBackBtn) teamProgressBackBtn.classList.add('hidden');
       const upcomingMeetingsBackBtn = document.getElementById('upcomingMeetingsBackBtn');
       if (upcomingMeetingsBackBtn) upcomingMeetingsBackBtn.classList.add('hidden');
+      // Sayfa modunda açılmış olabilecek Toplantı/Takvim modallarını normal (gizli overlay) haline döndür
+      if (typeof restoreModalOverlay === 'function') {
+        restoreModalOverlay('meetingsModal');
+        restoreModalOverlay('calendarModal');
+      }
+      const meetingsModalEl = document.getElementById('meetingsModal');
+      if (meetingsModalEl) meetingsModalEl.classList.add('hidden');
+      const calendarModalEl = document.getElementById('calendarModal');
+      if (calendarModalEl) calendarModalEl.classList.add('hidden');
 
       // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri).
       // Mühendisler için Ekip Gidişatı kaldırıldı.
@@ -5282,6 +5299,62 @@
       const section = document.getElementById('leaderTasksPageSection');
       if (section) section.classList.remove('hidden');
       renderLeaderTasksPage();
+    }
+
+    // ============================================================
+    // Ekip Lideri / Müdür: Toplantı ve Takvim'i modal yerine ana ekran
+    // kutucukları gibi TAM SAYFA olarak açar. Modal DOM'unu yeniden
+    // kullanır ama overlay (fixed inset-0) stilini kaldırıp akışa gömer.
+    // ============================================================
+    const MODAL_OVERLAY_CLASSES = ['fixed', 'inset-0', 'bg-slate-950/80', 'backdrop-blur-md', 'items-center', 'justify-center', 'z-50'];
+
+    function openModalAsPage(modalId, opener) {
+      const home = document.getElementById('leaderSection');
+      if (home) home.classList.add('hidden');
+      const modal = document.getElementById(modalId);
+      if (modal) {
+        modal.dataset.asPage = '1';
+        MODAL_OVERLAY_CLASSES.forEach(c => modal.classList.remove(c));
+        modal.classList.add('block');
+      }
+      if (typeof opener === 'function') opener();
+    }
+
+    // Sayfa modundan çıkarken overlay stilini geri yükler (diğer roller modalı normal kullanabilsin)
+    function restoreModalOverlay(modalId) {
+      const modal = document.getElementById(modalId);
+      if (!modal || modal.dataset.asPage !== '1') return;
+      delete modal.dataset.asPage;
+      modal.classList.remove('block');
+      MODAL_OVERLAY_CLASSES.forEach(c => modal.classList.add(c));
+      if (!modal.classList.contains('hidden')) modal.classList.add('hidden');
+    }
+
+    function openLeaderMeetingsPage() {
+      openModalAsPage('meetingsModal', () => {
+        const modal = document.getElementById('meetingsModal');
+        if (modal) modal.classList.remove('hidden');
+        if (typeof populateMeetingTargetRoles === 'function') populateMeetingTargetRoles();
+        if (typeof loadMeetings === 'function') loadMeetings();
+        const track = document.getElementById('meetingRequestsList');
+        if (track && !track.dataset.scrollBound) {
+          track.addEventListener('scroll', () => {
+            if (typeof updateMeetingCarouselControls === 'function') updateMeetingCarouselControls();
+          });
+          track.dataset.scrollBound = '1';
+        }
+        if (typeof updateMeetingCarouselControls === 'function') setTimeout(updateMeetingCarouselControls, 0);
+      });
+    }
+
+    function openLeaderCalendarPage() {
+      openModalAsPage('calendarModal', () => {
+        const modal = document.getElementById('calendarModal');
+        if (modal) modal.classList.remove('hidden');
+        calendarViewDate = new Date();
+        if (typeof loadCalendarData === 'function') loadCalendarData();
+        if (typeof refreshGoogleCalendarStatus === 'function') refreshGoogleCalendarStatus();
+      });
     }
 
     // "Görevler" kutucuğu: Müdür/Ekip Lideri'nin hem kendi görevlerini hem de
@@ -6420,6 +6493,12 @@
     function toggleCalendarModal() {
       const modal = document.getElementById('calendarModal');
       if (!modal) return;
+      // Sayfa modunda açıldıysa (Ekip Lideri/Müdür kutucuğu): kapatınca ana ekrana dön
+      if (modal.dataset.asPage === '1') {
+        restoreModalOverlay('calendarModal');
+        if (typeof showDashboard === 'function') showDashboard();
+        return;
+      }
       modal.classList.toggle('hidden');
       if (!modal.classList.contains('hidden')) {
         calendarViewDate = new Date();
