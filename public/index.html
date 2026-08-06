@@ -23,14 +23,40 @@
       height: 6px;
     }
     ::-webkit-scrollbar-track {
-      background: #0f172a;
+      background: transparent;
     }
     ::-webkit-scrollbar-thumb {
-      background: #334155;
+      background: #cbd5e1;
       border-radius: 9999px;
     }
     ::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+    .dark ::-webkit-scrollbar-thumb {
+      background: #334155;
+    }
+    .dark ::-webkit-scrollbar-thumb:hover {
       background: #475569;
+    }
+    /* Kaydırılabilir liste paneli: alan uzamaz, içeride kaydırılır */
+    .scroll-panel {
+      overflow-y: auto;
+      overflow-x: hidden;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 transparent;
+      -webkit-overflow-scrolling: touch;
+    }
+    .dark .scroll-panel {
+      scrollbar-color: #334155 transparent;
+    }
+    /* Yatay kaydırılabilir çip satırı (birim/firma/proje seçimleri) */
+    .scroll-chips {
+      overflow-x: auto;
+      overflow-y: hidden;
+      scrollbar-width: thin;
+      -webkit-overflow-scrolling: touch;
+      flex-wrap: nowrap !important;
+      padding-bottom: 2px;
     }
     /* Saydam giriş panelindeki select açılır listelerinin okunabilirliği */
     #authContainer select option {
@@ -457,6 +483,16 @@
           </div>
         </div>
 
+        <!-- YAKLAŞAN TOPLANTILAR (toplantı erişimi olan tüm roller; admin sağ kolonda görür) -->
+        <section id="upcomingMeetingsSection" class="hidden">
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+            <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+              <i class="fa-solid fa-calendar-check text-cyan-500"></i> Yaklaşan Toplantılar
+            </h3>
+            <div id="upcomingMeetingsList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 scroll-panel max-h-80 pr-1"></div>
+          </div>
+        </section>
+
         <!-- MÜHENDİS/LİDER PANELİ -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
@@ -576,19 +612,19 @@
                 <!-- ADIM 1: Birim seçimi (elektronik / yazılım / mekanik ...) -->
                 <div>
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Birim Seçin</div>
-                  <div id="projDeptChips" class="flex flex-wrap gap-2"></div>
+                  <div id="projDeptChips" class="flex gap-2 scroll-chips"></div>
                 </div>
 
                 <!-- ADIM 2: Firma seçimi -->
                 <div id="projCompanyWrap" class="hidden">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Firma Seçin</div>
-                  <div id="projCompanyChips" class="flex flex-wrap gap-2"></div>
+                  <div id="projCompanyChips" class="flex gap-2 scroll-chips"></div>
                 </div>
 
                 <!-- ADIM 3: Proje seçimi (tıklanınca renk değişir) -->
                 <div id="projProjectWrap" class="hidden">
                   <div class="text-[11px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Proje Seçin</div>
-                  <div id="projProjectChips" class="flex flex-wrap gap-2"></div>
+                  <div id="projProjectChips" class="flex gap-2 scroll-chips"></div>
                 </div>
 
                 <!-- ADIM 4: Grafik + seçilen proje bilgisi -->
@@ -646,7 +682,7 @@
                 <h3 class="font-bold text-base text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-arrow-up-wide-short text-indigo-500"></i> Projelerin Aciliyet & Önem Sırası
                 </h3>
-                <div id="urgencyRankingList" class="space-y-2"></div>
+                <div id="urgencyRankingList" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
               </div>
             </div>
 
@@ -656,9 +692,9 @@
               <!-- Son 3 gün toplantı listesi -->
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
-                  <i class="fa-solid fa-calendar-check text-cyan-500"></i> Son 3 Gün Toplantılar
+                  <i class="fa-solid fa-calendar-check text-cyan-500"></i> Yaklaşan Toplantılar
                 </h4>
-                <div id="recentMeetingsList" class="space-y-2"></div>
+                <div id="recentMeetingsList" class="space-y-2 scroll-panel max-h-64 pr-1"></div>
               </div>
 
               <!-- Geciken Projeler bildirimi -->
@@ -666,15 +702,15 @@
                 <h4 class="font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-triangle-exclamation"></i> Geciken Projeler
                 </h4>
-                <div id="overdueProjectsList" class="space-y-2"></div>
+                <div id="overdueProjectsList" class="space-y-2 scroll-panel max-h-64 pr-1"></div>
               </div>
 
               <!-- Yeni kullanıcı bilgilendirme -->
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
-                  <i class="fa-solid fa-user-plus text-emerald-500"></i> Yeni Kullanıcı Bildirimleri
+                  <i class="fa-solid fa-user-plus text-emerald-500"></i> Yeni Kayıtlar & Onay Bekleyenler
                 </h4>
-                <div id="newUserNotifList" class="space-y-2"></div>
+                <div id="newUserNotifList" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
               </div>
             </div>
           </div>
@@ -691,10 +727,19 @@
             <!-- ADIM 1: BİRİM LİSTESİ -->
             <div id="teamProgressDeptList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3"></div>
 
-            <!-- ADIM 2: SEÇİLEN BİRİMDEKİ ROL/KİŞİ LİSTESİ -->
-            <div id="teamProgressPeopleList" class="hidden space-y-4">
+            <!-- ADIM 1.5: ALT ALAN SEÇİMİ (birimde alt alan tanımlıysa) -->
+            <div id="teamProgressSubareaWrap" class="hidden space-y-3">
               <button onclick="backToDeptProgressList()" class="text-xs text-cyan-600 dark:text-cyan-400 font-semibold flex items-center gap-1.5 hover:underline">
                 <i class="fa-solid fa-arrow-left"></i> Birimlere Dön
+              </button>
+              <h4 id="teamProgressSubareaTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100"></h4>
+              <div id="teamProgressSubareaList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+            </div>
+
+            <!-- ADIM 2: SEÇİLEN BİRİMDEKİ ROL/KİŞİ LİSTESİ -->
+            <div id="teamProgressPeopleList" class="hidden space-y-4">
+              <button onclick="backFromPeopleList()" class="text-xs text-cyan-600 dark:text-cyan-400 font-semibold flex items-center gap-1.5 hover:underline">
+                <i class="fa-solid fa-arrow-left"></i> <span id="peopleBackLabel">Birimlere Dön</span>
               </button>
               <h4 id="teamProgressDeptTitle" class="font-bold text-sm text-slate-800 dark:text-slate-100"></h4>
               <div id="teamProgressRoleGroups" class="space-y-4"></div>
@@ -702,7 +747,60 @@
           </div>
         </section>
 
-        <!-- MÜHENDİS: KENDİ BİRİMİNDEKİ STAJYERLERİN DURUMU + STAJYERE GÖREV ATAMA -->
+        <!-- KİŞİ DETAY SAYFASI (tam ekran; Ekip Gidişatı'ndan kişiye tıklanınca açılır) -->
+        <section id="personDetailSection" class="hidden space-y-5">
+          <button onclick="closePersonDetailPage()" class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold flex items-center gap-1.5 hover:underline">
+            <i class="fa-solid fa-arrow-left"></i> Ekip Gidişatı'na Dön
+          </button>
+
+          <!-- Üst kimlik kartı -->
+          <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-6 shadow-sm">
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+              <div id="pdAvatar" class="h-16 w-16 shrink-0 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-bold text-2xl"></div>
+              <div class="min-w-0 flex-1">
+                <h2 id="pdName" class="text-xl font-bold text-slate-900 dark:text-slate-100"></h2>
+                <div id="pdRoleLine" class="text-sm text-cyan-600 dark:text-cyan-400 font-semibold"></div>
+                <div id="pdMetaLine" class="text-xs text-slate-500 dark:text-slate-400 mt-0.5"></div>
+              </div>
+              <div id="pdCounters" class="flex gap-2 shrink-0"></div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+            <!-- Sol: İletişim & kişisel bilgiler -->
+            <div class="space-y-5">
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-id-card text-cyan-500"></i> Kişisel Bilgiler
+                </h3>
+                <div id="pdPersonalInfo" class="space-y-2.5 text-sm"></div>
+              </div>
+              <!-- Günlük loglar -->
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-clock-rotate-left text-cyan-500"></i> Son Günlük Notlar
+                </h3>
+                <div id="pdLogs" class="space-y-2 scroll-panel max-h-64 pr-1"></div>
+              </div>
+            </div>
+
+            <!-- Sağ: Projeler + görevler -->
+            <div class="lg:col-span-2 space-y-5">
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-diagram-project text-indigo-500"></i> Sorumlu Olduğu Projeler
+                </h3>
+                <div id="pdProjects" class="space-y-2 scroll-panel max-h-80 pr-1"></div>
+              </div>
+              <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-5 shadow-sm">
+                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
+                  <i class="fa-solid fa-list-check text-emerald-500"></i> Üzerindeki Görevler
+                </h3>
+                <div id="pdTasks" class="space-y-2 scroll-panel max-h-96 pr-1"></div>
+              </div>
+            </div>
+          </div>
+        </section>
         <section id="engineerSection" class="hidden space-y-6">
           <div class="bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-5 shadow-xl backdrop-blur-md">
             <div class="flex justify-between items-center mb-4">
@@ -833,6 +931,24 @@
           <div id="companyListInModal" class="flex flex-wrap gap-2 mt-3"></div>
         </div>
 
+        <!-- Alt Alan Yönetimi -->
+        <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
+          <h4 class="font-bold text-sm mb-3 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Birim Alt Alanları</h4>
+          <p class="text-[11px] text-slate-500 dark:text-slate-400 mb-3">Bir birim seçildiğinde Ekip Gidişatı'nda önce bu alt alanlar sorulur (ör. Elektronik → Donanım/Gömülü, Test).</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2 items-end">
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Birim</label>
+              <select id="newSubareaDept" onchange="renderSubareaListInModal()" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500"></select>
+            </div>
+            <div>
+              <label class="block text-xs font-semibold mb-1.5 text-slate-700 dark:text-slate-300">Alt Alan Adı</label>
+              <input type="text" id="newSubareaName" placeholder="örn: Donanım/Gömülü" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm focus:outline-none focus:border-cyan-500">
+            </div>
+            <button onclick="handleAddSubarea()" class="bg-cyan-600 hover:bg-cyan-500 text-white font-bold px-4 py-2 rounded-xl text-sm transition-all">Alt Alan Ekle</button>
+          </div>
+          <div id="subareaListInModal" class="flex flex-wrap gap-2 mt-3"></div>
+        </div>
+
         <!-- Yeni Proje -->
         <div class="bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-2xl p-4">
           <h4 class="font-bold text-sm mb-3 text-cyan-600 dark:text-cyan-400 flex items-center gap-2"><i class="fa-solid fa-folder-plus"></i> Yeni Proje Ekle</h4>
@@ -888,7 +1004,7 @@
         <!-- Mevcut Projeler -->
         <div>
           <h4 class="font-bold text-sm mb-3 text-slate-800 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-list text-cyan-500"></i> Mevcut Projeler</h4>
-          <div id="projectListInModal" class="space-y-2"></div>
+          <div id="projectListInModal" class="space-y-2 scroll-panel max-h-72 pr-1"></div>
         </div>
       </div>
     </div>
@@ -1191,7 +1307,11 @@
   </div>
 
   <script>
-    const API_BASE_URL = 'https://intern-tasks-pannel.onrender.com';  //http://localhost:5000
+    // API adresi: localhost'ta açıldıysa yerel sunucu, aksi halde canlı sunucu kullanılır.
+    // Böylece yerel geliştirmede güncel server.js'e, yayında canlı sunucuya bağlanır.
+    const API_BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+      ? `${location.protocol}//${location.hostname}:5000`
+      : 'https://intern-tasks-pannel.onrender.com';
 
     let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
     let usersList = [];
@@ -1707,11 +1827,13 @@
     // ============================================================
     // PROJE GİDİŞATI PANELİ (Firma → Proje → Planlanan/Gerçekleşen grafik)
     // ============================================================
-    const PROJECT_DEPTS = [
+    // Varsayılan birimler (backend erişilemezse fallback)
+    const DEFAULT_PROJECT_DEPTS = [
       { key: 'ELEKTRONIK', label: 'Elektronik', icon: 'fa-microchip' },
       { key: 'YAZILIM', label: 'Yazılım', icon: 'fa-code' },
       { key: 'MEKANIK', label: 'Mekanik', icon: 'fa-gears' }
     ];
+    let PROJECT_DEPTS = [...DEFAULT_PROJECT_DEPTS];
     let projCompaniesCache = [];
     let projProjectsCache = [];
     let projSelectedDept = null;
@@ -1721,21 +1843,84 @@
     let projProgressChartInstance = null;
 
     async function loadProjectDashboard() {
+      await loadProjectDepartments();
       renderProjectDeptChips();
       await refreshDashboardSummary();
     }
 
-    // ADIM 1: Birim çipleri
+    // Birimleri backend'den yükle
+    async function loadProjectDepartments() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/departments`);
+        const list = await safeJson(res);
+        if (Array.isArray(list) && list.length) {
+          PROJECT_DEPTS = list.map(d => ({ id: d.id, key: d.key, label: d.label, icon: d.icon || 'fa-layer-group' }));
+          // DEPARTMENT_LABELS'ı da güncelle ki her yerde doğru etiket görünsün
+          PROJECT_DEPTS.forEach(d => { DEPARTMENT_LABELS[d.key] = d.label; });
+        }
+      } catch (e) {
+        PROJECT_DEPTS = [...DEFAULT_PROJECT_DEPTS];
+      }
+    }
+
+    // ADIM 1: Birim çipleri (+ Birim Ekle butonu)
     function renderProjectDeptChips() {
       const el = document.getElementById('projDeptChips');
       if (!el) return;
-      el.innerHTML = PROJECT_DEPTS.map(d => {
+      const chips = PROJECT_DEPTS.map(d => {
         const active = projSelectedDept === d.key;
-        return `<button onclick="selectProjectDept('${d.key}')" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+        return `<button onclick="selectProjectDept('${d.key}')" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
           ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-500/20'
           : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-cyan-500'}">
-          <i class="fa-solid ${d.icon} me-1.5"></i>${d.label}</button>`;
+          <i class="fa-solid ${d.icon} me-1.5"></i>${escapeHtmlProj(d.label)}</button>`;
       }).join('');
+      const addBtn = `<button onclick="openAddDepartmentPrompt()" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border border-dashed border-cyan-400 dark:border-cyan-600 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all">
+        <i class="fa-solid fa-plus me-1.5"></i>Birim Ekle</button>`;
+      el.innerHTML = chips + addBtn;
+    }
+
+    // Yeni birim ekleme (basit prompt akışı)
+    async function openAddDepartmentPrompt() {
+      const label = prompt('Yeni birim adı (örn: Ar-Ge, Kalite, Üretim):');
+      if (label === null) return;
+      const trimmed = label.trim();
+      if (!trimmed) { showToast('Birim adı boş olamaz.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/departments`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ label: trimmed, userRole: currentUser.role })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Birim eklenemedi.', 'error'); return; }
+        showToast('Birim eklendi.', 'success');
+        await loadProjectDepartments();
+        renderProjectDeptChips();
+        // Modal açıksa firma/proje birim seçeneklerini de tazele
+        syncDeptSelects();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // Modal içindeki birim <select>'lerini güncel birimlerle doldur
+    function syncDeptSelects() {
+      const opts = PROJECT_DEPTS.map(d => `<option value="${d.key}">${escapeHtmlProj(d.label)}</option>`).join('');
+      const cDept = document.getElementById('newCompanyDept');
+      if (cDept) {
+        const cur = cDept.value;
+        cDept.innerHTML = `<option value="">Genel (birime bağlı değil)</option>` + opts;
+        cDept.value = cur;
+      }
+      const pDept = document.getElementById('newProjectDept');
+      if (pDept) {
+        const cur = pDept.value;
+        pDept.innerHTML = opts;
+        if (cur) pDept.value = cur;
+      }
+      const sDept = document.getElementById('newSubareaDept');
+      if (sDept) {
+        const cur = sDept.value;
+        sDept.innerHTML = opts;
+        if (cur) sDept.value = cur;
+      }
     }
 
     async function selectProjectDept(dept) {
@@ -1746,7 +1931,7 @@
       // Firmaları çek (birime bağlı olanlar + genel olanlar)
       try {
         const res = await fetch(`${API_BASE_URL}/api/companies`);
-        const all = await res.json();
+        const all = await safeJson(res);
         projCompaniesCache = (all || []).filter(c => !c.department || c.department === dept);
       } catch (e) { projCompaniesCache = []; }
       renderProjectCompanyChips();
@@ -1767,7 +1952,7 @@
       }
       el.innerHTML = projCompaniesCache.map(c => {
         const active = projSelectedCompany === c.id;
-        return `<button onclick="selectProjectCompany(${c.id})" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+        return `<button onclick="selectProjectCompany(${c.id})" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
           ? 'bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-500/20'
           : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-indigo-500'}">
           <i class="fa-solid fa-building me-1.5"></i>${escapeHtmlProj(c.name)}</button>`;
@@ -1780,7 +1965,7 @@
       renderProjectCompanyChips();
       try {
         const res = await fetch(`${API_BASE_URL}/api/projects?company_id=${companyId}&department=${encodeURIComponent(projSelectedDept)}`);
-        projProjectsCache = await res.json();
+        projProjectsCache = await safeJson(res);
       } catch (e) { projProjectsCache = []; }
       renderProjectProjectChips();
       document.getElementById('projProjectWrap').classList.remove('hidden');
@@ -1799,7 +1984,7 @@
       el.innerHTML = projProjectsCache.map(p => {
         const active = projSelectedProject === p.id;
         const overdueDot = p.is_overdue ? '<span class="inline-block w-2 h-2 rounded-full bg-rose-500 ms-1.5"></span>' : '';
-        return `<button onclick="selectProjectProject(${p.id})" class="px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+        return `<button onclick="selectProjectProject(${p.id})" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
           ? 'bg-emerald-600 text-white border-emerald-600 shadow-lg shadow-emerald-500/20'
           : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-emerald-500'}">
           <i class="fa-solid fa-folder me-1.5"></i>${escapeHtmlProj(p.name)}${overdueDot}</button>`;
@@ -1817,7 +2002,7 @@
     async function loadProjectChart(projectId) {
       try {
         const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
-        const data = await res.json();
+        const data = await safeJson(res);
         const project = data.project;
         const progress = data.progress || [];
         projSelectedProjectOwnerId = project.owner_id;
@@ -1941,7 +2126,7 @@
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ log_date: date, planned, actual, note, userRole: currentUser.role, userId: currentUser.id })
         });
-        const out = await res.json();
+        const out = await safeJson(res);
         if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
         document.getElementById('progNewPlanned').value = '';
         document.getElementById('progNewActual').value = '';
@@ -1957,7 +2142,7 @@
       try {
         const res = await fetch(`${API_BASE_URL}/api/admin/dashboard?userRole=${currentUser.role}`);
         if (!res.ok) return;
-        const data = await res.json();
+        const data = await safeJson(res);
         renderRecentMeetings(data.recentMeetings || []);
         renderOverdueProjects(data.overdueProjects || []);
         renderNewUserNotifs(data.pendingUsers || []);
@@ -1968,15 +2153,29 @@
     function renderRecentMeetings(meetings) {
       const el = document.getElementById('recentMeetingsList');
       if (!el) return;
-      if (meetings.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Son 3 günde toplantı yok.</p>`; return; }
+      if (meetings.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Yaklaşan toplantı yok.</p>`; return; }
+      const statusLabels = { APPROVED: 'Onaylı', PENDING: 'Bekliyor', REJECTED: 'Reddedildi' };
+      const todayStr = new Date().toISOString().substring(0, 10);
       el.innerHTML = meetings.slice(0, 6).map(m => {
         const st = m.status === 'APPROVED' ? 'text-emerald-500' : m.status === 'REJECTED' ? 'text-rose-500' : 'text-amber-500';
-        return `<div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5">
-          <div class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
-          <div class="text-[10px] text-slate-400 flex items-center justify-between mt-0.5">
-            <span>${escapeHtmlProj(m.requester_name || '')} · ${(m.created_at || '').substring(0, 10)}</span>
-            <span class="${st} font-bold"><i class="fa-solid fa-circle text-[6px] me-1"></i>${m.status || ''}</span>
+        const rawDate = (m.preferred_date || m.created_at || '');
+        const dOnly = rawDate.substring(0, 10);
+        // Tarih + saat gösterimi
+        let when = dOnly;
+        if (m.preferred_date && m.preferred_date.length > 10) {
+          when = m.preferred_date.substring(0, 16).replace('T', ' ');
+        }
+        const isToday = dOnly === todayStr;
+        return `<div class="bg-slate-50 dark:bg-slate-900/50 border ${isToday ? 'border-cyan-400 dark:border-cyan-600' : 'border-slate-200 dark:border-slate-700'} rounded-lg p-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <div class="text-xs font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
+            ${isToday ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 shrink-0">BUGÜN</span>' : ''}
           </div>
+          <div class="text-[10px] text-slate-400 flex items-center justify-between mt-1">
+            <span><i class="fa-regular fa-clock me-1"></i>${when}</span>
+            <span class="${st} font-bold">${statusLabels[m.status] || m.status || ''}</span>
+          </div>
+          ${m.requester_name ? `<div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlProj(m.requester_name)}${m.department ? ' · ' + (DEPARTMENT_LABELS[m.department] || m.department) : ''}</div>` : ''}
         </div>`;
       }).join('');
     }
@@ -2000,14 +2199,25 @@
     function renderNewUserNotifs(users) {
       const el = document.getElementById('newUserNotifList');
       if (!el) return;
-      if (users.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Bekleyen yeni kullanıcı yok.</p>`; return; }
-      el.innerHTML = users.slice(0, 6).map(u => `
-        <div class="bg-emerald-500/5 border border-emerald-200 dark:border-emerald-900/40 rounded-lg p-2.5 flex items-center justify-between gap-2">
-          <div class="min-w-0">
-            <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(u.name)}</div>
-            <div class="text-[10px] text-slate-500 dark:text-slate-400">${ROLE_LABELS_TR[u.role] || u.role || ''} · ${DEPARTMENT_LABELS[u.department] || u.department || '-'}</div>
+      if (users.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400">Onay bekleyen yeni kullanıcı yok.</p>`; return; }
+      el.innerHTML = users.slice(0, 8).map(u => `
+        <div class="bg-emerald-500/5 border border-emerald-200 dark:border-emerald-900/40 rounded-lg p-2.5">
+          <div class="flex items-start justify-between gap-2">
+            <div class="min-w-0">
+              <div class="text-xs font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(u.name)}</div>
+              <div class="text-[10px] text-slate-500 dark:text-slate-400 truncate">${ROLE_LABELS_TR[u.role] || u.role || ''} · ${DEPARTMENT_LABELS[u.department] || u.department || '-'}</div>
+              ${u.email ? `<div class="text-[10px] text-slate-400 truncate">${escapeHtmlProj(u.email)}</div>` : ''}
+            </div>
+            <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">ONAY BEKLİYOR</span>
           </div>
-          <span class="text-[9px] font-bold px-2 py-0.5 rounded-md bg-amber-500/15 text-amber-600 dark:text-amber-400 shrink-0">ONAY BEKLİYOR</span>
+          <div class="flex items-center gap-2 mt-2">
+            <button onclick="approveUser(${u.id})" class="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
+              <i class="fa-solid fa-check"></i> Onayla
+            </button>
+            <button onclick="rejectPendingUser(${u.id})" class="flex-1 bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold py-1.5 rounded-lg transition-all flex items-center justify-center gap-1">
+              <i class="fa-solid fa-xmark"></i> Reddet
+            </button>
+          </div>
         </div>
       `).join('');
     }
@@ -2046,7 +2256,7 @@
       // Projenin firmasını bul
       try {
         const res = await fetch(`${API_BASE_URL}/api/projects/${projectId}`);
-        const data = await res.json();
+        const data = await safeJson(res);
         const companyId = data.project.company_id;
         if (companyId) await selectProjectCompany(companyId);
         await selectProjectProject(projectId);
@@ -2064,10 +2274,19 @@
     }
 
     async function refreshProjectManageModal() {
+      // Birimleri güncelle ve modal select'lerini doldur
+      await loadProjectDepartments();
+      syncDeptSelects();
+      // Alt alanları çek ve listele
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/subareas`);
+        teamSubareasCache = await safeJson(res);
+      } catch (e) { teamSubareasCache = []; }
+      renderSubareaListInModal();
       // Firmalar
       try {
         const res = await fetch(`${API_BASE_URL}/api/companies`);
-        projCompaniesCache = await res.json();
+        projCompaniesCache = await safeJson(res);
       } catch (e) { projCompaniesCache = []; }
       // Firma çip listesi
       const clist = document.getElementById('companyListInModal');
@@ -2113,7 +2332,7 @@
       if (!el) return;
       try {
         const res = await fetch(`${API_BASE_URL}/api/projects`);
-        const projects = await res.json();
+        const projects = await safeJson(res);
         if (!projects.length) { el.innerHTML = `<p class="text-xs text-slate-400">Henüz proje yok.</p>`; return; }
         el.innerHTML = projects.map(p => `
           <div class="flex items-center justify-between gap-2 bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5">
@@ -2136,7 +2355,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name, department: department || null, userRole: currentUser.role })
         });
-        const out = await res.json();
+        const out = await safeJson(res);
         if (!res.ok) { showToast(out.error || 'Eklenemedi.', 'error'); return; }
         document.getElementById('newCompanyName').value = '';
         showToast('Firma eklendi.', 'success');
@@ -2151,11 +2370,70 @@
           method: 'DELETE', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userRole: currentUser.role })
         });
-        const out = await res.json();
+        const out = await safeJson(res);
         if (!res.ok) { showToast(out.error || 'Silinemedi.', 'error'); return; }
         showToast('Firma silindi.', 'success');
         await refreshProjectManageModal();
         await refreshDashboardSummary();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // --- Alt Alan (subarea) modal işlemleri ---
+    function renderSubareaListInModal() {
+      const el = document.getElementById('subareaListInModal');
+      if (!el) return;
+      const sel = document.getElementById('newSubareaDept');
+      const dept = sel ? sel.value : '';
+      const list = (teamSubareasCache || []).filter(s => !dept || s.department_key === dept);
+      if (list.length === 0) {
+        el.innerHTML = `<span class="text-xs text-slate-400">Bu birim için alt alan yok.</span>`;
+        return;
+      }
+      el.innerHTML = list.map(s => `
+        <span class="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-700 dark:text-slate-200">
+          ${escapeHtmlProj(s.label)}<span class="text-[9px] text-slate-400">(${DEPARTMENT_LABELS[s.department_key] || s.department_key})</span>
+          <button onclick="handleDeleteSubarea(${s.id})" class="text-rose-500 hover:text-rose-600 ms-1"><i class="fa-solid fa-xmark"></i></button>
+        </span>`).join('');
+    }
+
+    async function handleAddSubarea() {
+      const dept = document.getElementById('newSubareaDept').value;
+      const label = document.getElementById('newSubareaName').value.trim();
+      if (!dept) { showToast('Birim seçin.', 'error'); return; }
+      if (!label) { showToast('Alt alan adı gerekli.', 'error'); return; }
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/subareas`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ department: dept, label, userRole: currentUser.role })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Eklenemedi.', 'error'); return; }
+        document.getElementById('newSubareaName').value = '';
+        showToast('Alt alan eklendi.', 'success');
+        // Cache'i tazele
+        try {
+          const r2 = await fetch(`${API_BASE_URL}/api/subareas`);
+          teamSubareasCache = await safeJson(r2);
+        } catch (e) {}
+        renderSubareaListInModal();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    async function handleDeleteSubarea(id) {
+      if (!confirm('Bu alt alanı silmek istediğinize emin misiniz?')) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/subareas/${id}`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userRole: currentUser.role })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Silinemedi.', 'error'); return; }
+        showToast('Alt alan silindi.', 'success');
+        try {
+          const r2 = await fetch(`${API_BASE_URL}/api/subareas`);
+          teamSubareasCache = await safeJson(r2);
+        } catch (e) {}
+        renderSubareaListInModal();
       } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
@@ -2176,7 +2454,7 @@
           method: 'POST', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ company_id, name, department, owner_id: owner_id || null, start_date, end_date, priority, note, userRole: currentUser.role, createdBy: currentUser.name })
         });
-        const out = await res.json();
+        const out = await safeJson(res);
         if (!res.ok) { showToast(out.error || 'Oluşturulamadı.', 'error'); return; }
         document.getElementById('newProjectName').value = '';
         document.getElementById('newProjectNote').value = '';
@@ -2193,7 +2471,7 @@
           method: 'DELETE', headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ userRole: currentUser.role })
         });
-        const out = await res.json();
+        const out = await safeJson(res);
         if (!res.ok) { showToast(out.error || 'Silinemedi.', 'error'); return; }
         showToast('Proje silindi.', 'success');
         await renderProjectListInModal();
@@ -2227,6 +2505,21 @@
       }, 3000);
     }
 
+    // API yanıtını güvenle JSON'a çevirir. Sunucu HTML (404/hata sayfası) dönerse
+    // "Unexpected token '<'" yerine anlaşılır bir hata fırlatır.
+    async function safeJson(res) {
+      const text = await res.text();
+      try {
+        return JSON.parse(text);
+      } catch (e) {
+        const looksHtml = text.trim().startsWith('<');
+        if (looksHtml) {
+          throw new Error('Sunucu bu isteği tanımıyor (API henüz yayınlanmamış olabilir). Güncel server.js\'in yayında olduğundan emin olun.');
+        }
+        throw new Error('Sunucudan geçersiz yanıt alındı.');
+      }
+    }
+
     // Basit HTML kaçış (proje isimleri için)
     function escapeHtmlProj(str) {
       return String(str == null ? '' : str)
@@ -2246,14 +2539,33 @@
       REVISION_REQUESTED: 'Revize İstendi'
     };
 
-    function loadTeamProgress() {
+    // Ekip Gidişatı state
+    let teamSubareasCache = [];      // tüm alt alanlar
+    let tpSelectedDept = null;       // seçili birim
+    let tpSelectedSubarea = null;    // seçili alt alan (null = alt alan yok/hepsi)
+
+    async function loadTeamProgress() {
+      // Alt alanları çek
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/subareas`);
+        teamSubareasCache = await safeJson(res);
+      } catch (e) { teamSubareasCache = []; }
+      tpSelectedDept = null;
+      tpSelectedSubarea = null;
       renderProgressDeptList();
+    }
+
+    // Bir birimin alt alanlarını getirir
+    function getSubareasForDept(dept) {
+      return (teamSubareasCache || []).filter(s => s.department_key === dept);
     }
 
     // ADIM 1: Birim kartlarını göster
     function renderProgressDeptList() {
       const deptListEl = document.getElementById('teamProgressDeptList');
       const peopleWrap = document.getElementById('teamProgressPeopleList');
+      const subWrap = document.getElementById('teamProgressSubareaWrap');
+      if (subWrap) subWrap.classList.add('hidden');
       if (!deptListEl) return;
 
       deptListEl.classList.remove('hidden');
@@ -2266,6 +2578,8 @@
       const byDept = {};
       (usersList || []).forEach(u => {
         if (u.role === 'ADMIN' || u.role === 'HR') return;
+        // Sadece admin tarafından onaylanmış kullanıcılar Ekip Gidişatı'na girer
+        if (u.status && u.status !== 'APPROVED') return;
         if (!isAdminViewer) {
           // Sadece kendi birimi ve kendi altındaki roller
           if (currentUser.department && u.department !== currentUser.department) return;
@@ -2296,14 +2610,109 @@
       `).join('');
     }
 
-    // ADIM 2: Seçilen birimdeki rol/kişi listesi
+    // ADIM 1.5: Birim seçildi — alt alan varsa alt alan ekranını, yoksa direkt kişileri göster
     function selectProgressDepartment(dept) {
+      tpSelectedDept = dept;
+      tpSelectedSubarea = null;
+      const subs = getSubareasForDept(dept);
+      if (subs.length > 0) {
+        renderProgressSubareaList(dept, subs);
+      } else {
+        renderProgressPeople(dept, null);
+      }
+    }
+
+    // Alt alan seçim ekranı
+    function renderProgressSubareaList(dept, subs) {
       const deptListEl = document.getElementById('teamProgressDeptList');
+      const subWrap = document.getElementById('teamProgressSubareaWrap');
       const peopleWrap = document.getElementById('teamProgressPeopleList');
       if (deptListEl) deptListEl.classList.add('hidden');
+      if (peopleWrap) peopleWrap.classList.add('hidden');
+      if (subWrap) subWrap.classList.remove('hidden');
+
+      document.getElementById('teamProgressSubareaTitle').innerText = (DEPARTMENT_LABELS[dept] || dept) + ' — Alt Alan Seçin';
+
+      const isAdminViewer = currentUser.role === 'ADMIN';
+      const allowedRoles = isAdminViewer ? null : getSubordinateRoles(currentUser.role);
+      // Her alt alandaki kişi sayısı
+      const countFor = (label) => (usersList || []).filter(u => {
+        if ((u.department || '') !== dept) return false;
+        if (u.role === 'ADMIN' || u.role === 'HR') return false;
+        if (u.status && u.status !== 'APPROVED') return false;
+        if (!isAdminViewer && allowedRoles && !allowedRoles.includes(u.role)) return false;
+        return (u.sub_area || '') === label;
+      }).length;
+      // Alt alanı atanmamış kişi sayısı
+      const noneCount = (usersList || []).filter(u => {
+        if ((u.department || '') !== dept) return false;
+        if (u.role === 'ADMIN' || u.role === 'HR') return false;
+        if (u.status && u.status !== 'APPROVED') return false;
+        if (!isAdminViewer && allowedRoles && !allowedRoles.includes(u.role)) return false;
+        return !u.sub_area;
+      }).length;
+
+      const listEl = document.getElementById('teamProgressSubareaList');
+      let cards = subs.map((s, si) => `
+        <button onclick="selectProgressSubareaByIndex('${dept}', ${si})" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 rounded-2xl p-5 text-left transition-all">
+          <div class="text-2xl font-bold text-cyan-600 dark:text-cyan-400">${countFor(s.label)}</div>
+          <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">${escapeHtmlProj(s.label)}</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Kişi <i class="fa-solid fa-chevron-right ms-1"></i></div>
+        </button>
+      `).join('');
+      // Alt alanı olmayanlar için "Diğer" kartı
+      if (noneCount > 0) {
+        cards += `
+        <button onclick="selectProgressSubareaByIndex('${dept}', -1)" class="bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-slate-400 dark:hover:border-slate-500 rounded-2xl p-5 text-left transition-all">
+          <div class="text-2xl font-bold text-slate-500">${noneCount}</div>
+          <div class="text-sm font-semibold text-slate-800 dark:text-slate-200 mt-1">Diğer / Atanmamış</div>
+          <div class="text-[11px] text-slate-400 mt-0.5">Kişi <i class="fa-solid fa-chevron-right ms-1"></i></div>
+        </button>`;
+      }
+      listEl.innerHTML = cards;
+    }
+
+    // Index ile alt alan seçimi (inline onclick tırnak sorunlarını önler)
+    function selectProgressSubareaByIndex(dept, idx) {
+      const subs = getSubareasForDept(dept);
+      const subLabel = idx === -1 ? null : (subs[idx] ? subs[idx].label : null);
+      selectProgressSubarea(dept, subLabel);
+    }
+
+    function selectProgressSubarea(dept, subLabel) {
+      tpSelectedSubarea = subLabel; // null olabilir (Diğer)
+      renderProgressPeople(dept, subLabel);
+    }
+
+    // Alt alan ekranından birimlere dön / kişilerden alt alan veya birime dön
+    function backFromPeopleList() {
+      const subs = getSubareasForDept(tpSelectedDept);
+      if (subs.length > 0) {
+        // Alt alan seçim ekranına dön
+        renderProgressSubareaList(tpSelectedDept, subs);
+      } else {
+        renderProgressDeptList();
+      }
+    }
+
+    // ADIM 2: Seçilen birim (+ opsiyonel alt alan) rol/kişi listesi
+    function renderProgressPeople(dept, subLabel) {
+      const deptListEl = document.getElementById('teamProgressDeptList');
+      const subWrap = document.getElementById('teamProgressSubareaWrap');
+      const peopleWrap = document.getElementById('teamProgressPeopleList');
+      if (deptListEl) deptListEl.classList.add('hidden');
+      if (subWrap) subWrap.classList.add('hidden');
       if (peopleWrap) peopleWrap.classList.remove('hidden');
 
-      document.getElementById('teamProgressDeptTitle').innerText = (DEPARTMENT_LABELS[dept] || dept) + ' Personeli';
+      const subs = getSubareasForDept(dept);
+      // Geri butonu etiketi
+      const backLabel = document.getElementById('peopleBackLabel');
+      if (backLabel) backLabel.innerText = subs.length > 0 ? 'Alt Alanlara Dön' : 'Birimlere Dön';
+
+      let title = (DEPARTMENT_LABELS[dept] || dept);
+      if (subLabel) title += ' · ' + subLabel;
+      else if (subs.length > 0) title += ' · Diğer';
+      document.getElementById('teamProgressDeptTitle').innerText = title + ' Personeli';
 
       const isAdminViewer = currentUser.role === 'ADMIN';
       const allowedRoles = isAdminViewer ? null : getSubordinateRoles(currentUser.role);
@@ -2311,7 +2720,14 @@
       const people = (usersList || []).filter(u => {
         if ((u.department || 'Belirtilmemiş') !== dept) return false;
         if (u.role === 'ADMIN' || u.role === 'HR') return false;
+        // Sadece onaylı kullanıcılar
+        if (u.status && u.status !== 'APPROVED') return false;
         if (!isAdminViewer && allowedRoles && !allowedRoles.includes(u.role)) return false;
+        // Alt alan filtresi: subLabel verildiyse eşleşenler; null ise alt alanı olmayanlar (yalnızca birimde alt alan tanımlıysa)
+        if (subs.length > 0) {
+          if (subLabel) { if ((u.sub_area || '') !== subLabel) return false; }
+          else { if (u.sub_area) return false; }
+        }
         return true;
       });
 
@@ -2360,7 +2776,7 @@
                     const active = tasksList.filter(t => t.assigned_to == u.id && t.status !== 'APPROVED').length;
                     const done = tasksList.filter(t => t.assigned_to == u.id && t.status === 'APPROVED').length;
                     return `
-                      <button onclick="openPersonProgress(${u.id})" class="group w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
+                      <button onclick="openPersonDetailPage(${u.id})" class="group w-56 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg rounded-2xl p-4 text-left transition-all">
                         <div class="flex items-center gap-3">
                           <div class="h-10 w-10 shrink-0 rounded-full bg-gradient-to-br from-cyan-500/20 to-cyan-500/5 border border-cyan-500/30 flex items-center justify-center text-cyan-600 dark:text-cyan-400 font-bold text-sm">
                             ${(u.name || '?').trim().charAt(0).toUpperCase()}
@@ -2387,6 +2803,204 @@
 
     function backToDeptProgressList() {
       renderProgressDeptList();
+    }
+
+    // ============================================================
+    // KİŞİ DETAY SAYFASI (tam ekran)
+    // ============================================================
+    async function openPersonDetailPage(userId) {
+      const teamSec = document.getElementById('teamProgressSection');
+      const detailSec = document.getElementById('personDetailSection');
+      if (!detailSec) return;
+
+      // Diğer ana bölümleri gizle, detay sayfasını göster
+      if (teamSec) teamSec.classList.add('hidden');
+      const adminSec = document.getElementById('adminPanelSection');
+      if (adminSec) adminSec.classList.add('hidden');
+      detailSec.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+
+      // Yükleniyor durumları
+      document.getElementById('pdName').innerText = 'Yükleniyor...';
+      document.getElementById('pdPersonalInfo').innerHTML = '';
+      document.getElementById('pdProjects').innerHTML = '';
+      document.getElementById('pdTasks').innerHTML = '';
+      document.getElementById('pdLogs').innerHTML = '';
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/person/${userId}/detail`);
+        const data = await safeJson(res);
+        if (!res.ok) { showToast(data.error || 'Kişi bilgileri alınamadı.', 'error'); return; }
+        renderPersonDetail(data);
+      } catch (e) {
+        showToast('Hata: ' + e.message, 'error');
+      }
+    }
+
+    function closePersonDetailPage() {
+      const detailSec = document.getElementById('personDetailSection');
+      if (detailSec) detailSec.classList.add('hidden');
+      // Admin ise admin paneli + ekip gidişatını geri getir
+      if (currentUser.role === 'ADMIN') {
+        const adminSec = document.getElementById('adminPanelSection');
+        if (adminSec) adminSec.classList.remove('hidden');
+      }
+      const teamSec = document.getElementById('teamProgressSection');
+      if (teamSec) teamSec.classList.remove('hidden');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    function renderPersonDetail(data) {
+      const u = data.user;
+      const tasks = data.tasks || [];
+      const projects = data.projects || [];
+      const logs = data.logs || [];
+
+      // Kimlik kartı
+      document.getElementById('pdAvatar').innerText = (u.name || '?').trim().charAt(0).toUpperCase();
+      document.getElementById('pdName').innerText = u.name || '-';
+      let roleLine = ROLE_LABELS_TR[u.role] || u.role || '';
+      if (u.leader_sub_type) {
+        roleLine += u.leader_sub_type === 'TEST_EKIP_LIDERI' ? ' · Test Ekip Lideri'
+          : u.leader_sub_type === 'GOMULU_EKIP_LIDERI' ? ' · Gömülü Ekip Lideri' : '';
+      }
+      document.getElementById('pdRoleLine').innerText = roleLine;
+      const metaParts = [];
+      if (u.department) metaParts.push(DEPARTMENT_LABELS[u.department] || u.department);
+      if (u.sub_area) metaParts.push(u.sub_area);
+      document.getElementById('pdMetaLine').innerText = metaParts.join(' · ');
+
+      // Sayaçlar
+      const activeTasks = tasks.filter(t => t.status !== 'APPROVED').length;
+      const doneTasks = tasks.filter(t => t.status === 'APPROVED').length;
+      document.getElementById('pdCounters').innerHTML = `
+        <div class="text-center px-3 py-2 rounded-xl bg-amber-500/10 border border-amber-500/20">
+          <div class="text-lg font-bold text-amber-600 dark:text-amber-400">${activeTasks}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">aktif görev</div>
+        </div>
+        <div class="text-center px-3 py-2 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400">${doneTasks}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">tamamlanan</div>
+        </div>
+        <div class="text-center px-3 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20">
+          <div class="text-lg font-bold text-indigo-600 dark:text-indigo-400">${projects.length}</div>
+          <div class="text-[10px] text-slate-500 dark:text-slate-400">proje</div>
+        </div>
+      `;
+
+      // Kişisel bilgiler
+      const infoRow = (icon, label, value) => `
+        <div class="flex items-center gap-3">
+          <div class="w-8 h-8 shrink-0 rounded-lg bg-slate-100 dark:bg-slate-900 flex items-center justify-center text-slate-500 dark:text-slate-400"><i class="fa-solid ${icon} text-xs"></i></div>
+          <div class="min-w-0">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wide">${label}</div>
+            <div class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${value}</div>
+          </div>
+        </div>`;
+      const infoEl = document.getElementById('pdPersonalInfo');
+      let infoHtml = '';
+      infoHtml += infoRow('fa-envelope', 'E-posta', u.email ? escapeHtmlProj(u.email) : '—');
+      infoHtml += infoRow('fa-phone', 'Telefon', u.phone ? escapeHtmlProj(u.phone) : '—');
+      infoHtml += infoRow('fa-at', 'Kullanıcı Adı', u.username ? escapeHtmlProj(u.username) : '—');
+      infoHtml += infoRow('fa-building', 'Birim', u.department ? (DEPARTMENT_LABELS[u.department] || u.department) : '—');
+      if (u.sub_area) infoHtml += infoRow('fa-layer-group', 'Alt Alan', escapeHtmlProj(u.sub_area));
+      if (u.intern_start_date || u.intern_end_date) {
+        infoHtml += infoRow('fa-calendar', 'Staj Dönemi', `${u.intern_start_date || '?'} → ${u.intern_end_date || '?'}`);
+      }
+      // Admin için düzenleme (telefon / alt alan)
+      if (currentUser.role === 'ADMIN') {
+        const subs = getSubareasForDept(u.department);
+        const subOptions = `<option value="">— Yok —</option>` + subs.map(s => `<option value="${escapeHtmlProj(s.label)}" ${s.label === u.sub_area ? 'selected' : ''}>${escapeHtmlProj(s.label)}</option>`).join('');
+        infoHtml += `
+          <div class="pt-3 mt-2 border-t border-slate-200 dark:border-slate-700 space-y-2">
+            <div class="text-[10px] text-slate-400 uppercase tracking-wide">Hızlı Düzenle (Admin)</div>
+            <input id="pdEditPhone" type="text" placeholder="Telefon" value="${u.phone ? escapeHtmlProj(u.phone) : ''}" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+            ${subs.length > 0 ? `<select id="pdEditSubarea" class="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">${subOptions}</select>` : ''}
+            <button onclick="savePersonEdits(${u.id})" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold py-1.5 rounded-lg transition-all">Kaydet</button>
+          </div>`;
+      }
+      infoEl.innerHTML = infoHtml;
+
+      // Projeler
+      const projEl = document.getElementById('pdProjects');
+      if (projects.length === 0) {
+        projEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Bu kişi hiçbir projeden sorumlu değil.</p>`;
+      } else {
+        projEl.innerHTML = projects.map(p => {
+          const daysTxt = p.days_left < 0 ? `${Math.abs(p.days_left)} gün gecikti` : `${p.days_left} gün kaldı`;
+          const daysCls = p.days_left < 0 ? 'text-rose-500' : p.days_left <= 3 ? 'text-amber-500' : 'text-emerald-500';
+          return `<div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+            <div class="flex items-center justify-between gap-2">
+              <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(p.company_name || '')} — ${escapeHtmlProj(p.name)}</div>
+              <span class="text-[10px] font-bold ${daysCls} shrink-0">${daysTxt}</span>
+            </div>
+            <div class="flex items-center gap-2 mt-2">
+              <div class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
+                <div class="h-full ${p.behind ? 'bg-rose-500' : 'bg-cyan-500'} rounded-full" style="width:${Math.min(100, Math.max(3, p.actual))}%"></div>
+              </div>
+              <span class="text-[10px] text-slate-400 shrink-0">%${p.actual}${p.planned ? ' / hedef %' + p.planned : ''}</span>
+            </div>
+            ${p.note ? `<div class="text-[10px] text-slate-500 dark:text-slate-400 mt-1">${escapeHtmlProj(p.note)}</div>` : ''}
+          </div>`;
+        }).join('');
+      }
+
+      // Görevler
+      const taskEl = document.getElementById('pdTasks');
+      if (tasks.length === 0) {
+        taskEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Bu kişide görev yok.</p>`;
+      } else {
+        const statusBadge = {
+          IN_PROGRESS: 'bg-cyan-500/15 text-cyan-600 dark:text-cyan-400',
+          COMPLETED: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+          APPROVED: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+          REVISION_REQUESTED: 'bg-rose-500/15 text-rose-600 dark:text-rose-400'
+        };
+        taskEl.innerHTML = tasks.map(t => `
+          <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="min-w-0">
+                <div class="text-sm font-bold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(t.title)}</div>
+                <div class="text-[10px] text-slate-400 mt-0.5">${escapeHtmlProj(t.category || '')} · Bitiş: ${t.end_date || '-'}</div>
+              </div>
+              <span class="text-[9px] font-bold px-2 py-0.5 rounded ${statusBadge[t.status] || 'bg-slate-500/15 text-slate-500'} shrink-0">${TASK_STATUS_LABELS_TR[t.status] || t.status}</span>
+            </div>
+            ${t.description ? `<div class="text-[11px] text-slate-500 dark:text-slate-400 mt-1.5 line-clamp-2">${escapeHtmlProj(t.description)}</div>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Günlük loglar
+      const logEl = document.getElementById('pdLogs');
+      if (logs.length === 0) {
+        logEl.innerHTML = `<p class="text-xs text-slate-400 py-2">Günlük not yok.</p>`;
+      } else {
+        logEl.innerHTML = logs.map(l => `
+          <div class="bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-lg p-2.5">
+            <div class="text-[10px] text-slate-400">${l.log_date || ''}${l.task_title ? ' · ' + escapeHtmlProj(l.task_title) : ''}</div>
+            <div class="text-xs text-slate-700 dark:text-slate-300 mt-0.5">${escapeHtmlProj(l.note || '')}</div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Admin: telefon / alt alan hızlı kaydet
+    async function savePersonEdits(userId) {
+      const phoneEl = document.getElementById('pdEditPhone');
+      const subEl = document.getElementById('pdEditSubarea');
+      const phone = phoneEl ? phoneEl.value.trim() : undefined;
+      const sub_area = subEl ? subEl.value : undefined;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/users/${userId}/sub-area`, {
+          method: 'PUT', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone, sub_area, userRole: currentUser.role })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Kaydedilemedi.', 'error'); return; }
+        showToast('Bilgiler güncellendi.', 'success');
+        await loadUsers(); // usersList tazelensin (alt alan filtreleri doğru olsun)
+        await openPersonDetailPage(userId); // detayları yeniden yükle
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
     // ADIM 3: Kişi detay modalını aç
@@ -2688,6 +3302,61 @@
         badge.classList.remove('hidden');
       } else {
         badge.classList.add('hidden');
+      }
+    }
+
+    // Ana ekrandaki "Yaklaşan Toplantılar" kartını doldurur (toplantı erişimi olan roller).
+    // Kendi verisini çeker; loadMeetings'ten bağımsızdır.
+    async function renderUpcomingMeetings() {
+      const el = document.getElementById('upcomingMeetingsList');
+      if (!el) return;
+      try {
+        let url = `${API_BASE_URL}/api/meetings?userId=${currentUser.id}&role=${currentUser.role}`;
+        if (currentUser.department) url += `&department=${encodeURIComponent(currentUser.department)}`;
+        const res = await fetch(url);
+        const meetings = await safeJson(res);
+        const todayStr = new Date().toISOString().substring(0, 10);
+        const upcoming = (Array.isArray(meetings) ? meetings : [])
+          .filter(m => {
+            if (m.status === 'REJECTED') return false;
+            const raw = m.preferred_date || m.created_at || '';
+            const d = raw.substring(0, 10);
+            return d && d >= todayStr; // bugün veya ileride
+          })
+          .sort((a, b) => {
+            const da = (a.preferred_date || a.created_at || '').substring(0, 10);
+            const db = (b.preferred_date || b.created_at || '').substring(0, 10);
+            return da.localeCompare(db);
+          });
+
+        if (upcoming.length === 0) {
+          el.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Yaklaşan toplantı yok.</p>`;
+          return;
+        }
+        const statusLabels = { APPROVED: 'Onaylı', PENDING: 'Bekliyor' };
+        el.innerHTML = upcoming.slice(0, 12).map(m => {
+          const rawDate = (m.preferred_date || m.created_at || '');
+          const dOnly = rawDate.substring(0, 10);
+          let when = dOnly;
+          if (m.preferred_date && m.preferred_date.length > 10) when = m.preferred_date.substring(0, 16).replace('T', ' ');
+          const isToday = dOnly === todayStr;
+          const st = m.status === 'APPROVED' ? 'text-emerald-500' : 'text-amber-500';
+          const rolesText = m.target_roles ? m.target_roles.split(',').map(r => ROLE_LABELS_TR[r.trim()] || r.trim()).join(', ') : '';
+          return `<div class="bg-slate-50 dark:bg-slate-900/50 border ${isToday ? 'border-cyan-400 dark:border-cyan-600' : 'border-slate-200 dark:border-slate-700'} rounded-xl p-3">
+            <div class="flex items-start justify-between gap-2">
+              <div class="text-sm font-semibold text-slate-800 dark:text-slate-100 truncate">${escapeHtmlProj(m.subject || '-')}</div>
+              ${isToday ? '<span class="text-[9px] font-bold px-1.5 py-0.5 rounded bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 shrink-0">BUGÜN</span>' : ''}
+            </div>
+            <div class="text-[11px] text-slate-500 dark:text-slate-400 flex items-center justify-between mt-1.5">
+              <span><i class="fa-regular fa-clock me-1"></i>${when}</span>
+              <span class="${st} font-bold">${statusLabels[m.status] || m.status || ''}</span>
+            </div>
+            ${m.requester_name ? `<div class="text-[10px] text-slate-400 mt-0.5 truncate">${escapeHtmlProj(m.requester_name)}${m.department ? ' · ' + (DEPARTMENT_LABELS[m.department] || m.department) : ''}</div>` : ''}
+            ${rolesText ? `<div class="text-[10px] text-cyan-600 dark:text-cyan-400 mt-0.5 truncate"><i class="fa-solid fa-bell me-1"></i>${rolesText}</div>` : ''}
+          </div>`;
+        }).join('');
+      } catch (e) {
+        el.innerHTML = `<p class="text-xs text-rose-400 col-span-full text-center py-4">Toplantılar yüklenemedi.</p>`;
       }
     }
 
@@ -3499,6 +4168,8 @@
       if (engineerSection) engineerSection.classList.add('hidden');
       if (mainTasksSection) mainTasksSection.classList.add('hidden');
       if (teamProgressSection) teamProgressSection.classList.add('hidden');
+      const personDetailSec = document.getElementById('personDetailSection');
+      if (personDetailSec) personDetailSec.classList.add('hidden');
 
       // Ekip Gidişatı: alt rolü olan roller görebilir (Müdür, Ekip Lideri).
       // Mühendisler için Ekip Gidişatı kaldırıldı.
@@ -3569,6 +4240,17 @@
 
       if (canAccessMeetings && typeof loadMeetings === 'function') {
         loadMeetings();
+      }
+
+      // Ana ekrandaki "Yaklaşan Toplantılar" kartı: toplantı erişimi olan roller (admin hariç,
+      // admin bunu kendi panelinin sağ kolonunda görür).
+      const upcomingSection = document.getElementById('upcomingMeetingsSection');
+      if (upcomingSection) {
+        const showUpcoming = canAccessMeetings && currentUser.role !== 'ADMIN';
+        upcomingSection.classList.toggle('hidden', !showUpcoming);
+        if (showUpcoming && typeof renderUpcomingMeetings === 'function') {
+          renderUpcomingMeetings();
+        }
       }
 
       // Takvim menüsü: tüm giriş yapmış kullanıcılar için görünür (herkesin görevi/toplantısı olabilir)
@@ -4500,12 +5182,17 @@
       try {
         const res = await fetch(`${API_BASE_URL}/api/users/${userId}/approve`, { method: 'PATCH' });
         if (res.ok) {
-          alert("Kullanıcı kaydı onaylandı!");
+          showToast('Kullanıcı kaydı onaylandı!', 'success');
           await loadUsers();
           if (typeof loadPendingUsers === 'function') await loadPendingUsers();
+          if (typeof refreshDashboardSummary === 'function') await refreshDashboardSummary();
+          if (typeof updateUserMgmtBadge === 'function') updateUserMgmtBadge();
+        } else {
+          showToast('Onaylama başarısız.', 'error');
         }
       } catch(err) {
         console.error("Onaylama hatası:", err);
+        showToast('Hata: ' + err.message, 'error');
       }
     }
 
@@ -4520,15 +5207,18 @@
         });
 
         if (res.ok) {
-          alert("Kayıt talebi silindi.");
+          showToast('Kayıt talebi silindi.', 'success');
+          await loadUsers();
           if (typeof loadPendingUsers === 'function') await loadPendingUsers();
           if (typeof fetchAdminStats === 'function') await fetchAdminStats();
+          if (typeof refreshDashboardSummary === 'function') await refreshDashboardSummary();
         } else {
           const data = await res.json();
-          alert("Hata: " + data.error);
+          showToast('Hata: ' + (data.error || 'Silinemedi.'), 'error');
         }
       } catch (err) {
         console.error("Kayıt silme hatası:", err);
+        showToast('Hata: ' + err.message, 'error');
       }
     }
 

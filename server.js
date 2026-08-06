@@ -25,6 +25,9 @@ async function initDbMigration() {
     { name: 'department', type: 'TEXT' },
     { name: 'leader_sub_type', type: 'TEXT' },
     { name: 'status', type: "TEXT DEFAULT 'PENDING'" },
+    // Ekip Gidişatı alt alanı (ör. Donanım/Gömülü, Test) ve iletişim
+    { name: 'sub_area', type: 'TEXT' },
+    { name: 'phone', type: 'TEXT' },
     // Google Takvim entegrasyonu: kullanıcı başına refresh token ve bağlı durumu
     { name: 'google_refresh_token', type: 'TEXT' },
     { name: 'google_calendar_connected', type: 'INTEGER DEFAULT 0' }
@@ -179,6 +182,57 @@ async function initDb() {
     try { await db.execute(`ALTER TABLE projects ADD COLUMN note TEXT`); } catch (e) {}
     try { await db.execute(`ALTER TABLE projects ADD COLUMN priority TEXT DEFAULT 'NORMAL'`); } catch (e) {}
     try { await db.execute(`ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'ACTIVE'`); } catch (e) {}
+
+    // Proje birimleri (elektronik, yazılım, mekanik ... + admin ekleyebilir)
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS project_departments (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        key TEXT UNIQUE NOT NULL,
+        label TEXT NOT NULL,
+        icon TEXT,
+        created_at TEXT NOT NULL
+      )
+    `);
+    // Varsayılan birimleri bir defalık ekle (varsa yok sayılır)
+    const seedDepts = [
+      { key: 'ELEKTRONIK', label: 'Elektronik', icon: 'fa-microchip' },
+      { key: 'YAZILIM', label: 'Yazılım', icon: 'fa-code' },
+      { key: 'MEKANIK', label: 'Mekanik', icon: 'fa-gears' }
+    ];
+    for (const d of seedDepts) {
+      try {
+        await db.execute({
+          sql: `INSERT INTO project_departments (key, label, icon, created_at) VALUES (?, ?, ?, ?)`,
+          args: [d.key, d.label, d.icon, new Date().toISOString().substring(0, 10)]
+        });
+      } catch (e) { /* zaten var */ }
+    }
+
+    // Birim alt alanları (ör. Elektronik → Donanım/Gömülü, Test)
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS department_subareas (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        department_key TEXT NOT NULL,
+        label TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      )
+    `);
+    // Elektronik için varsayılan 2 alt alan (tablo boşsa)
+    try {
+      const cnt = await db.execute(`SELECT COUNT(*) AS c FROM department_subareas`);
+      if (Number(cnt.rows[0].c) === 0) {
+        const seedSubs = [
+          { dep: 'ELEKTRONIK', label: 'Donanım/Gömülü' },
+          { dep: 'ELEKTRONIK', label: 'Test' }
+        ];
+        for (const s of seedSubs) {
+          await db.execute({
+            sql: `INSERT INTO department_subareas (department_key, label, created_at) VALUES (?, ?, ?)`,
+            args: [s.dep, s.label, new Date().toISOString().substring(0, 10)]
+          });
+        }
+      }
+    } catch (e) {}
 
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
@@ -650,7 +704,7 @@ app.get('/api/users', async (req, res) => {
   try {
     const { department, role } = req.query;
 
-    let sql = `SELECT id, name, email, username, department, role, status, intern_start_date, intern_end_date FROM users`;
+    let sql = `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date FROM users`;
     let args = [];
 
     // Departman bazlı görünürlük: ADMIN ve HR hariç herkes sadece kendi biriminin personelini görür
@@ -1700,6 +1754,132 @@ function daysBetween(a, b) {
   return Math.round((db2 - da) / 86400000);
 }
 
+// --- BİRİM ALT ALANLARI (department_subareas) ---
+
+// Bir birimin alt alanlarını listele (department query ile) veya tümü
+app.get('/api/subareas', async (req, res) => {
+  try {
+    const { department } = req.query;
+    let sql = `SELECT * FROM department_subareas`;
+    const args = [];
+    if (department) { sql += ` WHERE department_key = ?`; args.push(department); }
+    sql += ` ORDER BY id ASC`;
+    const r = await db.execute({ sql, args });
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Alt alan ekle (Admin)
+app.post('/api/subareas', async (req, res) => {
+  try {
+    const { department, label, userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (!department || !label || !label.trim()) return res.status(400).json({ error: 'Birim ve alt alan adı gerekli.' });
+    await db.execute({
+      sql: `INSERT INTO department_subareas (department_key, label, created_at) VALUES (?, ?, ?)`,
+      args: [department, label.trim(), todayISO()]
+    });
+    res.json({ message: 'Alt alan eklendi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Alt alan sil (Admin)
+app.delete('/api/subareas/:id', async (req, res) => {
+  try {
+    const { userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    await db.execute({ sql: `DELETE FROM department_subareas WHERE id = ?`, args: [req.params.id] });
+    res.json({ message: 'Alt alan silindi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Bir kullanıcının alt alanını / telefonunu güncelle (Admin)
+app.put('/api/users/:id/sub-area', async (req, res) => {
+  try {
+    const { sub_area, phone, userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const cur = await db.execute({ sql: `SELECT sub_area, phone FROM users WHERE id = ?`, args: [req.params.id] });
+    if (cur.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    await db.execute({
+      sql: `UPDATE users SET sub_area = ?, phone = ? WHERE id = ?`,
+      args: [
+        sub_area !== undefined ? sub_area : cur.rows[0].sub_area,
+        phone !== undefined ? phone : cur.rows[0].phone,
+        req.params.id
+      ]
+    });
+    res.json({ message: 'Güncellendi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- BİRİMLER (project_departments) ---
+
+// Birim listesi
+app.get('/api/departments', async (req, res) => {
+  try {
+    const r = await db.execute(`SELECT * FROM project_departments ORDER BY id ASC`);
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Birim ekle (Admin)
+app.post('/api/departments', async (req, res) => {
+  try {
+    const { label, icon, userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (!label || !label.trim()) return res.status(400).json({ error: 'Birim adı gerekli.' });
+    // key: Türkçe karakterleri sadeleştirip büyük harf + alt çizgi
+    const base = label.trim()
+      .replace(/ı/g, 'i').replace(/İ/g, 'I')
+      .replace(/ş/g, 's').replace(/Ş/g, 'S')
+      .replace(/ğ/g, 'g').replace(/Ğ/g, 'G')
+      .replace(/ü/g, 'u').replace(/Ü/g, 'U')
+      .replace(/ö/g, 'o').replace(/Ö/g, 'O')
+      .replace(/ç/g, 'c').replace(/Ç/g, 'C')
+      .toUpperCase().replace(/[^A-Z0-9]+/g, '_').replace(/^_+|_+$/g, '');
+    let key = base || ('BIRIM_' + Date.now());
+    // Çakışma varsa sonuna sayı ekle
+    try {
+      const exists = await db.execute({ sql: `SELECT id FROM project_departments WHERE key = ?`, args: [key] });
+      if (exists.rows.length) key = key + '_' + Date.now().toString().slice(-4);
+    } catch (e) {}
+    await db.execute({
+      sql: `INSERT INTO project_departments (key, label, icon, created_at) VALUES (?, ?, ?, ?)`,
+      args: [key, label.trim(), icon || 'fa-layer-group', todayISO()]
+    });
+    res.json({ message: 'Birim eklendi.', key });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Birim sil (Admin) — bağlı firma/proje varsa engelle
+app.delete('/api/departments/:id', async (req, res) => {
+  try {
+    const { userRole } = req.body;
+    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const d = await db.execute({ sql: `SELECT key FROM project_departments WHERE id = ?`, args: [req.params.id] });
+    if (d.rows.length === 0) return res.status(404).json({ error: 'Birim bulunamadı.' });
+    const key = d.rows[0].key;
+    const pc = await db.execute({ sql: `SELECT COUNT(*) AS c FROM projects WHERE department = ?`, args: [key] });
+    if (Number(pc.rows[0].c) > 0) return res.status(400).json({ error: 'Bu birime bağlı projeler var, önce onları silin.' });
+    await db.execute({ sql: `DELETE FROM project_departments WHERE id = ?`, args: [req.params.id] });
+    res.json({ message: 'Birim silindi.' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // --- FİRMALAR ---
 
 // Firma listesi (opsiyonel birim filtresi)
@@ -1918,6 +2098,71 @@ app.delete('/api/progress/:id', async (req, res) => {
 });
 
 // --- ADMIN DASHBOARD ÖZETİ (geciken projeler + aciliyet sıralaması + son toplantılar) ---
+// --- KİŞİ DETAY (Ekip Gidişatı → kişi sayfası) ---
+app.get('/api/person/:id/detail', async (req, res) => {
+  try {
+    const uid = req.params.id;
+    const uRes = await db.execute({
+      sql: `SELECT id, name, email, username, department, role, status, sub_area, phone, leader_sub_type, intern_start_date, intern_end_date FROM users WHERE id = ?`,
+      args: [uid]
+    });
+    if (uRes.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+    const user = uRes.rows[0];
+
+    // Kişiye atanmış görevler
+    const tRes = await db.execute({
+      sql: `SELECT id, title, description, category, end_date, work_days, status, created_by
+            FROM tasks WHERE assigned_to = ? ORDER BY end_date ASC`,
+      args: [uid]
+    });
+
+    // Kişinin sorumlu olduğu projeler + son ilerleme
+    const pRes = await db.execute({
+      sql: `SELECT projects.*, companies.name AS company_name
+            FROM projects
+            LEFT JOIN companies ON projects.company_id = companies.id
+            WHERE projects.owner_id = ?
+            ORDER BY projects.end_date ASC`,
+      args: [uid]
+    });
+    const today = todayISO();
+    const projects = [];
+    for (const p of pRes.rows) {
+      const prog = await db.execute({
+        sql: `SELECT planned, actual FROM project_progress WHERE project_id = ? ORDER BY log_date DESC LIMIT 1`,
+        args: [p.id]
+      });
+      const last = prog.rows[0];
+      const actual = last ? Number(last.actual) : 0;
+      const planned = last ? Number(last.planned) : 0;
+      const daysLeft = daysBetween(today, p.end_date);
+      projects.push({
+        id: p.id, name: p.name, company_name: p.company_name, department: p.department,
+        end_date: p.end_date, priority: p.priority, status: p.status, note: p.note,
+        actual, planned, days_left: daysLeft, behind: actual < planned - 5
+      });
+    }
+
+    // Son günlük loglar (varsa)
+    let logs = [];
+    try {
+      const lRes = await db.execute({
+        sql: `SELECT daily_logs.log_date, daily_logs.note, tasks.title AS task_title
+              FROM daily_logs LEFT JOIN tasks ON daily_logs.task_id = tasks.id
+              WHERE daily_logs.intern_id = ? ORDER BY daily_logs.log_date DESC LIMIT 20`,
+        args: [uid]
+      });
+      logs = lRes.rows;
+    } catch (e) {}
+
+    res.json({ user, tasks: tRes.rows, projects, logs });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// --- KİŞİ DETAY SONU ---
+
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
     const { userRole } = req.query;
@@ -1961,31 +2206,40 @@ app.get('/api/admin/dashboard', async (req, res) => {
     const byUrgency = all.filter(p => p.status !== 'COMPLETED')
       .sort((a, b) => b.urgency - a.urgency);
 
-    // Son 3 gün içindeki toplantılar
+    // Yaklaşan toplantılar: tercih edilen tarihi bugün veya sonrası olanlar (reddedilmemiş), en yakın önce
     const meetRes = await db.execute({
       sql: `SELECT meeting_requests.*, users.name AS requester_name
             FROM meeting_requests
             LEFT JOIN users ON meeting_requests.requested_by = users.id
-            ORDER BY created_at DESC LIMIT 30`,
+            ORDER BY created_at DESC LIMIT 100`,
       args: []
     });
-    const recentMeetings = meetRes.rows.filter(m => {
-      if (!m.created_at) return false;
-      const d = m.created_at.substring(0, 10);
-      return daysBetween(d, today) <= 3 && daysBetween(d, today) >= 0;
-    });
+    const upcomingMeetings = meetRes.rows
+      .filter(m => {
+        if (m.status === 'REJECTED') return false;
+        const raw = m.preferred_date || m.created_at;
+        if (!raw) return false;
+        const d = raw.substring(0, 10);
+        // Bugün veya gelecekte olanlar
+        return daysBetween(d, today) <= 0; // today - d <= 0 => d bugün ya da ileride
+      })
+      .sort((a, b) => {
+        const da = (a.preferred_date || a.created_at || '').substring(0, 10);
+        const db2 = (b.preferred_date || b.created_at || '').substring(0, 10);
+        return da.localeCompare(db2); // en yakın tarih önce
+      });
 
-    // Son 3 gün içinde eklenen (onaya düşen) yeni kullanıcılar — bilgilendirme paneli
+    // Onay bekleyen (yeni kayıt olan) kullanıcılar — bilgilendirme paneli
     let recentUsers = [];
     try {
-      const uRes = await db.execute({ sql: `SELECT id, name, role, department, status FROM users`, args: [] });
+      const uRes = await db.execute({ sql: `SELECT id, name, email, role, department, status FROM users`, args: [] });
       recentUsers = uRes.rows.filter(u => u.status === 'PENDING');
     } catch (e) {}
 
     res.json({
       overdueProjects: overdue,
       urgencyRanking: byUrgency,
-      recentMeetings,
+      recentMeetings: upcomingMeetings,
       pendingUsers: recentUsers,
       totalProjects: all.length,
       activeProjects: all.filter(p => p.status !== 'COMPLETED').length
