@@ -239,6 +239,25 @@ async function initDb() {
       }
     } catch (e) {}
 
+    // ============================================================
+    // BİLDİRİMLER: her kullanıcının kendi bildirim kutusu.
+    // "box": hangi kutucuğun/simgenin üstünde uyarı noktası gösterileceği
+    // (TASKS, MEETINGS, PENDING_USERS, PROJECTS). Bildirim görüntülendiğinde satır silinir.
+    // ============================================================
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        type TEXT NOT NULL,
+        box TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT,
+        ref_id INTEGER,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY(user_id) REFERENCES users(id)
+      )
+    `);
+
     console.log('Turso bulut veritabanı tabloları hazır.');
   } catch (err) {
     console.error('Veritabanı başlatma hatası:', err.message);
@@ -246,6 +265,31 @@ async function initDb() {
 }
 
 initDb();
+
+// ============================================================
+// BİLDİRİM YARDIMCILARI
+// ============================================================
+
+// Tek bir kullanıcıya bildirim düşürür. Ana işlemi bozmasın diye hatayı yutar.
+async function createNotification(userId, type, box, title, message, refId) {
+  if (!userId) return;
+  try {
+    await db.execute({
+      sql: `INSERT INTO notifications (user_id, type, box, title, message, ref_id, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      args: [userId, type, box, title, message || null, refId != null ? refId : null, new Date().toISOString().replace('T', ' ').substring(0, 19)]
+    });
+  } catch (e) {
+    console.error('Bildirim oluşturulamadı:', e.message);
+  }
+}
+
+// Birden fazla kullanıcıya aynı bildirimi düşürür (tekrarlanan id'leri eler).
+async function notifyUsers(userIds, type, box, title, message, refId) {
+  const uniqueIds = [...new Set((userIds || []).filter(Boolean).map(Number))];
+  for (const uid of uniqueIds) {
+    await createNotification(uid, type, box, title, message, refId);
+  }
+}
 
 // ============================================================
 // GOOGLE TAKVİM ENTEGRASYONU
@@ -561,8 +605,23 @@ app.post('/api/register', async (req, res) => {
       ? 'Kayıt başarılı! Hesabınız yönetici onayından sonra aktif olacaktır.'
       : 'Kullanıcı başarıyla oluşturuldu.';
 
-    res.json({ 
-      message: successMessage, 
+    // Onay bekleyen bir kayıt ise Admin'lere bildirim düşür
+    if (initialStatus === 'PENDING') {
+      try {
+        const adminsRes = await db.execute(`SELECT id FROM users WHERE role = 'ADMIN'`);
+        await notifyUsers(
+          adminsRes.rows.map(r => r.id),
+          'USER_PENDING',
+          'PENDING_USERS',
+          'Yeni Kayıt Onayı',
+          `${name} (${role}) hesabı onayınızı bekliyor.`,
+          Number(result.lastInsertRowid)
+        );
+      } catch (notifErr) { console.error('Kayıt bildirimi hatası:', notifErr.message); }
+    }
+
+    res.json({
+      message: successMessage,
       userId: Number(result.lastInsertRowid),
       status: initialStatus
     });
@@ -819,6 +878,16 @@ app.post('/api/tasks', async (req, res) => {
       return res.status(403).json({ error: 'Görev atamaya yetkiniz yok!' });
     }
 
+    // Atanan kişi gerçekten görev alabilecek (çalışan) bir rolde ve onaylı olmalı —
+    // Ekip Lideri/Müdür artık herhangi bir birimden/rolden atayabildiği için sunucu
+    // tarafında da doğrulanır.
+    const ASSIGNABLE_ROLES = ['INTERN', 'TECHNICIAN', 'ENGINEER', 'LEADER'];
+    const assigneeCheck = await db.execute({ sql: `SELECT role, status FROM users WHERE id = ?`, args: [assignedTo] });
+    const assigneeUser = assigneeCheck.rows[0];
+    if (!assigneeUser || !ASSIGNABLE_ROLES.includes(assigneeUser.role) || assigneeUser.status !== 'APPROVED') {
+      return res.status(400).json({ error: 'Geçersiz görev atama hedefi.' });
+    }
+
     const result = await db.execute({
       sql: `INSERT INTO tasks (title, description, assigned_to, category, end_date, work_days, created_by, status) VALUES (?, ?, ?, ?, ?, ?, ?, 'IN_PROGRESS')`,
       args: [title, description || '', assignedTo, category, endDate, workDays, createdBy]
@@ -917,6 +986,10 @@ app.post('/api/tasks', async (req, res) => {
 
     // Google Takvim senkronu (kullanıcı takvimini bağladıysa). Yanıtı bekletmemek için await sonrası.
     syncTaskToGoogle(newTaskId).catch(e => console.error('Task sync:', e.message));
+
+    // Atanan kişiye bildirim düşür
+    createNotification(assignedTo, 'TASK_ASSIGNED', 'TASKS', 'Yeni Görev Atandı', `${createdBy} size "${title}" görevini atadı.`, newTaskId)
+      .catch(e => console.error('Görev bildirimi hatası:', e.message));
 
     res.json({ id: newTaskId, message: "Görev oluşturuldu ve e-posta bildirimi gönderildi." });
   } catch (error) {
@@ -1149,10 +1222,15 @@ app.put('/api/tasks/:id/complete', async (req, res) => {
     if (task) {
       // Görevi oluşturan lider/mühendisin mailini bul
       const creatorRes = await db.execute({
-        sql: `SELECT email, name FROM users WHERE name = ?`,
+        sql: `SELECT id, email, name FROM users WHERE name = ?`,
         args: [task.created_by]
       });
       const creator = creatorRes.rows[0];
+
+      if (creator) {
+        createNotification(creator.id, 'TASK_COMPLETED', 'TASKS', 'Görev Tamamlandı', `${task.intern_name} "${task.title}" görevini tamamladı, onayınızı bekliyor.`, task.id)
+          .catch(e => console.error('Görev tamamlama bildirimi hatası:', e.message));
+      }
 
       if (creator && creator.email) {
         try {
@@ -1276,6 +1354,19 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     if (result.rowsAffected === 0) {
       return res.status(404).json({ error: 'Görev bulunamadı.' });
     }
+
+    // Görevin sahibine (atanan kişiye) sonucu bildir
+    try {
+      const taskRes = await db.execute({ sql: `SELECT assigned_to, title FROM tasks WHERE id = ?`, args: [taskId] });
+      const t = taskRes.rows[0];
+      if (t) {
+        if (isRevision) {
+          createNotification(t.assigned_to, 'TASK_REVISION', 'TASKS', 'Revize İstendi', `"${t.title}" göreviniz için revize istendi: ${comment || ''}`, Number(taskId));
+        } else {
+          createNotification(t.assigned_to, 'TASK_APPROVED', 'TASKS', 'Görev Onaylandı', `"${t.title}" göreviniz onaylandı.`, Number(taskId));
+        }
+      }
+    } catch (notifErr) { console.error('Görev inceleme bildirimi hatası:', notifErr.message); }
 
     res.json({ message: !isRevision ? 'Görev onaylandı.' : 'Revize talebi iletildi.' });
   } catch (error) {
@@ -1518,10 +1609,12 @@ app.post('/api/meetings', async (req, res) => {
       return res.status(400).json({ error: 'Talep eden kullanıcı ve konu alanı zorunludur.' });
     }
 
-    // Her rolün toplantıya davet edebileceği (bildirim düşürebileceği) hedef roller
+    // Her rolün toplantıya davet edebileceği (bildirim düşürebileceği) hedef roller.
+    // Ekip Lideri ve Müdür artık herhangi bir birimdeki çalışan rollerini (Stajyer,
+    // Teknisyen, Mühendis, Ekip Lideri) çağırabilir.
     const ALLOWED_TARGETS = {
-      LEADER: ['ENGINEER'],                          // Ekip lideri -> mühendisler
-      MANAGER: ['LEADER', 'ENGINEER'],               // Müdür -> ekip lideri ve mühendisler
+      LEADER: ['INTERN', 'TECHNICIAN', 'ENGINEER', 'LEADER'],
+      MANAGER: ['INTERN', 'TECHNICIAN', 'ENGINEER', 'LEADER'],
       ADMIN: ['MANAGER', 'LEADER', 'ENGINEER'],      // Admin -> müdür, ekip lideri, mühendisler
       ENGINEER: ['INTERN']                           // Mühendis -> stajyerler
     };
@@ -1535,10 +1628,12 @@ app.post('/api/meetings', async (req, res) => {
     const allowedForRole = ALLOWED_TARGETS[userRole] || [];
     rolesArr = rolesArr.filter(r => allowedForRole.includes(r));
 
+    // Admin, Müdür ve Ekip Lideri istediği birimden toplantı isteyebilir (birim seçimi zorunlu);
+    // Mühendis yalnızca kendi biriminden (stajyerlerini) çağırabilir.
+    const CROSS_DEPT_MEETING_ROLES = ['ADMIN', 'MANAGER', 'LEADER'];
     let department;
 
-    if (userRole === 'ADMIN') {
-      // Admin istediği ekipten toplantı isteyebilir; birim seçimi zorunludur
+    if (CROSS_DEPT_MEETING_ROLES.includes(userRole)) {
       if (!targetDepartment) {
         return res.status(400).json({ error: 'Lütfen bir birim seçiniz.' });
       }
@@ -1585,6 +1680,23 @@ app.post('/api/meetings', async (req, res) => {
 
     // Talep edenin takvimine (tarihi varsa) toplantıyı ekle
     syncMeetingToGoogle(newMeetingId).catch(e => console.error('Meeting sync:', e.message));
+
+    // Çağrılan kişilere (rol bazlı + tekil seçilenler) bildirim düşür
+    (async () => {
+      try {
+        const recipientIds = new Set(userIdsArr);
+        if (rolesArr.length > 0) {
+          const rolePlaceholders = rolesArr.map(() => '?').join(',');
+          const roleUsersRes = await db.execute({
+            sql: `SELECT id FROM users WHERE department = ? AND role IN (${rolePlaceholders}) AND status = 'APPROVED'`,
+            args: [department, ...rolesArr]
+          });
+          roleUsersRes.rows.forEach(r => recipientIds.add(Number(r.id)));
+        }
+        recipientIds.delete(Number(requestedBy));
+        await notifyUsers([...recipientIds], 'MEETING_REQUEST', 'MEETINGS', 'Yeni Toplantı Talebi', subject, newMeetingId);
+      } catch (notifErr) { console.error('Toplantı bildirimi hatası:', notifErr.message); }
+    })();
 
     res.json({ id: newMeetingId, message: 'Toplantı talebiniz iletildi.' });
   } catch (error) {
@@ -1821,6 +1933,16 @@ app.put('/api/meetings/:id/review', async (req, res) => {
       return res.status(404).json({ error: 'Talep bulunamadı veya bu talebe erişim yetkiniz yok.' });
     }
 
+    // Talep edene sonucu bildir
+    try {
+      const mRes = await db.execute({ sql: `SELECT requested_by, subject FROM meeting_requests WHERE id = ?`, args: [meetingId] });
+      const m = mRes.rows[0];
+      if (m) {
+        const approved = action === 'APPROVED';
+        createNotification(m.requested_by, 'MEETING_REVIEWED', 'MEETINGS', approved ? 'Toplantı Talebiniz Onaylandı' : 'Toplantı Talebiniz Reddedildi', m.subject, Number(meetingId));
+      }
+    } catch (notifErr) { console.error('Toplantı inceleme bildirimi hatası:', notifErr.message); }
+
     res.json({ message: action === 'APPROVED' ? 'Toplantı talebi onaylandı.' : 'Toplantı talebi reddedildi.' });
   } catch (error) {
     res.status(500).json({ error: 'Talep güncellenirken hata: ' + error.message });
@@ -1937,6 +2059,45 @@ app.delete('/api/subareas/:id', async (req, res) => {
   }
 });
 
+// --- BİLDİRİMLER ---
+
+// Kullanıcının okunmamış (henüz görüntülenmemiş) bildirimleri
+app.get('/api/notifications', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId gerekli.' });
+    const r = await db.execute({
+      sql: `SELECT * FROM notifications WHERE user_id = ? ORDER BY id DESC LIMIT 100`,
+      args: [userId]
+    });
+    res.json(r.rows);
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Bir bildirimin içeriği görüntülendiğinde: kalıcı olarak silinir
+app.delete('/api/notifications/:id', async (req, res) => {
+  try {
+    await db.execute({ sql: `DELETE FROM notifications WHERE id = ?`, args: [req.params.id] });
+    res.json({ message: 'ok' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
+// Bir kullanıcının bildirim panelini kapatırken tümünü görüntülenmiş saymak isterse (opsiyonel)
+app.delete('/api/notifications', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.status(400).json({ error: 'userId gerekli.' });
+    await db.execute({ sql: `DELETE FROM notifications WHERE user_id = ?`, args: [userId] });
+    res.json({ message: 'ok' });
+  } catch (e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 // Bir kullanıcının alt alanını / telefonunu güncelle (Admin)
 app.put('/api/users/:id/sub-area', async (req, res) => {
   try {
@@ -2035,15 +2196,26 @@ app.get('/api/companies', async (req, res) => {
   }
 });
 
-// Firma ekle (Admin)
+// Firma ekle (Admin: herhangi bir birim/genel; Müdür: yalnızca kendi birimi — sunucu tarafında sabitlenir)
 app.post('/api/companies', async (req, res) => {
   try {
-    const { name, department, userRole } = req.body;
-    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const { name, department, userRole, userId } = req.body;
     if (!name || !name.trim()) return res.status(400).json({ error: 'Firma adı gerekli.' });
+
+    let finalDepartment = department || null;
+    if (isAdmin(userRole)) {
+      // Admin istediği birimi (veya "genel") seçebilir
+    } else if (userRole === 'MANAGER') {
+      const u = await db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] });
+      if (u.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+      finalDepartment = u.rows[0].department; // kendi biriminden başka değer gönderilse bile yok sayılır
+    } else {
+      return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    }
+
     const r = await db.execute({
       sql: `INSERT INTO companies (name, department, created_at) VALUES (?, ?, ?)`,
-      args: [name.trim(), department || null, todayISO()]
+      args: [name.trim(), finalDepartment, todayISO()]
     });
     res.json({ message: 'Firma eklendi.', id: Number(r.lastInsertRowid) });
   } catch (e) {
@@ -2051,12 +2223,25 @@ app.post('/api/companies', async (req, res) => {
   }
 });
 
-// Firma sil (Admin) — bağlı projeler ve ilerleme kayıtları da silinir
+// Firma sil (Admin: herhangi biri; Müdür: yalnızca kendi birimine ait firmalar) — bağlı projeler ve ilerleme kayıtları da silinir
 app.delete('/api/companies/:id', async (req, res) => {
   try {
-    const { userRole } = req.body;
-    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const { userRole, userId } = req.body;
     const cid = req.params.id;
+
+    if (!isAdmin(userRole)) {
+      if (userRole !== 'MANAGER') return res.status(403).json({ error: 'Yetkisiz erişim.' });
+      const [uRes, cRes] = await Promise.all([
+        db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] }),
+        db.execute({ sql: `SELECT department FROM companies WHERE id = ?`, args: [cid] })
+      ]);
+      if (uRes.rows.length === 0 || cRes.rows.length === 0) return res.status(404).json({ error: 'Bulunamadı.' });
+      const companyDept = cRes.rows[0].department;
+      if (!companyDept || companyDept !== uRes.rows[0].department) {
+        return res.status(403).json({ error: 'Bu firmayı silme yetkiniz yok.' });
+      }
+    }
+
     const projs = await db.execute({ sql: `SELECT id FROM projects WHERE company_id = ?`, args: [cid] });
     for (const p of projs.rows) {
       await db.execute({ sql: `DELETE FROM project_progress WHERE project_id = ?`, args: [p.id] });
@@ -2140,18 +2325,30 @@ app.get('/api/projects/:id', async (req, res) => {
   }
 });
 
-// Proje oluştur (Admin)
+// Proje oluştur (Admin: herhangi bir birim; Müdür: yalnızca kendi birimi — sunucu tarafında sabitlenir)
 app.post('/api/projects', async (req, res) => {
   try {
-    const { company_id, name, department, owner_id, start_date, end_date, priority, note, userRole, createdBy } = req.body;
-    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
-    if (!company_id || !name || !department || !start_date || !end_date) {
-      return res.status(400).json({ error: 'Firma, proje adı, birim ve tarihler zorunludur.' });
+    const { company_id, name, department, owner_id, start_date, end_date, priority, note, userRole, userId, createdBy } = req.body;
+    if (!company_id || !name || !start_date || !end_date) {
+      return res.status(400).json({ error: 'Firma, proje adı ve tarihler zorunludur.' });
     }
+
+    let finalDepartment;
+    if (isAdmin(userRole)) {
+      if (!department) return res.status(400).json({ error: 'Birim zorunludur.' });
+      finalDepartment = department;
+    } else if (userRole === 'MANAGER') {
+      const u = await db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] });
+      if (u.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
+      finalDepartment = u.rows[0].department; // kendi biriminden başka değer gönderilse bile yok sayılır
+    } else {
+      return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    }
+
     const r = await db.execute({
       sql: `INSERT INTO projects (company_id, name, department, owner_id, start_date, end_date, priority, status, note, created_by, created_at)
             VALUES (?, ?, ?, ?, ?, ?, ?, 'ACTIVE', ?, ?, ?)`,
-      args: [company_id, name.trim(), department, owner_id || null, start_date, end_date, priority || 'NORMAL', note || null, createdBy || null, todayISO()]
+      args: [company_id, name.trim(), finalDepartment, owner_id || null, start_date, end_date, priority || 'NORMAL', note || null, createdBy || null, todayISO()]
     });
     res.json({ message: 'Proje oluşturuldu.', id: Number(r.lastInsertRowid) });
   } catch (e) {
@@ -2187,12 +2384,24 @@ app.put('/api/projects/:id', async (req, res) => {
   }
 });
 
-// Proje sil (Admin)
+// Proje sil (Admin: herhangi biri; Müdür: yalnızca kendi birimine ait projeler)
 app.delete('/api/projects/:id', async (req, res) => {
   try {
-    const { userRole } = req.body;
-    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const { userRole, userId } = req.body;
     const pid = req.params.id;
+
+    if (!isAdmin(userRole)) {
+      if (userRole !== 'MANAGER') return res.status(403).json({ error: 'Yetkisiz erişim.' });
+      const [uRes, pRes] = await Promise.all([
+        db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] }),
+        db.execute({ sql: `SELECT department FROM projects WHERE id = ?`, args: [pid] })
+      ]);
+      if (uRes.rows.length === 0 || pRes.rows.length === 0) return res.status(404).json({ error: 'Bulunamadı.' });
+      if (pRes.rows[0].department !== uRes.rows[0].department) {
+        return res.status(403).json({ error: 'Bu projeyi silme yetkiniz yok.' });
+      }
+    }
+
     await db.execute({ sql: `DELETE FROM project_progress WHERE project_id = ?`, args: [pid] });
     await db.execute({ sql: `DELETE FROM projects WHERE id = ?`, args: [pid] });
     res.json({ message: 'Proje silindi.' });
@@ -2208,15 +2417,32 @@ app.post('/api/projects/:id/progress', async (req, res) => {
   try {
     const { log_date, planned, actual, note, userRole, userId } = req.body;
     const pid = req.params.id;
-    const cur = await db.execute({ sql: `SELECT owner_id FROM projects WHERE id = ?`, args: [pid] });
+    const cur = await db.execute({ sql: `SELECT owner_id, name FROM projects WHERE id = ?`, args: [pid] });
     if (cur.rows.length === 0) return res.status(404).json({ error: 'Proje bulunamadı.' });
-    const isOwner = userId && Number(cur.rows[0].owner_id) === Number(userId);
+    const project = cur.rows[0];
+    const isOwner = userId && Number(project.owner_id) === Number(userId);
     if (!isAdmin(userRole) && !isOwner) return res.status(403).json({ error: 'Yetkisiz erişim.' });
     if (!log_date) return res.status(400).json({ error: 'Tarih gerekli.' });
     await db.execute({
       sql: `INSERT INTO project_progress (project_id, log_date, planned, actual, note, created_at) VALUES (?, ?, ?, ?, ?, ?)`,
       args: [pid, log_date, Number(planned) || 0, Number(actual) || 0, note || null, todayISO()]
     });
+
+    // Admin eklediyse proje sahibine, sahibi eklediyse Admin'lere bildirim düşür
+    (async () => {
+      try {
+        const message = `"${project.name}" projesine yeni ilerleme noktası eklendi.`;
+        if (isAdmin(userRole)) {
+          if (project.owner_id && Number(project.owner_id) !== Number(userId)) {
+            await createNotification(project.owner_id, 'PROJECT_PROGRESS', 'PROJECTS', 'Proje İlerlemesi Güncellendi', message, Number(pid));
+          }
+        } else {
+          const adminsRes = await db.execute(`SELECT id FROM users WHERE role = 'ADMIN'`);
+          await notifyUsers(adminsRes.rows.map(r => r.id), 'PROJECT_PROGRESS', 'PROJECTS', 'Proje İlerlemesi Güncellendi', message, Number(pid));
+        }
+      } catch (notifErr) { console.error('Proje ilerleme bildirimi hatası:', notifErr.message); }
+    })();
+
     res.json({ message: 'İlerleme kaydedildi.' });
   } catch (e) {
     res.status(500).json({ error: e.message });
@@ -2323,18 +2549,21 @@ app.get('/api/person/:id/detail', async (req, res) => {
 
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
-    const { userRole } = req.query;
-    if (!isAdmin(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    const { userRole, department } = req.query;
+    // Admin tüm birimleri görür; Müdür yalnızca kendi biriminin projelerini görebilir.
+    const isMgr = userRole === 'MANAGER';
+    if (!isAdmin(userRole) && !isMgr) return res.status(403).json({ error: 'Yetkisiz erişim.' });
+    if (isMgr && !department) return res.status(400).json({ error: 'Birim gerekli.' });
     const today = todayISO();
 
-    // Tüm projeler + son ilerleme
-    const projRes = await db.execute({
-      sql: `SELECT projects.*, companies.name AS company_name, users.name AS owner_name
+    // Tüm projeler (Müdür ise sadece kendi birimi) + son ilerleme
+    let projSql = `SELECT projects.*, companies.name AS company_name, users.name AS owner_name
             FROM projects
             LEFT JOIN companies ON projects.company_id = companies.id
-            LEFT JOIN users ON projects.owner_id = users.id`,
-      args: []
-    });
+            LEFT JOIN users ON projects.owner_id = users.id`;
+    const projArgs = [];
+    if (isMgr) { projSql += ` WHERE projects.department = ?`; projArgs.push(department); }
+    const projRes = await db.execute({ sql: projSql, args: projArgs });
 
     const all = [];
     for (const p of projRes.rows) {
@@ -2364,35 +2593,40 @@ app.get('/api/admin/dashboard', async (req, res) => {
     const byUrgency = all.filter(p => p.status !== 'COMPLETED')
       .sort((a, b) => b.urgency - a.urgency);
 
-    // Yaklaşan toplantılar: tercih edilen tarihi bugün veya sonrası olanlar (reddedilmemiş), en yakın önce
-    const meetRes = await db.execute({
-      sql: `SELECT meeting_requests.*, users.name AS requester_name
-            FROM meeting_requests
-            LEFT JOIN users ON meeting_requests.requested_by = users.id
-            ORDER BY created_at DESC LIMIT 100`,
-      args: []
-    });
-    const upcomingMeetings = meetRes.rows
-      .filter(m => {
-        if (m.status === 'REJECTED') return false;
-        const raw = m.preferred_date || m.created_at;
-        if (!raw) return false;
-        const d = raw.substring(0, 10);
-        // Bugün veya gelecekte olanlar
-        return daysBetween(d, today) <= 0; // today - d <= 0 => d bugün ya da ileride
-      })
-      .sort((a, b) => {
-        const da = (a.preferred_date || a.created_at || '').substring(0, 10);
-        const db2 = (b.preferred_date || b.created_at || '').substring(0, 10);
-        return da.localeCompare(db2); // en yakın tarih önce
-      });
-
-    // Onay bekleyen (yeni kayıt olan) kullanıcılar — bilgilendirme paneli
+    // Yaklaşan toplantılar ve onay bekleyen kayıtlar: yalnızca Admin'e özel bilgilendirme
+    // panelleri (Müdür bu paneli kullanmıyor, gereksiz sorgudan kaçınılır).
+    let upcomingMeetings = [];
     let recentUsers = [];
-    try {
-      const uRes = await db.execute({ sql: `SELECT id, name, email, role, department, status FROM users`, args: [] });
-      recentUsers = uRes.rows.filter(u => u.status === 'PENDING');
-    } catch (e) {}
+    if (isAdmin(userRole)) {
+      // Yaklaşan toplantılar: tercih edilen tarihi bugün veya sonrası olanlar (reddedilmemiş), en yakın önce
+      const meetRes = await db.execute({
+        sql: `SELECT meeting_requests.*, users.name AS requester_name
+              FROM meeting_requests
+              LEFT JOIN users ON meeting_requests.requested_by = users.id
+              ORDER BY created_at DESC LIMIT 100`,
+        args: []
+      });
+      upcomingMeetings = meetRes.rows
+        .filter(m => {
+          if (m.status === 'REJECTED') return false;
+          const raw = m.preferred_date || m.created_at;
+          if (!raw) return false;
+          const d = raw.substring(0, 10);
+          // Bugün veya gelecekte olanlar
+          return daysBetween(d, today) <= 0; // today - d <= 0 => d bugün ya da ileride
+        })
+        .sort((a, b) => {
+          const da = (a.preferred_date || a.created_at || '').substring(0, 10);
+          const db2 = (b.preferred_date || b.created_at || '').substring(0, 10);
+          return da.localeCompare(db2); // en yakın tarih önce
+        });
+
+      // Onay bekleyen (yeni kayıt olan) kullanıcılar — bilgilendirme paneli
+      try {
+        const uRes = await db.execute({ sql: `SELECT id, name, email, role, department, status FROM users`, args: [] });
+        recentUsers = uRes.rows.filter(u => u.status === 'PENDING');
+      } catch (e) {}
+    }
 
     res.json({
       overdueProjects: overdue,
