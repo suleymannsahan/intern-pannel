@@ -14,6 +14,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <style>
+    /* Giriş sonrası tanıtım videosu: logo/başlık belirir, "aşağı kaydırın" ipucu hafifçe zıplar */
+    @keyframes introFadeIn {
+      from { opacity: 0; transform: translateY(16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes introBounce {
+      0%, 100% { transform: translate(-50%, 0); }
+      50% { transform: translate(-50%, -8px); }
+    }
     input[type="date"]::-webkit-calendar-picker-indicator {
       filter: invert(0.8);
       cursor: pointer;
@@ -286,6 +295,28 @@
 
         <button type="submit" class="w-full bg-gradient-to-r from-cyan-600 to-cyan-500 hover:from-cyan-500 hover:to-cyan-400 text-white dark:text-slate-950 font-bold py-2.5 rounded-xl transition-all text-sm shadow-lg shadow-cyan-500/20">Hesap Oluştur</button>
       </form>
+    </div>
+  </div>
+
+  <!-- GİRİŞ SONRASI TANITIM VİDEOSU: Apple tarzı, tam ekran, kullanıcı aşağı kaydırana kadar
+       loop oynar; kaydırınca (veya ipucuna tıklanınca) ana panele geçilir. -->
+  <div id="introVideoScreen" class="hidden relative w-full h-[180vh] bg-black">
+    <div class="sticky top-0 h-screen w-full overflow-hidden flex items-center justify-center">
+      <video id="introVideo" class="absolute inset-0 w-full h-full object-cover" autoplay muted loop playsinline>
+        <source src="opening-bg.mp4" type="video/mp4">
+      </video>
+      <div class="absolute inset-0 bg-gradient-to-b from-black/50 via-black/10 to-black/70"></div>
+
+      <div class="relative z-10 flex flex-col items-center text-center px-4" style="animation: introFadeIn 1.2s ease-out;">
+        <img src="Y_logo.png" alt="Logo" class="h-14 sm:h-16 w-auto mb-4 drop-shadow-[0_0_20px_rgba(6,182,212,0.35)]">
+        <h1 class="text-2xl sm:text-4xl font-bold text-white drop-shadow-[0_2px_10px_rgba(0,0,0,0.7)]">Görevlendirme &amp; Takip Sistemi</h1>
+        <p id="introWelcomeText" class="mt-2 text-sm sm:text-base text-slate-200 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]"></p>
+      </div>
+
+      <button type="button" id="introScrollHint" onclick="finishPostLoginIntro()" class="absolute bottom-8 left-1/2 -translate-x-1/2 z-10 flex flex-col items-center gap-2 text-white/90 hover:text-white transition-colors" style="animation: introBounce 2s ease-in-out infinite;">
+        <span class="text-xs sm:text-sm font-medium tracking-wide">Aşağı kaydırın</span>
+        <i class="fa-solid fa-chevron-down text-lg"></i>
+      </button>
     </div>
   </div>
 
@@ -5778,7 +5809,10 @@
         if (res.ok) {
           currentUser = data;
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
-          
+
+          // 0. Giriş sonrası tanıtım videosu (kullanıcı aşağı kaydırana/ipucuna tıklayana kadar loop oynar)
+          await startPostLoginIntro();
+
           // 1. Ana paneli / ekranı görünür yap (bitmeden yönlendirme yapılmasın)
           await showDashboard();
 
@@ -5796,6 +5830,52 @@
       } catch (err) {
         console.error("Giriş hatası:", err);
       }
+    }
+
+    // Giriş sonrası tanıtım videosu: authContainer'ı gizler, tam ekran videoyu gösterir ve
+    // kullanıcı aşağı kaydırana (veya ipucuna tıklayana) kadar dashboard'u AÇMADAN bekler.
+    let finishPostLoginIntroFn = null;
+    function startPostLoginIntro() {
+      return new Promise((resolve) => {
+        const introEl = document.getElementById('introVideoScreen');
+        const authEl = document.getElementById('authContainer');
+        if (!introEl) { resolve(); return; }
+
+        if (authEl) authEl.classList.add('hidden');
+        introEl.classList.remove('hidden');
+        window.scrollTo(0, 0);
+
+        const welcomeEl = document.getElementById('introWelcomeText');
+        if (welcomeEl) welcomeEl.innerText = currentUser && currentUser.name ? `Hoş geldin, ${currentUser.name}` : '';
+
+        const video = document.getElementById('introVideo');
+        if (video) {
+          video.currentTime = 0;
+          video.play().catch(() => {});
+        }
+
+        let finished = false;
+        const finish = () => {
+          if (finished) return;
+          finished = true;
+          window.removeEventListener('scroll', onScroll);
+          introEl.classList.add('hidden');
+          if (video) video.pause();
+          window.scrollTo(0, 0);
+          finishPostLoginIntroFn = null;
+          resolve();
+        };
+        const onScroll = () => {
+          if (window.scrollY > window.innerHeight * 0.6) finish();
+        };
+        window.addEventListener('scroll', onScroll, { passive: true });
+        finishPostLoginIntroFn = finish;
+      });
+    }
+
+    // "Aşağı kaydırın" ipucuna tıklanınca da (kaydırmadan) tanıtım ekranı tamamlanır
+    function finishPostLoginIntro() {
+      if (typeof finishPostLoginIntroFn === 'function') finishPostLoginIntroFn();
     }
 
     async function handleResetPassword(e) {
