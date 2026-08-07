@@ -497,6 +497,13 @@
               <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
               <input type="text" id="leaderTaskSearchInput" oninput="renderLeaderTasksPage()" placeholder="Görev, veren veya kişi adı ara..." class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:outline-none focus:border-cyan-500 text-slate-900 dark:text-slate-100">
             </div>
+
+            <!-- MÜDÜR / EKİP LİDERİ: kendi biriminde rol bazlı filtre -->
+            <div id="leaderTasksRoleFilterWrap" class="hidden mb-4">
+              <label class="block text-[10px] font-bold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wide">Role Göre Filtrele</label>
+              <div id="leaderTasksRoleToggle" class="inline-flex flex-wrap gap-1 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-300 dark:border-slate-800"></div>
+            </div>
+
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <section>
                 <h4 class="font-bold text-xs mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-spinner text-cyan-500"></i>Aktif Görevler <span id="leaderActiveTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400">0</span></h4>
@@ -506,6 +513,27 @@
                 <h4 class="font-bold text-xs mb-3 text-slate-500 dark:text-slate-400 flex items-center gap-2"><i class="fa-solid fa-clock-rotate-left"></i>Geçmiş / Tamamlanan <span id="leaderPastTaskCount" class="text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">0</span></h4>
                 <div id="leaderTaskListPast" class="grid grid-cols-1 gap-4 scroll-panel max-h-[420px] pr-1"></div>
               </section>
+            </div>
+
+            <!-- GÖREVLERİM: kendi kendine hatırlatma amaçlı görev ekleme + kendine atanan görevler -->
+            <div class="mt-4 bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 rounded-xl p-4">
+              <h4 class="font-bold text-sm mb-3 text-slate-900 dark:text-slate-100 flex items-center gap-2">
+                <i class="fa-solid fa-user-check text-cyan-500"></i> Görevlerim
+              </h4>
+              <form onsubmit="handleAddSelfTask(event)" class="grid grid-cols-1 sm:grid-cols-4 gap-2 items-end mb-3">
+                <div class="sm:col-span-2">
+                  <label class="block text-[10px] text-slate-500 mb-1">Görev Tanımı</label>
+                  <input type="text" id="selfTaskTitle" required placeholder="örn: Haftalık rapor hazırla" class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                </div>
+                <div>
+                  <label class="block text-[10px] text-slate-500 mb-1">Bitiş Tarihi</label>
+                  <input type="date" id="selfTaskEndDate" required class="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
+                </div>
+                <button type="submit" class="w-full sm:w-auto bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition-all">
+                  <i class="fa-solid fa-plus me-1"></i> Kendime Ekle
+                </button>
+              </form>
+              <div id="selfTaskList" class="grid grid-cols-1 sm:grid-cols-2 gap-3 scroll-panel max-h-[320px] pr-1"></div>
             </div>
           </div>
         </section>
@@ -1257,7 +1285,6 @@
                     <option value="ELEKTRONIK">Elektronik</option>
                     <option value="MEKANIK">Mekanik</option>
                     <option value="YAZILIM">Yazılım</option>
-                    <option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>
                   </select>
                 </div>
                 <div>
@@ -1932,6 +1959,11 @@
     }, true);
 
     window.onload = async function() {
+      // Birim listesi (admin'in eklediği/sildiği birimler dahil) — giriş ekranındaki
+      // kayıt formu da dahil, birimlerin göründüğü her yer bundan beslenir.
+      await loadProjectDepartments();
+      refreshAllDepartmentSelects();
+
       await loadUsers();
       if (currentUser) {
         await showDashboard();
@@ -2697,6 +2729,12 @@
     // ============================================================
     // PROJE GİDİŞATI PANELİ (Firma → Proje → Planlanan/Gerçekleşen grafik)
     // ============================================================
+    // Bu rollerde "Projeler" sayfası kendi birimiyle sabitlenir (Admin gibi tüm birimleri
+    // değil, yalnızca kendi biriminin firma/proje/gidişat verilerini görür)
+    const PROJECT_DEPT_LOCKED_ROLES = ['MANAGER', 'LEADER'];
+    function isProjectDeptLockedRole(role) {
+      return PROJECT_DEPT_LOCKED_ROLES.includes(role);
+    }
     // Varsayılan birimler (backend erişilemezse fallback)
     const DEFAULT_PROJECT_DEPTS = [
       { key: 'ELEKTRONIK', label: 'Elektronik', icon: 'fa-microchip' },
@@ -2718,7 +2756,7 @@
       // Müdür: birim sabittir (kendi birimi), "Birim Seçin" adımı gizlenir ve doğrudan
       // kendi biriminin firma/proje seçimine geçilir. "Firma / Proje Yönet" (yeni firma/proje
       // ekleme + mevcut projeler) admin ile aynı şekilde açık kalır, sadece kendi birimiyle sınırlanır.
-      const isManagerView = currentUser && currentUser.role === 'MANAGER';
+      const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
       const deptStepWrap = document.getElementById('projDeptStepWrap');
       const addProgressWrap = document.getElementById('projAddProgressWrap');
       if (deptStepWrap) deptStepWrap.classList.toggle('hidden', isManagerView);
@@ -2749,16 +2787,23 @@
       }
     }
 
-    // ADIM 1: Birim çipleri (+ Birim Ekle butonu)
+    // ADIM 1: Birim çipleri (+ Birim Ekle butonu). Admin ise her çipte silme (x) düğmesi de gösterilir.
     function renderProjectDeptChips() {
       const el = document.getElementById('projDeptChips');
       if (!el) return;
+      const isAdminViewer = currentUser && currentUser.role === 'ADMIN';
       const chips = PROJECT_DEPTS.map(d => {
         const active = projSelectedDept === d.key;
-        return `<button onclick="selectProjectDept('${d.key}')" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
+        const baseCls = active
           ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-500/20'
-          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-cyan-500'}">
-          <i class="fa-solid ${d.icon} me-1.5"></i>${escapeHtmlProj(d.label)}</button>`;
+          : 'bg-slate-100 dark:bg-slate-900 text-slate-700 dark:text-slate-200 border-slate-200 dark:border-slate-700 hover:border-cyan-500';
+        const deleteBtn = (isAdminViewer && d.id) ? `
+          <button type="button" onclick="event.stopPropagation(); handleDeleteDepartment(${d.id}, '${escapeHtmlProj(d.label).replace(/'/g, "\\'")}')" class="ms-1.5 ${active ? 'text-white/70 hover:text-white' : 'text-slate-400 hover:text-rose-500'}" title="Birimi sil">
+            <i class="fa-solid fa-xmark text-xs"></i>
+          </button>` : '';
+        // Silme düğmesi bir <button> içinde iç içe <button> olmasın diye çip <div role="button"> olarak kurulur
+        return `<div role="button" tabindex="0" onclick="selectProjectDept('${d.key}')" onkeydown="if(event.key==='Enter') selectProjectDept('${d.key}')" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all cursor-pointer inline-flex items-center ${baseCls}">
+          <i class="fa-solid ${d.icon} me-1.5"></i>${escapeHtmlProj(d.label)}${deleteBtn}</div>`;
       }).join('');
       const addBtn = `<button onclick="openAddDepartmentPrompt()" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border border-dashed border-cyan-400 dark:border-cyan-600 text-cyan-600 dark:text-cyan-400 hover:bg-cyan-500/10 transition-all">
         <i class="fa-solid fa-plus me-1.5"></i>Birim Ekle</button>`;
@@ -2780,9 +2825,34 @@
         if (!res.ok) { showToast(out.error || 'Birim eklenemedi.', 'error'); return; }
         showToast('Birim eklendi.', 'success');
         await loadProjectDepartments();
-        renderProjectDeptChips();
-        // Modal açıksa firma/proje birim seçeneklerini de tazele
-        syncDeptSelects();
+        refreshAllDepartmentSelects();
+      } catch (e) { showToast('Hata: ' + e.message, 'error'); }
+    }
+
+    // Birim sil (bağlı proje varsa sunucu reddeder)
+    async function handleDeleteDepartment(id, label) {
+      if (!confirm(`"${label}" birimini silmek istediğinize emin misiniz?`)) return;
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/departments/${id}`, {
+          method: 'DELETE', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ userRole: currentUser.role })
+        });
+        const out = await safeJson(res);
+        if (!res.ok) { showToast(out.error || 'Birim silinemedi.', 'error'); return; }
+        showToast('Birim silindi.', 'success');
+        // Silinen birim o an seçiliyse seçim durumunu sıfırla
+        const deleted = PROJECT_DEPTS.find(d => d.id === id);
+        if (deleted && projSelectedDept === deleted.key) {
+          projSelectedDept = null;
+          projSelectedCompany = null;
+          projSelectedProject = null;
+          document.getElementById('projCompanyWrap')?.classList.add('hidden');
+          document.getElementById('projProjectWrap')?.classList.add('hidden');
+          document.getElementById('projChartWrap')?.classList.add('hidden');
+          document.getElementById('projEmptyState')?.classList.remove('hidden');
+        }
+        await loadProjectDepartments();
+        refreshAllDepartmentSelects();
       } catch (e) { showToast('Hata: ' + e.message, 'error'); }
     }
 
@@ -2806,6 +2876,37 @@
         const cur = sDept.value;
         sDept.innerHTML = opts;
         if (cur) sDept.value = cur;
+      }
+    }
+
+    // Admin bir birim ekleyip sildiğinde, birimlerin göründüğü TÜM alanları (kayıt formu,
+    // kullanıcı yönetimi, toplantı/görev filtreleri, proje çipleri vb.) güncel listeyle doldurur.
+    function refreshAllDepartmentSelects() {
+      renderProjectDeptChips();
+      syncDeptSelects();
+
+      const setSelectOptions = (id, html) => {
+        const sel = document.getElementById(id);
+        if (!sel) return;
+        const cur = sel.value;
+        sel.innerHTML = html;
+        if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+      };
+
+      const deptOpts = PROJECT_DEPTS.map(d => `<option value="${d.key}">${escapeHtmlProj(d.label)}</option>`).join('');
+      const hrOpt = `<option value="INSAN_KAYNAKLARI">İnsan Kaynakları</option>`;
+
+      // Kayıt formu ve Admin'in "Yeni Kullanıcı Ekle" formu: İnsan Kaynakları hep seçilebilir kalır
+      setSelectOptions('regDepartment', `<option value="">-- Birim Seçiniz --</option>${deptOpts}${hrOpt}`);
+      setSelectOptions('newUserDepartment', `<option value="">-- Birim Seçiniz --</option>${deptOpts}${hrOpt}`);
+      // Toplantı talebi birim seçimi (Admin/Müdür/Ekip Lideri)
+      setSelectOptions('meetingTargetDepartment', `<option value="">-- Birim Seçiniz --</option>${deptOpts}${hrOpt}`);
+      // Admin'in Görevler filtresi ve Yeni Görev Atama: İş birimleriyle sınırlı (İK hariç)
+      setSelectOptions('filterAdminDept', `<option value="">Tüm Birimler</option>${deptOpts}`);
+      setSelectOptions('taskAssignDept', `<option value="">Tüm Birimler</option>${deptOpts}`);
+
+      if (typeof populateAdminStatusDeptChips === 'function' && document.getElementById('adminStatusDeptChips')) {
+        populateAdminStatusDeptChips();
       }
     }
 
@@ -3027,7 +3128,7 @@
     // Müdür için istek kendi birimiyle sınırlanır (backend bunu department parametresiyle uygular).
     async function refreshDashboardSummary() {
       try {
-        const isManagerView = currentUser && currentUser.role === 'MANAGER';
+        const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
         if (isManagerView && !currentUser.department) return;
         let url = `${API_BASE_URL}/api/admin/dashboard?userRole=${currentUser.role}`;
         if (isManagerView) url += `&department=${encodeURIComponent(currentUser.department)}`;
@@ -3043,7 +3144,7 @@
     // geçtiğiyle birlikte) ve teslim tarihine 3 gün veya daha az kalan projeler (Yaklaşan Projeler,
     // kaç gün kaldığıyla birlikte) ayrı ayrı listelenir. Müdür için ayrı DOM elemanları kullanılır.
     function renderAdminOverdueReminder(projects) {
-      const isManagerView = currentUser && currentUser.role === 'MANAGER';
+      const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
       const overdueEl = document.getElementById(isManagerView ? 'managerOverdueReminderList' : 'adminOverdueReminderList');
       const upcomingEl = document.getElementById(isManagerView ? 'managerUpcomingProjectsList' : 'adminUpcomingProjectsList');
       if (!overdueEl || !upcomingEl) return;
@@ -3078,7 +3179,7 @@
       if (projects.length === 0) { el.innerHTML = `<p class="text-xs text-slate-400 text-center py-2">Henüz proje eklenmedi. "Firma / Proje Yönet" ile başlayın.</p>`; return; }
       // Müdür kendi biriminin TÜM projelerini görür (en acilden en az acile);
       // Admin (çok departmanlı, potansiyel olarak uzun liste) ilk 10 ile sınırlı kalır.
-      const isManagerView = currentUser && currentUser.role === 'MANAGER';
+      const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
       const visible = isManagerView ? projects : projects.slice(0, 10);
       el.innerHTML = visible.map((p, i) => {
         let barCls = 'bg-emerald-500', lvl = 'Düşük';
@@ -3234,11 +3335,11 @@
 
     // Geciken/aciliyet listesinden projeye zıpla
     async function jumpToProject(dept, projectId) {
-      // "Geciken Projeler" hatırlatıcısı admin/müdür ana ekranında; Projeler sayfası
-      // henüz açık değilse role göre (Admin veya Müdür) önce onu açıp verilerini yükleriz.
+      // "Geciken Projeler" hatırlatıcısı admin/müdür/ekip lideri ana ekranında; Projeler sayfası
+      // henüz açık değilse role göre önce onu açıp verilerini yükleriz.
       const projectsPage = document.getElementById('adminPanelSection');
       if (projectsPage && projectsPage.classList.contains('hidden')) {
-        if (currentUser && currentUser.role === 'MANAGER' && typeof openManagerProjectsPage === 'function') {
+        if (currentUser && isProjectDeptLockedRole(currentUser.role) && typeof openManagerProjectsPage === 'function') {
           await openManagerProjectsPage();
         } else if (typeof openAdminProjectsPage === 'function') {
           await openAdminProjectsPage();
@@ -3266,7 +3367,7 @@
     }
 
     async function refreshProjectManageModal() {
-      const isManagerView = currentUser && currentUser.role === 'MANAGER';
+      const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
       const managerDept = isManagerView ? currentUser.department : null;
 
       // Müdür: birim alanları (Yeni Firma / Yeni Proje) ve Alt Alan Yönetimi bölümü gizlenir —
@@ -3349,7 +3450,7 @@
       const el = document.getElementById('projExistingProjectsList');
       if (!el) return;
       try {
-        const isManagerView = currentUser && currentUser.role === 'MANAGER';
+        const isManagerView = currentUser && isProjectDeptLockedRole(currentUser.role);
         const url = isManagerView
           ? `${API_BASE_URL}/api/projects?department=${encodeURIComponent(currentUser.department)}`
           : `${API_BASE_URL}/api/projects`;
@@ -4821,7 +4922,7 @@
           ['LEADER', 'Ekip Lideri'], ['MANAGER', 'Müdür'], ['HR', 'İnsan Kaynakları'], ['ADMIN', 'Sistem Yöneticisi']
         ];
         const DEPT_OPTS = [
-          ['ELEKTRONIK', 'Elektronik'], ['MEKANIK', 'Mekanik'], ['YAZILIM', 'Yazılım'], ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']
+          ...PROJECT_DEPTS.map(d => [d.key, d.label]), ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']
         ];
 
         const buildRoleSelect = (u) => `
@@ -5476,13 +5577,13 @@
         if (typeof renderInternStatusList === 'function') renderInternStatusList();
         if (typeof renderLeaderWeekMeetings === 'function') renderLeaderWeekMeetings();
 
-        // Sadece Müdür: "Projeler" kutucuğu + kendi biriminin Geciken/Yaklaşan Projeler paneli
-        const isManager = role === 'MANAGER';
+        // Müdür ve Ekip Lideri: "Projeler" kutucuğu + kendi biriminin Geciken/Yaklaşan Projeler paneli
+        const isManagerOrLeader = role === 'MANAGER' || role === 'LEADER';
         const leaderProjectsTile = document.getElementById('leaderProjectsTile');
         const managerOverduePanelWrap = document.getElementById('managerOverduePanelWrap');
-        if (leaderProjectsTile) leaderProjectsTile.classList.toggle('hidden', !isManager);
-        if (managerOverduePanelWrap) managerOverduePanelWrap.classList.toggle('hidden', !isManager);
-        if (isManager && typeof refreshDashboardSummary === 'function') refreshDashboardSummary();
+        if (leaderProjectsTile) leaderProjectsTile.classList.toggle('hidden', !isManagerOrLeader);
+        if (managerOverduePanelWrap) managerOverduePanelWrap.classList.toggle('hidden', !isManagerOrLeader);
+        if (isManagerOrLeader && typeof refreshDashboardSummary === 'function') refreshDashboardSummary();
 
       } else if (isEngineer) {
         // Mühendis: Ekip Lideri/Müdür/Admin ile aynı düzende, kutucuklu ana ekranı (engineerHomeSection) görür.
@@ -5936,6 +6037,7 @@
       if (home) home.classList.add('hidden');
       const section = document.getElementById('leaderTasksPageSection');
       if (section) section.classList.remove('hidden');
+      populateLeaderTasksRoleFilter();
       renderLeaderTasksPage();
     }
 
@@ -6215,6 +6317,51 @@
       }, 'engineerHomeSection');
     }
 
+    // MÜDÜR: "Görevler" sayfasında kendi biriminde rol bazlı filtreleme. Seçili rol state'i.
+    let leaderTasksRoleFilterValue = '';
+
+    // Müdür ve Ekip Lideri için: kendi altındaki rolleri (rol sıralaması mantığıyla) toggle olarak gösterir
+    // (Müdür: Ekip Lideri/Mühendis/Teknisyen/Stajyer; Ekip Lideri: Mühendis/Teknisyen/Stajyer)
+    function populateLeaderTasksRoleFilter() {
+      const wrap = document.getElementById('leaderTasksRoleFilterWrap');
+      const toggle = document.getElementById('leaderTasksRoleToggle');
+      if (!wrap || !toggle || !currentUser) return;
+
+      const isManagerOrLeader = currentUser.role === 'MANAGER' || currentUser.role === 'LEADER';
+      wrap.classList.toggle('hidden', !isManagerOrLeader);
+      if (!isManagerOrLeader) return;
+
+      const subRoles = getSubordinateRoles(currentUser.role); // üstten alta
+      if (!subRoles.includes(leaderTasksRoleFilterValue)) leaderTasksRoleFilterValue = '';
+
+      const roles = ['', ...subRoles];
+      toggle.innerHTML = roles.map(r => `
+        <button type="button" data-role="${r}" onclick="setLeaderTasksRoleFilter('${r}')" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all">${r === '' ? 'Tümü' : (ROLE_LABELS_TR[r] || r)}</button>
+      `).join('');
+
+      updateLeaderTasksRoleFilterStyles();
+    }
+
+    function updateLeaderTasksRoleFilterStyles() {
+      const toggle = document.getElementById('leaderTasksRoleToggle');
+      if (!toggle) return;
+      const activeCls = ['bg-cyan-600', 'text-white'];
+      const passiveCls = ['text-slate-500', 'dark:text-slate-400'];
+      toggle.querySelectorAll('button[data-role]').forEach(btn => {
+        if (btn.dataset.role === leaderTasksRoleFilterValue) {
+          btn.classList.add(...activeCls); btn.classList.remove(...passiveCls);
+        } else {
+          btn.classList.remove(...activeCls); btn.classList.add(...passiveCls);
+        }
+      });
+    }
+
+    function setLeaderTasksRoleFilter(role) {
+      leaderTasksRoleFilterValue = role;
+      updateLeaderTasksRoleFilterStyles();
+      renderLeaderTasksPage();
+    }
+
     // "Görevler" kutucuğu: Müdür/Ekip Lideri'nin hem kendi görevlerini hem de
     // altındaki rollerin (rol sıralaması) görevlerini birlikte, kart olarak gösterir.
     function renderLeaderTasksPage() {
@@ -6229,8 +6376,10 @@
       const subRoles = getSubordinateRoles(currentUser.role);
 
       const relevant = (tasksList || []).filter(t => {
-        if (t.assigned_to == currentUser.id) return true; // kendi görevleri
         const arole = getAssigneeRole(t);
+        // Belirli bir rol seçiliyse sadece o roldeki (kendi biriminde altındaki) kişilerin görevleri
+        if (leaderTasksRoleFilterValue) return arole === leaderTasksRoleFilterValue;
+        if (t.assigned_to == currentUser.id) return true; // kendi görevleri
         return arole && subRoles.includes(arole); // altındakilerin görevleri
       });
 
@@ -6261,6 +6410,55 @@
       } else {
         pastTasks.forEach(t => pastEl.appendChild(createTaskCard(t, true, t.assigned_to != currentUser.id)));
       }
+
+      renderSelfTaskList();
+    }
+
+    // "Görevlerim": Müdür/Ekip Lideri'nin kendi kendine atadığı (hatırlatma amaçlı) görevler dahil,
+    // kendisine atanmış tüm görevleri listeler.
+    function renderSelfTaskList() {
+      const el = document.getElementById('selfTaskList');
+      if (!el || !currentUser) return;
+
+      const mine = (tasksList || [])
+        .filter(t => t.assigned_to == currentUser.id)
+        .slice()
+        .sort((a, b) => (a.end_date || '').localeCompare(b.end_date || ''));
+
+      el.innerHTML = '';
+      if (mine.length === 0) {
+        el.innerHTML = `<p class="text-xs text-slate-400 col-span-full text-center py-4">Henüz kendinize atadığınız bir görev yok.</p>`;
+        return;
+      }
+      mine.forEach(t => el.appendChild(createTaskCard(t, t.status === 'APPROVED' || t.status === 'COMPLETED', false)));
+    }
+
+    // "Görevlerim" hızlı ekleme formu: kendine hatırlatma amaçlı görev oluşturur
+    async function handleAddSelfTask(e) {
+      e.preventDefault();
+      const title = document.getElementById('selfTaskTitle').value;
+      const endDate = document.getElementById('selfTaskEndDate').value;
+      const today = new Date().toISOString().split('T')[0];
+      const workDays = calculateWorkDays(today, endDate);
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/tasks`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            title, description: '', assignedTo: currentUser.id, category: 'Genel',
+            endDate, workDays, createdBy: currentUser.name, userRole: currentUser.role
+          })
+        });
+        if (res.ok) {
+          document.getElementById('selfTaskTitle').value = '';
+          document.getElementById('selfTaskEndDate').value = '';
+          await loadTasks();
+        } else {
+          const data = await res.json();
+          alert('Hata: ' + (data.error || 'Görev eklenemedi.'));
+        }
+      } catch (err) { console.error('Kendime görev ekleme hatası:', err); }
     }
 
     // Görev atanabilecek çalışan rolleri (Müdür/Ekip Lideri artık herhangi bir birim/rolden atayabilir)
@@ -6437,9 +6635,10 @@
     let adminStatusSelectedRole = '';
     let adminStatusSelectedSubarea = null; // null = henüz seçilmedi, '__NONE__' = Diğer/Atanmamış, aksi halde alt alan etiketi
     let adminStatusSubareasCache = null;
-    const ADMIN_STATUS_DEPTS = [
-      ['ELEKTRONIK', 'Elektronik'], ['MEKANIK', 'Mekanik'], ['YAZILIM', 'Yazılım'], ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']
-    ];
+    // Admin'in ekleyip sildiği birimlerle birlikte güncel tutulur (+ sabit İnsan Kaynakları)
+    function getAdminStatusDepts() {
+      return [...PROJECT_DEPTS.map(d => [d.key, d.label]), ['INSAN_KAYNAKLARI', 'İnsan Kaynakları']];
+    }
     // Müdürden stajyere doğru (üstten alta) sıralama
     const ADMIN_STATUS_ROLES = [
       ['MANAGER', 'Müdür'], ['LEADER', 'Ekip Lideri'], ['ENGINEER', 'Mühendis'], ['TECHNICIAN', 'Teknisyen'], ['INTERN', 'Stajyer']
@@ -6448,7 +6647,7 @@
     function populateAdminStatusDeptChips() {
       const el = document.getElementById('adminStatusDeptChips');
       if (!el) return;
-      el.innerHTML = ADMIN_STATUS_DEPTS.map(([key, label]) => {
+      el.innerHTML = getAdminStatusDepts().map(([key, label]) => {
         const active = adminStatusSelectedDept === key;
         return `<button type="button" onclick="selectAdminStatusDept('${key}')" class="shrink-0 whitespace-nowrap px-4 py-2 rounded-xl text-sm font-semibold border transition-all ${active
           ? 'bg-cyan-600 text-white border-cyan-600 shadow-lg shadow-cyan-500/20'

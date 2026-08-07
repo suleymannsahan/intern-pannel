@@ -999,6 +999,8 @@ app.post('/api/tasks', async (req, res) => {
 
 // Admin Yetki Kontrolü Fonksiyonu
 const isAdmin = (role) => role === 'ADMIN';
+// Firma/Proje yönetiminde kendi biriminle sınırlı erişimi olan roller (Müdür, Ekip Lideri)
+const isDeptLockedRole = (role) => role === 'MANAGER' || role === 'LEADER';
 
 // Görev Getirme Endpoint'ini Admin İçin Güncelleme
 app.get('/api/tasks', async (req, res) => {
@@ -2205,7 +2207,7 @@ app.post('/api/companies', async (req, res) => {
     let finalDepartment = department || null;
     if (isAdmin(userRole)) {
       // Admin istediği birimi (veya "genel") seçebilir
-    } else if (userRole === 'MANAGER') {
+    } else if (isDeptLockedRole(userRole)) {
       const u = await db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] });
       if (u.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
       finalDepartment = u.rows[0].department; // kendi biriminden başka değer gönderilse bile yok sayılır
@@ -2230,7 +2232,7 @@ app.delete('/api/companies/:id', async (req, res) => {
     const cid = req.params.id;
 
     if (!isAdmin(userRole)) {
-      if (userRole !== 'MANAGER') return res.status(403).json({ error: 'Yetkisiz erişim.' });
+      if (!isDeptLockedRole(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
       const [uRes, cRes] = await Promise.all([
         db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] }),
         db.execute({ sql: `SELECT department FROM companies WHERE id = ?`, args: [cid] })
@@ -2337,7 +2339,7 @@ app.post('/api/projects', async (req, res) => {
     if (isAdmin(userRole)) {
       if (!department) return res.status(400).json({ error: 'Birim zorunludur.' });
       finalDepartment = department;
-    } else if (userRole === 'MANAGER') {
+    } else if (isDeptLockedRole(userRole)) {
       const u = await db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] });
       if (u.rows.length === 0) return res.status(404).json({ error: 'Kullanıcı bulunamadı.' });
       finalDepartment = u.rows[0].department; // kendi biriminden başka değer gönderilse bile yok sayılır
@@ -2391,7 +2393,7 @@ app.delete('/api/projects/:id', async (req, res) => {
     const pid = req.params.id;
 
     if (!isAdmin(userRole)) {
-      if (userRole !== 'MANAGER') return res.status(403).json({ error: 'Yetkisiz erişim.' });
+      if (!isDeptLockedRole(userRole)) return res.status(403).json({ error: 'Yetkisiz erişim.' });
       const [uRes, pRes] = await Promise.all([
         db.execute({ sql: `SELECT department FROM users WHERE id = ?`, args: [userId] }),
         db.execute({ sql: `SELECT department FROM projects WHERE id = ?`, args: [pid] })
@@ -2550,8 +2552,8 @@ app.get('/api/person/:id/detail', async (req, res) => {
 app.get('/api/admin/dashboard', async (req, res) => {
   try {
     const { userRole, department } = req.query;
-    // Admin tüm birimleri görür; Müdür yalnızca kendi biriminin projelerini görebilir.
-    const isMgr = userRole === 'MANAGER';
+    // Admin tüm birimleri görür; Müdür/Ekip Lideri yalnızca kendi biriminin projelerini görebilir.
+    const isMgr = isDeptLockedRole(userRole);
     if (!isAdmin(userRole) && !isMgr) return res.status(403).json({ error: 'Yetkisiz erişim.' });
     if (isMgr && !department) return res.status(400).json({ error: 'Birim gerekli.' });
     const today = todayISO();
