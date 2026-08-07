@@ -608,7 +608,7 @@ app.post('/api/register', async (req, res) => {
     // Onay bekleyen bir kayıt ise Admin'lere bildirim düşür
     if (initialStatus === 'PENDING') {
       try {
-        const adminsRes = await db.execute(`SELECT id FROM users WHERE role = 'ADMIN'`);
+        const adminsRes = await db.execute(`SELECT id FROM users WHERE role IN ('ADMIN', 'HR')`);
         await notifyUsers(
           adminsRes.rows.map(r => r.id),
           'USER_PENDING',
@@ -872,10 +872,14 @@ app.put('/api/users/:id/intern-dates', async (req, res) => {
 // Görev Oluşturma
 app.post('/api/tasks', async (req, res) => {
   try {
-    const { title, description, assignedTo, category, endDate, workDays, createdBy, userRole } = req.body;
+    const { title, description, assignedTo, category, endDate, workDays, createdBy, userRole, userId } = req.body;
 
-    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+    if (!['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER', 'INTERN'].includes(userRole)) {
       return res.status(403).json({ error: 'Görev atamaya yetkiniz yok!' });
+    }
+    // Stajyer sadece kendi kendine (hatırlatma amaçlı) görev ekleyebilir, başkasına atayamaz.
+    if (userRole === 'INTERN' && Number(assignedTo) !== Number(userId)) {
+      return res.status(403).json({ error: 'Sadece kendinize görev ekleyebilirsiniz.' });
     }
 
     // Atanan kişi gerçekten görev alabilecek (çalışan) bir rolde ve onaylı olmalı —
@@ -997,8 +1001,8 @@ app.post('/api/tasks', async (req, res) => {
   }
 });
 
-// Admin Yetki Kontrolü Fonksiyonu
-const isAdmin = (role) => role === 'ADMIN';
+// Admin Yetki Kontrolü Fonksiyonu (İK, admin ile birebir aynı yetkilere sahiptir)
+const isAdmin = (role) => role === 'ADMIN' || role === 'HR';
 // Firma/Proje yönetiminde kendi biriminle sınırlı erişimi olan roller (Müdür, Ekip Lideri)
 const isDeptLockedRole = (role) => role === 'MANAGER' || role === 'LEADER';
 
@@ -1023,7 +1027,7 @@ app.get('/api/tasks', async (req, res) => {
     if (role === 'INTERN') {
       conditions.push(`tasks.assigned_to = ?`);
       args.push(userId);
-    } else if (role !== 'ADMIN' && department) {
+    } else if (!isAdmin(role) && department) {
       conditions.push(`users.department = ?`);
       args.push(department);
     }
@@ -1191,12 +1195,16 @@ app.get('/api/admin/stats', async (req, res) => {
     const taskCount = await db.execute(`SELECT COUNT(*) as count FROM tasks`);
     const revisionCount = await db.execute(`SELECT COUNT(*) as count FROM task_revisions`);
     const pendingTasks = await db.execute(`SELECT COUNT(*) as count FROM tasks WHERE status = 'COMPLETED'`);
+    const roleCountsRes = await db.execute(`SELECT role, COUNT(*) as count FROM users GROUP BY role`);
+    const roleCounts = {};
+    roleCountsRes.rows.forEach(r => { roleCounts[r.role] = r.count; });
 
     res.json({
       totalUsers: userCount.rows[0].count,
       totalTasks: taskCount.rows[0].count,
       totalRevisions: revisionCount.rows[0].count,
-      pendingApprovalTasks: pendingTasks.rows[0].count
+      pendingApprovalTasks: pendingTasks.rows[0].count,
+      roleCounts
     });
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -1326,7 +1334,7 @@ app.put('/api/tasks/:id/review', async (req, res) => {
     const { action, comment, userRole, revisedBy } = req.body;
 
     // Yetki Kontrolü
-    const canReview = ['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole);
+    const canReview = ['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole);
     if (!canReview) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz bulunmamaktadır.' });
     }
@@ -1408,7 +1416,7 @@ app.delete('/api/tasks/:id', async (req, res) => {
     const taskId = req.params.id;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+    if (!['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1448,7 +1456,7 @@ app.delete('/api/users/:id', async (req, res) => {
     const userId = req.params.id;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+    if (!['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1480,7 +1488,7 @@ app.put('/api/tasks/:id', async (req, res) => {
     const taskId = req.params.id;
     const { title, description, assignedTo, category, endDate, workDays, userRole } = req.body;
 
-    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+    if (!['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1527,7 +1535,7 @@ app.put('/api/users/:id', async (req, res) => {
     const { name, email, role, startDate, endDate } = req.body;
     const userRole = (req.headers['user-role'] || '').toUpperCase();
 
-    if (!['ADMIN', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
+    if (!['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1603,7 +1611,7 @@ app.post('/api/meetings', async (req, res) => {
   try {
     const { requestedBy, subject, description, preferredDate, userRole, targetDepartment, targetRoles, targetUserIds } = req.body;
 
-    if (!['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN'].includes(userRole)) {
+    if (!['ENGINEER', 'LEADER', 'MANAGER', 'ADMIN', 'HR'].includes(userRole)) {
       return res.status(403).json({ error: 'Toplantı talebi oluşturmak için yetkiniz yok.' });
     }
 
@@ -1618,6 +1626,7 @@ app.post('/api/meetings', async (req, res) => {
       LEADER: ['INTERN', 'TECHNICIAN', 'ENGINEER', 'LEADER'],
       MANAGER: ['INTERN', 'TECHNICIAN', 'ENGINEER', 'LEADER'],
       ADMIN: ['MANAGER', 'LEADER', 'ENGINEER'],      // Admin -> müdür, ekip lideri, mühendisler
+      HR: ['MANAGER', 'LEADER', 'ENGINEER'],         // İK, admin ile birebir aynı yetkiye sahip
       ENGINEER: ['INTERN']                           // Mühendis -> stajyerler
     };
 
@@ -1630,9 +1639,9 @@ app.post('/api/meetings', async (req, res) => {
     const allowedForRole = ALLOWED_TARGETS[userRole] || [];
     rolesArr = rolesArr.filter(r => allowedForRole.includes(r));
 
-    // Admin, Müdür ve Ekip Lideri istediği birimden toplantı isteyebilir (birim seçimi zorunlu);
-    // Mühendis yalnızca kendi biriminden (stajyerlerini) çağırabilir.
-    const CROSS_DEPT_MEETING_ROLES = ['ADMIN', 'MANAGER', 'LEADER'];
+    // Toplantı talep edebilen herkes (Admin, Müdür, Ekip Lideri, Mühendis) istediği birimden
+    // (varsa alt alandan) toplantı isteyebilir (birim seçimi zorunlu).
+    const CROSS_DEPT_MEETING_ROLES = ['ADMIN', 'HR', 'MANAGER', 'LEADER', 'ENGINEER'];
     let department;
 
     if (CROSS_DEPT_MEETING_ROLES.includes(userRole)) {
@@ -1723,8 +1732,8 @@ app.get('/api/meetings', async (req, res) => {
       // Müdür/Ekip Lideri: kendi biriminden gelen talepleri VEYA kendisine (rolüne/kişisel olarak) yönlendirilen talepleri görür
       conditions.push(`(meeting_requests.department = ? OR meeting_requests.requested_by = ? OR meeting_requests.target_roles LIKE ? OR meeting_requests.target_user_ids LIKE ?)`);
       args.push(department, userId, `%${role}%`, `%,${userId},%`);
-    } else if (role === 'ADMIN') {
-      // Admin tüm talepleri görebilir, ek filtre yok
+    } else if (isAdmin(role)) {
+      // Admin/İK tüm talepleri görebilir, ek filtre yok
     } else {
       // Diğer roller (ör. Mühendis, Stajyer): kendi oluşturdukları talepleri VEYA kendilerine
       // (rolüne toplu ya da kişisel olarak) yönlendirilen (bildirim düşen) talepleri görür
@@ -1887,7 +1896,7 @@ app.put('/api/meetings/:id/review', async (req, res) => {
     const meetingId = req.params.id;
     const { action, reviewComment, userRole, reviewerName, department } = req.body;
 
-    if (!['MANAGER', 'LEADER', 'ADMIN'].includes(userRole)) {
+    if (!['MANAGER', 'LEADER', 'ADMIN', 'HR'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
 
@@ -1897,7 +1906,7 @@ app.put('/api/meetings/:id/review', async (req, res) => {
 
     // Rol seviyesi kontrolü: İnceleyen kişi, talep edenden DAHA DÜŞÜK roldeyse yetkisi yoktur.
     // (Örn. bir ekip lideri, müdürün oluşturduğu talebi onaylayamaz/reddedemez.) ADMIN hiyerarşi dışıdır.
-    if (userRole !== 'ADMIN') {
+    if (!isAdmin(userRole)) {
       const reqRes = await db.execute({
         sql: `SELECT users.role AS requester_role FROM meeting_requests
               LEFT JOIN users ON meeting_requests.requested_by = users.id
@@ -1924,7 +1933,7 @@ app.put('/api/meetings/:id/review', async (req, res) => {
     let sql = `UPDATE meeting_requests SET status = ?, reviewed_by = ?, review_comment = ? WHERE id = ?`;
     let args = [action, reviewerName || null, reviewComment || null, meetingId];
 
-    if (userRole !== 'ADMIN') {
+    if (!isAdmin(userRole)) {
       sql = `UPDATE meeting_requests SET status = ?, reviewed_by = ?, review_comment = ? WHERE id = ? AND department = ?`;
       args = [action, reviewerName || null, reviewComment || null, meetingId, department];
     }
@@ -1957,7 +1966,7 @@ app.put('/api/meetings/:id/content', async (req, res) => {
     const meetingId = req.params.id;
     const { subject, description, preferredDate, userRole, department } = req.body;
 
-    if (!['MANAGER', 'LEADER', 'ADMIN'].includes(userRole)) {
+    if (!['MANAGER', 'LEADER', 'ADMIN', 'HR'].includes(userRole)) {
       return res.status(403).json({ error: 'Bu işlemi yapmaya yetkiniz yok!' });
     }
     if (!subject || !subject.trim()) {
@@ -1965,7 +1974,7 @@ app.put('/api/meetings/:id/content', async (req, res) => {
     }
 
     // Aynı hiyerarşi kuralı: inceleyen, talep edenden daha düşük roldeyse düzenleyemez. ADMIN hariç.
-    if (userRole !== 'ADMIN') {
+    if (!isAdmin(userRole)) {
       const reqRes = await db.execute({
         sql: `SELECT users.role AS requester_role FROM meeting_requests
               LEFT JOIN users ON meeting_requests.requested_by = users.id
@@ -1984,7 +1993,7 @@ app.put('/api/meetings/:id/content', async (req, res) => {
 
     let sql = `UPDATE meeting_requests SET subject = ?, description = ?, preferred_date = ? WHERE id = ?`;
     let args = [subject.trim(), description || null, preferredDate || null, meetingId];
-    if (userRole !== 'ADMIN') {
+    if (!isAdmin(userRole)) {
       sql = `UPDATE meeting_requests SET subject = ?, description = ?, preferred_date = ? WHERE id = ? AND department = ?`;
       args = [subject.trim(), description || null, preferredDate || null, meetingId, department];
     }
@@ -2439,7 +2448,7 @@ app.post('/api/projects/:id/progress', async (req, res) => {
             await createNotification(project.owner_id, 'PROJECT_PROGRESS', 'PROJECTS', 'Proje İlerlemesi Güncellendi', message, Number(pid));
           }
         } else {
-          const adminsRes = await db.execute(`SELECT id FROM users WHERE role = 'ADMIN'`);
+          const adminsRes = await db.execute(`SELECT id FROM users WHERE role IN ('ADMIN', 'HR')`);
           await notifyUsers(adminsRes.rows.map(r => r.id), 'PROJECT_PROGRESS', 'PROJECTS', 'Proje İlerlemesi Güncellendi', message, Number(pid));
         }
       } catch (notifErr) { console.error('Proje ilerleme bildirimi hatası:', notifErr.message); }
