@@ -290,7 +290,7 @@
   </div>
 
   <!-- ANA PANEL (DASHBOARD) -->
-  <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
+  <div id="dashboardContainer" class="hidden h-screen flex flex-col overflow-hidden bg-slate-50 dark:bg-slate-950">
     <!-- HEADER -->
     <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-3.5 flex items-center justify-between gap-2 sm:gap-3 z-20 backdrop-blur-xl sticky top-0 shadow-md">
       <div class="flex items-center gap-3 shrink-0">
@@ -395,7 +395,7 @@
       </aside>
 
       <!-- SAĞ ANA İÇERİK -->
-      <main class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+      <main id="mainScrollArea" class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
         
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-600 dark:text-amber-300 backdrop-blur-md">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -408,7 +408,7 @@
         <!-- MÜHENDİS/LİDER ANA EKRANI: sadece başlıklı kutucuklar; her biri kendi sayfasını açar -->
         <section id="leaderSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="order-2 xl:order-1 xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button type="button" id="leaderProjectsTile" data-notif-box="PROJECTS" onclick="openManagerProjectsPage()" class="hidden group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="relative h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i><span class="notif-box-dot hidden"></span></div>
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
@@ -439,8 +439,8 @@
               </button>
             </div>
 
-            <!-- SAĞ TARAF: hatırlatıcılar -->
-            <div class="space-y-4">
+            <!-- SAĞ TARAF: hatırlatıcılar (mobilde en üstte / admin-İK'de çalışan sayılarının hemen altında görünür) -->
+            <div class="order-1 xl:order-2 space-y-4">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
@@ -896,7 +896,7 @@
           </div>
 
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="order-2 xl:order-1 xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button type="button" data-notif-box="PROJECTS" onclick="openAdminProjectsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="relative h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i><span class="notif-box-dot hidden"></span></div>
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
@@ -931,8 +931,8 @@
               </button>
             </div>
 
-            <!-- SAĞ TARAF: hatırlatıcılar -->
-            <div class="space-y-4">
+            <!-- SAĞ TARAF: hatırlatıcılar (mobilde en üstte / admin-İK'de çalışan sayılarının hemen altında görünür) -->
+            <div class="order-1 xl:order-2 space-y-4">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
@@ -1210,7 +1210,7 @@
         <!-- MÜHENDİS ANA EKRANI: Lider/Müdür/Admin ile aynı düzende, sadece başlıklı kutucuklar -->
         <section id="engineerHomeSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="order-2 xl:order-1 xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button type="button" data-notif-box="PROJECTS" onclick="openEngineerProjectsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="relative h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i><span class="notif-box-dot hidden"></span></div>
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
@@ -1241,8 +1241,8 @@
               </button>
             </div>
 
-            <!-- SAĞ TARAF: hatırlatıcılar -->
-            <div class="space-y-4">
+            <!-- SAĞ TARAF: hatırlatıcılar (mobilde en üstte / admin-İK'de çalışan sayılarının hemen altında görünür) -->
+            <div class="order-1 xl:order-2 space-y-4">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
@@ -1392,7 +1392,7 @@
         <!-- TEKNİSYEN ANA EKRANI: Mühendis ile aynı düzende, kutucuklu ana ekran -->
         <section id="technicianHomeSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="order-2 xl:order-1 xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button type="button" data-notif-box="PROJECTS" onclick="openTechnicianProjectsPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="relative h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-diagram-project"></i><span class="notif-box-dot hidden"></span></div>
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Projeler</span>
@@ -1415,8 +1415,8 @@
               </button>
             </div>
 
-            <!-- SAĞ TARAF: hatırlatıcılar (Mühendis panelindeki ile aynı kurallar) -->
-            <div class="space-y-4">
+            <!-- SAĞ TARAF: hatırlatıcılar (Mühendis panelindeki ile aynı kurallar; mobilde en üstte görünür) -->
+            <div class="order-1 xl:order-2 space-y-4">
               <div class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-2xl p-4 shadow-sm">
                 <h4 class="font-bold text-sm text-slate-800 dark:text-slate-100 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-bell text-cyan-500"></i> Bu Haftaki Toplantılar
@@ -1445,7 +1445,7 @@
         <!-- STAJYER ANA EKRANI: kutucuklu ana ekran -->
         <section id="internHomeSection" class="hidden space-y-6">
           <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
-            <div class="xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="order-2 xl:order-1 xl:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <button type="button" onclick="openInternTeamPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-sitemap"></i></div>
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekip Yapılandırılması</span>
@@ -1460,8 +1460,8 @@
               </button>
             </div>
 
-            <!-- SAĞ TARAF: kendisine atanan görevlerden geciken/yaklaşan olanlar -->
-            <div class="bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-4 shadow-sm space-y-4">
+            <!-- SAĞ TARAF: kendisine atanan görevlerden geciken/yaklaşan olanlar (mobilde en üstte görünür) -->
+            <div class="order-1 xl:order-2 bg-white dark:bg-slate-800 border border-rose-200 dark:border-rose-900/40 rounded-2xl p-4 shadow-sm space-y-4">
               <div>
                 <h4 class="font-bold text-sm text-rose-600 dark:text-rose-400 flex items-center gap-2 mb-3">
                   <i class="fa-solid fa-triangle-exclamation"></i> Geciken Görevler
@@ -2095,12 +2095,21 @@
     // Bir alt sayfaya (Görevler, Projeler, Toplantı vb.) girmeden hemen önceki scroll konumu:
     // "geri" ile ana ekrana dönüldüğünde sitenin en başına değil, kaldığımız yere döneriz.
     let preNavScrollY = 0;
+
+    // Sol panel/ana ekran ayrı kaydırılabildiği için "en başa dön" artık window değil,
+    // #mainScrollArea (ana içerik alanı) üzerinde çalışır.
+    function scrollMainTo(top, smooth) {
+      const mainEl = document.getElementById('mainScrollArea');
+      if (!mainEl) return;
+      mainEl.scrollTo({ top, behavior: smooth ? 'smooth' : 'auto' });
+    }
     document.addEventListener('click', function(e) {
       const el = e.target.closest('[onclick]');
       if (!el) return;
       const handler = el.getAttribute('onclick') || '';
       if (/^open\w*Page\(/.test(handler)) {
-        preNavScrollY = window.scrollY;
+        const mainEl = document.getElementById('mainScrollArea');
+        preNavScrollY = mainEl ? mainEl.scrollTop : 0;
       }
     }, true);
 
@@ -4182,7 +4191,7 @@
       const adminSec = document.getElementById('adminPanelSection');
       if (adminSec) adminSec.classList.add('hidden');
       detailSec.classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollMainTo(0, true);
 
       // Yükleniyor durumları
       document.getElementById('pdName').innerText = 'Yükleniyor...';
@@ -4209,7 +4218,7 @@
       // returnTo parametresi): Ekip Gidişatı'ndan veya Admin/İK ana ekranındaki rol kutucuklarından.
       const returnSec = document.getElementById(personDetailReturnTo);
       if (returnSec) returnSec.classList.remove('hidden');
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollMainTo(0, true);
     }
 
     function renderPersonDetail(data) {
@@ -6399,14 +6408,14 @@
     async function closeLeaderSubPage() {
       if (typeof showDashboard === 'function') await showDashboard();
       // Ana ekrana dönünce sitenin en başına değil, alt sayfaya girmeden önceki konuma dön
-      requestAnimationFrame(() => window.scrollTo(0, preNavScrollY));
+      requestAnimationFrame(() => scrollMainTo(preNavScrollY, false));
     }
 
     // Sol üstteki logo/başlık alanına basınca: hangi sayfada olursa olsun, direkt kullanıcının
     // rolüne göre ana (kutucuklu) ekrana döner.
     async function goToHomePage() {
       if (typeof showDashboard === 'function') await showDashboard();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      scrollMainTo(0, true);
     }
 
     function openLeaderStatusPage() {
