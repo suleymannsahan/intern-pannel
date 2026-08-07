@@ -163,7 +163,7 @@
     <!-- Video üzerine hafif karartma katmanı (formların okunabilirliği için) -->
     <div class="absolute inset-0 z-0 bg-black/40 dark:bg-black/55"></div>
 
-    <div class="relative z-10 bg-transparent border-none rounded-2xl p-8 w-full max-w-md">
+    <div class="relative z-10 bg-transparent border-none rounded-2xl p-5 sm:p-8 w-full max-w-md">
       <div class="text-center mb-8 flex flex-col items-center">
         <img src="Y_logo.png" alt="Logo" class="h-20 w-auto mb-3 drop-shadow-[0_0_15px_rgba(6,182,212,0.25)]">
         <h1 class="text-2xl font-bold text-center text-white mb-6 drop-shadow-[0_2px_8px_rgba(0,0,0,0.7)]">
@@ -292,13 +292,15 @@
   <!-- ANA PANEL (DASHBOARD) -->
   <div id="dashboardContainer" class="hidden min-h-screen flex flex-col bg-slate-50 dark:bg-slate-950">
     <!-- HEADER -->
-    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-6 py-3.5 flex items-center justify-between gap-3 z-20 backdrop-blur-xl sticky top-0 shadow-md">
+    <header class="bg-white/90 dark:bg-slate-900/90 border-b border-slate-200 dark:border-slate-800 px-3 sm:px-6 py-3.5 flex items-center justify-between gap-2 sm:gap-3 z-20 backdrop-blur-xl sticky top-0 shadow-md">
       <div class="flex items-center gap-3 shrink-0">
         <button onclick="toggleSidebar()" class="text-slate-700 dark:text-slate-300 hover:text-black dark:hover:text-white p-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700/60 transition-all">
           <i class="fa-solid fa-bars text-lg"></i>
         </button>
-        <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
-        <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
+        <button type="button" onclick="goToHomePage()" class="flex items-center gap-3 hover:opacity-80 transition-opacity" title="Ana Sayfa">
+          <img src="Y_logo.png" alt="Logo" class="h-8 w-auto object-contain drop-shadow">
+          <span class="font-bold text-base sm:text-lg tracking-tight text-slate-900 dark:text-slate-100 hidden sm:inline">Görevlendirme ve Takip Paneli</span>
+        </button>
       </div>
 
       <!-- ORTA MENÜ: Görevler / Yeni Kayıt Onayı / Kullanıcı Yönetimi -->
@@ -327,8 +329,8 @@
         </button>
       </nav>
 
-      <div class="flex items-center gap-3 shrink-0">
-        <div class="text-right">
+      <div class="flex items-center gap-2 sm:gap-3 shrink-0">
+        <div class="text-right hidden sm:block">
           <div id="userInfoName" class="font-bold text-sm text-slate-900 dark:text-slate-100"></div>
           <div id="userInfoRole" class="text-[11px] font-medium text-cyan-600 dark:text-cyan-400"></div>
         </div>
@@ -339,7 +341,7 @@
             <span id="notifBellCount" class="hidden absolute -top-1 -right-1 bg-rose-500 text-white text-[10px] font-bold rounded-full h-4 w-4 flex items-center justify-center">0</span>
           </button>
 
-          <div id="notificationsPanel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-50 backdrop-blur-xl">
+          <div id="notificationsPanel" class="hidden absolute right-0 mt-2 w-80 sm:w-96 max-w-[90vw] bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl p-3 z-50 backdrop-blur-xl">
             <div class="flex items-center justify-between px-1 pb-2 mb-1.5 border-b border-slate-100 dark:border-slate-800">
               <span class="font-bold text-sm text-slate-900 dark:text-slate-100 flex items-center gap-2"><i class="fa-solid fa-bell text-cyan-500"></i> Bildirimler</span>
               <button type="button" onclick="closeNotificationsPanel()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark"></i></button>
@@ -372,8 +374,12 @@
     </header>
 
     <div class="flex-1 flex relative overflow-hidden">
-      <!-- SOL SIDEBAR -->
-      <aside id="leftSidebar" class="w-80 bg-white/90 dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
+      <!-- MOBİLDE SIDEBAR AÇIKKEN ARKAYI KARARTAN OVERLAY: tıklanınca sidebar kapanır -->
+      <div id="sidebarOverlay" onclick="toggleSidebar()" class="hidden md:hidden fixed inset-0 bg-slate-950/50 z-30"></div>
+
+      <!-- SOL SIDEBAR: mobilde (md altı) sabit konumlu, ekranın soluna kayan bir çekmece; masaüstünde
+           (md ve üstü) normal akışta, mevcut margin-collapse yöntemiyle açılıp kapanabilen panel. -->
+      <aside id="leftSidebar" class="fixed md:static inset-y-0 left-0 z-40 md:z-auto w-80 max-w-[85vw] md:max-w-none -translate-x-full md:translate-x-0 bg-white dark:bg-slate-900 md:bg-white/90 md:dark:bg-slate-900/90 border-r border-slate-200 dark:border-slate-800 p-5 space-y-4 overflow-y-auto transition-all duration-300 ease-in-out shrink-0 backdrop-blur-md">
         <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-800 pb-3">
           <h3 class="font-bold text-xs uppercase tracking-wider text-cyan-600 dark:text-cyan-400 flex items-center gap-2">
             <i class="fa-solid fa-users-gear"></i> Ekip Rehberi
@@ -389,7 +395,7 @@
       </aside>
 
       <!-- SAĞ ANA İÇERİK -->
-      <main class="flex-1 p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
+      <main class="flex-1 p-3 sm:p-6 max-w-7xl w-full mx-auto space-y-6 overflow-y-auto bg-slate-50 dark:bg-slate-950">
         
         <div id="dailyWarningBanner" class="hidden bg-amber-500/10 border border-amber-500/30 rounded-2xl p-4 flex items-center gap-4 text-amber-600 dark:text-amber-300 backdrop-blur-md">
           <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
@@ -416,8 +422,8 @@
                 <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Yeni Görev Atama</span>
               </button>
               <button type="button" onclick="openLeaderProgressPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
-                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-chart-line"></i></div>
-                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekip Gidişatı</span>
+                <div class="h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-sitemap"></i></div>
+                <span class="font-bold text-sm text-slate-900 dark:text-slate-100">Ekiplerin Yapılandırılması</span>
               </button>
               <button type="button" data-notif-box="TASKS" onclick="openLeaderTasksPage()" class="group bg-white/80 dark:bg-slate-900/80 border border-slate-200 dark:border-slate-800 rounded-2xl p-6 shadow-xl backdrop-blur-md flex flex-col items-center justify-center gap-3 text-center hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-2xl hover:-translate-y-0.5 transition-all">
                 <div class="relative h-12 w-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center text-xl group-hover:bg-cyan-500 group-hover:text-white transition-all"><i class="fa-solid fa-list-check"></i><span class="notif-box-dot hidden"></span></div>
@@ -1726,7 +1732,7 @@
         </div>
         <div id="ppAddForm" class="hidden pt-3 border-t border-slate-200 dark:border-slate-800 space-y-2">
           <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300">Yeni İlerleme Ekle</h4>
-          <div class="grid grid-cols-3 gap-2">
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input type="date" id="ppDate" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
             <input type="number" id="ppPlanned" min="0" max="100" placeholder="Planlanan %" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
             <input type="number" id="ppActual" min="0" max="100" placeholder="Gerçekleşen %" class="bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-xs focus:outline-none focus:border-cyan-500">
@@ -1749,7 +1755,7 @@
                 <button onclick="closePersonProgressModal()" class="text-slate-400 hover:text-slate-900 dark:hover:text-white p-2 rounded-xl hover:bg-slate-100 dark:hover:bg-slate-800 transition-all"><i class="fa-solid fa-xmark text-lg"></i></button>
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div class="bg-amber-500/10 border border-amber-500/30 rounded-xl p-4">
                   <div class="text-xs text-amber-600 dark:text-amber-400">Üstünde Bulunan (Aktif) Görev</div>
                   <div id="personActiveTaskCount" class="text-2xl font-bold text-amber-600 dark:text-amber-400">0</div>
@@ -1826,17 +1832,45 @@
     <div class="bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-800 rounded-2xl p-6 w-full max-w-md space-y-4 shadow-2xl max-h-[90vh] overflow-y-auto">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-400"><i class="fa-solid fa-user-pen me-2"></i>Profil Bilgilerimi Düzenle</h3>
       <form onsubmit="handleSaveProfile(event)" class="space-y-3">
+        <div id="editProfileReadonlyInfo" class="text-[11px] text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 rounded-xl px-3 py-2">
+          <i class="fa-solid fa-circle-info me-1"></i> <span id="editProfileReadonlyText"></span>
+        </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Ad Soyad</label>
           <input type="text" id="editProfileName" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Kullanıcı Adı</label>
+          <input type="text" id="editProfileUsername" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
           <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">E-Posta</label>
           <input type="email" id="editProfileEmail" required class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
         </div>
         <div>
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Telefon</label>
+          <input type="tel" id="editProfilePhone" placeholder="05XX XXX XX XX" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+        <div>
           <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Yeni Şifre (Değiştirmek istemiyorsanız boş bırakın)</label>
           <input type="password" id="editProfilePassword" placeholder="Yeni şifre" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+        </div>
+
+        <!-- Alt Alan: sadece kullanıcının biriminde alt alan tanımlıysa görünür -->
+        <div id="editProfileSubareaWrap" class="hidden">
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Alt Alan</label>
+          <select id="editProfileSubarea" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+            <option value="">-- Yok --</option>
+          </select>
+        </div>
+
+        <!-- Ekip Lideri Türü: sadece Ekip Lideri rolünde görünür -->
+        <div id="editProfileLeaderTypeWrap" class="hidden">
+          <label class="block text-xs font-semibold mb-1 text-slate-700 dark:text-slate-300">Ekip Lideri Türü</label>
+          <select id="editProfileLeaderType" class="w-full bg-slate-100 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl px-3 py-2 text-sm">
+            <option value="TEST_EKIP_LIDERI">Test Ekip Lideri</option>
+            <option value="GOMULU_EKIP_LIDERI">Gömülü Ekip Lideri</option>
+          </select>
         </div>
 
         <div id="editProfileInternFields" class="hidden space-y-3 p-3 bg-slate-100 dark:bg-slate-950 rounded-xl border border-slate-200 dark:border-slate-800">
@@ -2559,7 +2593,15 @@
 
     function toggleSidebar() {
       const sidebar = document.getElementById('leftSidebar');
-      sidebar.classList.toggle('-ml-80');
+      const overlay = document.getElementById('sidebarOverlay');
+      // Mobilde (md altı) sidebar sabit konumlu bir çekmece olarak kayar ve arkasında
+      // karartma belirir; masaüstünde ise mevcut margin-collapse yöntemiyle genişleyip daralır.
+      if (window.matchMedia('(min-width: 768px)').matches) {
+        sidebar.classList.toggle('-ml-80');
+      } else {
+        sidebar.classList.toggle('-translate-x-full');
+        if (overlay) overlay.classList.toggle('hidden');
+      }
     }
 
     // Modal Açma/Kapatma ve Güncelleme İşlemleri
@@ -2623,8 +2665,17 @@
     async function handleSaveProfile(e) {
       e.preventDefault();
       const name = document.getElementById('editProfileName').value;
+      const username = document.getElementById('editProfileUsername').value;
       const email = document.getElementById('editProfileEmail').value;
+      const phone = document.getElementById('editProfilePhone').value;
       const password = document.getElementById('editProfilePassword').value;
+
+      const subareaWrap = document.getElementById('editProfileSubareaWrap');
+      const subArea = (subareaWrap && !subareaWrap.classList.contains('hidden'))
+        ? document.getElementById('editProfileSubarea').value : (currentUser.sub_area || null);
+
+      const leaderType = currentUser.role === 'LEADER'
+        ? document.getElementById('editProfileLeaderType').value : null;
 
       let startDate = null, endDate = null, engineerId = null;
       if (currentUser.role === 'INTERN') {
@@ -2637,14 +2688,18 @@
         const res = await fetch(`${API_BASE_URL}/api/users/profile`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ userId: currentUser.id, name, email, password, startDate, endDate, engineerId })
+          body: JSON.stringify({ userId: currentUser.id, name, username, email, phone, password, subArea, leaderType, startDate, endDate, engineerId })
         });
 
         const data = await res.json();
         if (res.ok) {
           alert("Profil bilgileriniz başarıyla güncellendi!");
           currentUser.name = name;
+          currentUser.username = username;
           currentUser.email = email;
+          currentUser.phone = phone;
+          currentUser.sub_area = subArea || null;
+          if (currentUser.role === 'LEADER') currentUser.leaderType = leaderType;
           if (currentUser.role === 'INTERN') {
             currentUser.intern_start_date = startDate;
             currentUser.intern_end_date = endDate;
@@ -2652,6 +2707,9 @@
           }
           localStorage.setItem('currentUser', JSON.stringify(currentUser));
           closeEditProfileModal();
+          // Değişen bilgiler (isim, kullanıcı adı, alt alan vb.) sitenin her yerinde (kişi listeleri,
+          // ekip yapılandırması, görev kartları...) kullanılan usersList'i de tazeleriz.
+          await loadUsers();
           await showDashboard();
         } else {
           alert("Hata: " + data.error);
@@ -5022,12 +5080,15 @@
       const wrap = document.getElementById('userBreakdownBars');
       if (!wrap) return;
 
-      const roleOrder = ['MANAGER', 'LEADER', 'ENGINEER', 'TECHNICIAN', 'INTERN', 'HR', 'ADMIN'];
       const roleColors = {
         MANAGER: 'bg-indigo-500', LEADER: 'bg-cyan-500', ENGINEER: 'bg-emerald-500',
         TECHNICIAN: 'bg-slate-500', INTERN: 'bg-amber-500', HR: 'bg-fuchsia-500', ADMIN: 'bg-rose-500'
       };
       const total = Object.values(lastRoleCounts).reduce((sum, n) => sum + Number(n || 0), 0) || 1;
+      // Yüzdesi en yüksek olandan en düşük olana sırala
+      const roleOrder = ['MANAGER', 'LEADER', 'ENGINEER', 'TECHNICIAN', 'INTERN', 'HR', 'ADMIN']
+        .slice()
+        .sort((a, b) => Number(lastRoleCounts[b] || 0) - Number(lastRoleCounts[a] || 0));
 
       wrap.innerHTML = roleOrder.map(role => {
         const count = Number(lastRoleCounts[role] || 0);
@@ -5057,8 +5118,41 @@
       }
     }
 
+    // Üst kutucuklardan (Toplam Kullanıcı + rol kutucukları) açık olan tüm panelleri kapatır.
+    // exceptPanelId verilirse o panel dokunulmadan bırakılır — böylece aynı anda yalnızca tek
+    // panel açık kalır, biri açılınca diğeri alt alta değil, onun yerine açılır.
+    function closeAllStatPanels(exceptPanelId) {
+      if (exceptPanelId !== 'userBreakdownPanel') {
+        const panel = document.getElementById('userBreakdownPanel');
+        const chevron = document.getElementById('userBreakdownChevron');
+        const card = document.getElementById('statTotalUsersCard');
+        if (panel && panel.classList.contains('is-open')) {
+          panel.style.maxHeight = '0px';
+          panel.style.marginTop = '0px';
+          panel.classList.remove('is-open');
+          if (chevron) chevron.classList.remove('rotate-180');
+          if (card) card.classList.remove('ring-2', 'ring-cyan-500');
+        }
+      }
+      ['HR', 'ENGINEER', 'TECHNICIAN', 'INTERN'].forEach(role => {
+        const panelId = `roleUserPanel_${role}`;
+        if (panelId === exceptPanelId) return;
+        const panel = document.getElementById(panelId);
+        const chevron = document.getElementById(`roleUserChevron_${role}`);
+        const card = document.getElementById(`statRoleCard_${role}`);
+        const ringCls = ROLE_CARD_RING[role] || 'ring-cyan-500';
+        if (panel && panel.classList.contains('is-open')) {
+          panel.style.maxHeight = '0px';
+          panel.style.marginTop = '0px';
+          panel.classList.remove('is-open');
+          if (chevron) chevron.classList.remove('rotate-180');
+          if (card) card.classList.remove('ring-2', ringCls);
+        }
+      });
+    }
+
     // "Toplam Kullanıcı" kutucuğunu açar/kapatır: yüksekliği animasyonlu genişler, ok simgesi döner,
-    // ilk açılışta içerideki dağılım barları da büyüyerek belirir.
+    // ilk açılışta içerideki dağılım barları da büyüyerek belirir. Açılırken diğer açık panel varsa kapanır.
     function toggleUserBreakdownPanel() {
       const panel = document.getElementById('userBreakdownPanel');
       const chevron = document.getElementById('userBreakdownChevron');
@@ -5066,21 +5160,16 @@
       if (!panel) return;
 
       const isOpen = panel.classList.contains('is-open');
-      if (isOpen) {
-        panel.style.maxHeight = '0px';
-        panel.style.marginTop = '0px';
-        panel.classList.remove('is-open');
-        if (chevron) chevron.classList.remove('rotate-180');
-        if (card) card.classList.remove('ring-2', 'ring-cyan-500');
-      } else {
-        renderUserBreakdownBars(true);
-        panel.classList.add('is-open');
-        panel.style.marginTop = '1.5rem';
-        // scrollHeight'a küçük bir pay ekleriz ki barların altındaki gölge/kenarlık kesilmesin
-        panel.style.maxHeight = (panel.scrollHeight + 8) + 'px';
-        if (chevron) chevron.classList.add('rotate-180');
-        if (card) card.classList.add('ring-2', 'ring-cyan-500');
-      }
+      closeAllStatPanels(isOpen ? null : 'userBreakdownPanel');
+      if (isOpen) return;
+
+      renderUserBreakdownBars(true);
+      panel.classList.add('is-open');
+      panel.style.marginTop = '1.5rem';
+      // scrollHeight'a küçük bir pay ekleriz ki barların altındaki gölge/kenarlık kesilmesin
+      panel.style.maxHeight = (panel.scrollHeight + 8) + 'px';
+      if (chevron) chevron.classList.add('rotate-180');
+      if (card) card.classList.add('ring-2', 'ring-cyan-500');
     }
 
     // İK/Mühendis/Teknisyen/Stajyer kutucukları: "Toplam Kullanıcı" ile aynı animasyonlu açılış,
@@ -5111,6 +5200,8 @@
       `).join('');
     }
 
+    // Bir rol kutucuğunu açar/kapatır (Toplam Kullanıcı ile aynı animasyon). Açılırken diğer
+    // açık panel (Toplam Kullanıcı dahil) varsa önce o kapanır, alt alta açılma olmaz.
     function toggleRoleUserPanel(role) {
       const panel = document.getElementById(`roleUserPanel_${role}`);
       const chevron = document.getElementById(`roleUserChevron_${role}`);
@@ -5119,20 +5210,15 @@
 
       const ringCls = ROLE_CARD_RING[role] || 'ring-cyan-500';
       const isOpen = panel.classList.contains('is-open');
-      if (isOpen) {
-        panel.style.maxHeight = '0px';
-        panel.style.marginTop = '0px';
-        panel.classList.remove('is-open');
-        if (chevron) chevron.classList.remove('rotate-180');
-        if (card) card.classList.remove('ring-2', ringCls);
-      } else {
-        renderRoleUserGrid(role);
-        panel.classList.add('is-open');
-        panel.style.marginTop = '1.5rem';
-        panel.style.maxHeight = (panel.scrollHeight + 8) + 'px';
-        if (chevron) chevron.classList.add('rotate-180');
-        if (card) card.classList.add('ring-2', ringCls);
-      }
+      closeAllStatPanels(isOpen ? null : `roleUserPanel_${role}`);
+      if (isOpen) return;
+
+      renderRoleUserGrid(role);
+      panel.classList.add('is-open');
+      panel.style.marginTop = '1.5rem';
+      panel.style.maxHeight = (panel.scrollHeight + 8) + 'px';
+      if (chevron) chevron.classList.add('rotate-180');
+      if (card) card.classList.add('ring-2', ringCls);
     }
 
     const ROLE_ORDER = ['MANAGER', 'MUDUR', 'LEADER', 'EKIP_LIDERI', 'ENGINEER', 'MUHENDIS', 'TECHNICIAN', 'TEKNISYEN', 'INTERN', 'STAJYER', 'HR', 'ADMIN'];
@@ -5520,10 +5606,43 @@
 
     function openEditProfileModal() {
       if (!currentUser) return;
-      
+
       document.getElementById('editProfileName').value = currentUser.name || '';
+      document.getElementById('editProfileUsername').value = currentUser.username || '';
       document.getElementById('editProfileEmail').value = currentUser.email || '';
+      document.getElementById('editProfilePhone').value = currentUser.phone || '';
       document.getElementById('editProfilePassword').value = '';
+
+      // Birim ve Rol burada değiştirilemez (yetki/görünürlük sistemini etkiler) — bilgi amaçlı gösterilir
+      const readonlyText = document.getElementById('editProfileReadonlyText');
+      if (readonlyText) {
+        const deptLabel = currentUser.department ? (DEPARTMENT_LABELS[currentUser.department] || currentUser.department) : '—';
+        const roleLabel = ROLE_LABELS_TR[currentUser.role] || currentUser.role;
+        readonlyText.innerText = `Birim: ${deptLabel} · Rol: ${roleLabel} (değiştirmek için yöneticinize başvurun)`;
+      }
+
+      // Alt Alan: yalnızca kullanıcının biriminde tanımlı alt alan varsa gösterilir
+      const subareaWrap = document.getElementById('editProfileSubareaWrap');
+      const subareaSelect = document.getElementById('editProfileSubarea');
+      const subs = getSubareasForDept(currentUser.department);
+      if (subs.length > 0) {
+        if (subareaWrap) subareaWrap.classList.remove('hidden');
+        if (subareaSelect) {
+          subareaSelect.innerHTML = `<option value="">-- Yok --</option>` +
+            subs.map(s => `<option value="${escapeHtmlProj(s.label)}" ${s.label === currentUser.sub_area ? 'selected' : ''}>${escapeHtmlProj(s.label)}</option>`).join('');
+        }
+      } else {
+        if (subareaWrap) subareaWrap.classList.add('hidden');
+      }
+
+      // Ekip Lideri Türü: yalnızca Ekip Lideri rolünde gösterilir
+      const leaderTypeWrap = document.getElementById('editProfileLeaderTypeWrap');
+      if (currentUser.role === 'LEADER') {
+        if (leaderTypeWrap) leaderTypeWrap.classList.remove('hidden');
+        document.getElementById('editProfileLeaderType').value = currentUser.leaderType || currentUser.leader_sub_type || 'TEST_EKIP_LIDERI';
+      } else {
+        if (leaderTypeWrap) leaderTypeWrap.classList.add('hidden');
+      }
 
       const internFields = document.getElementById('editProfileInternFields');
       if (currentUser.role === 'INTERN') {
@@ -6281,6 +6400,13 @@
       if (typeof showDashboard === 'function') await showDashboard();
       // Ana ekrana dönünce sitenin en başına değil, alt sayfaya girmeden önceki konuma dön
       requestAnimationFrame(() => window.scrollTo(0, preNavScrollY));
+    }
+
+    // Sol üstteki logo/başlık alanına basınca: hangi sayfada olursa olsun, direkt kullanıcının
+    // rolüne göre ana (kutucuklu) ekrana döner.
+    async function goToHomePage() {
+      if (typeof showDashboard === 'function') await showDashboard();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     function openLeaderStatusPage() {
@@ -7403,6 +7529,9 @@
 
       return (tasksList || []).filter(t => {
         if (t.assigned_to == currentUser.id) return false; // kendi görevi değil
+        // Stajyerin kendine hatırlatma amaçlı eklediği görevler (oluşturan = atanan kişi) yalnızca
+        // kendi panelinde (Görevlerim) görünür; yöneticilerin "Görevler" (ekip) listesine sızmaz.
+        if (t.created_by && t.assignee_name && t.created_by === t.assignee_name) return false;
         if (isAdmin) return true;
         const arole = getAssigneeRole(t);
         if (!arole) return false;

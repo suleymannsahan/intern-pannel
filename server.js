@@ -799,22 +799,39 @@ app.put('/api/users/:id/engineer', async (req, res) => {
 
 app.put('/api/users/profile', async (req, res) => {
   try {
-    const { userId, name, email, password, startDate, endDate, engineerId } = req.body;
+    const { userId, name, email, password, phone, username, subArea, leaderType, startDate, endDate, engineerId } = req.body;
 
     if (!userId || !name || !email) {
       return res.status(400).json({ error: 'Zorunlu alanlar eksik!' });
     }
 
+    // Kullanıcı adı değiştiriliyorsa başka bir hesapla çakışmadığından emin ol
+    // (users.username üzerinde DB seviyesinde UNIQUE kısıtı yok, burada uygulama seviyesinde kontrol ediyoruz).
+    if (username && username.trim()) {
+      const dupRes = await db.execute({
+        sql: `SELECT id FROM users WHERE username = ? AND id != ?`,
+        args: [username.trim(), userId]
+      });
+      if (dupRes.rows.length > 0) {
+        return res.status(400).json({ error: 'Bu kullanıcı adı başka bir kullanıcı tarafından kullanılıyor!' });
+      }
+    }
+
+    const commonArgs = [
+      name, email, username || null, phone || null, subArea || null, leaderType || null,
+      startDate || null, endDate || null, engineerId || null
+    ];
+
     if (password && password.trim() !== '') {
       const hashedPassword = await bcrypt.hash(password, 10);
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ?, password = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ? WHERE id = ?`,
-        args: [name, email, hashedPassword, startDate || null, endDate || null, engineerId || null, userId]
+        sql: `UPDATE users SET name = ?, email = ?, username = ?, phone = ?, sub_area = ?, leader_sub_type = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ?, password = ? WHERE id = ?`,
+        args: [...commonArgs, hashedPassword, userId]
       });
     } else {
       await db.execute({
-        sql: `UPDATE users SET name = ?, email = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ? WHERE id = ?`,
-        args: [name, email, startDate || null, endDate || null, engineerId || null, userId]
+        sql: `UPDATE users SET name = ?, email = ?, username = ?, phone = ?, sub_area = ?, leader_sub_type = ?, intern_start_date = ?, intern_end_date = ?, engineer_id = ? WHERE id = ?`,
+        args: [...commonArgs, userId]
       });
     }
 
