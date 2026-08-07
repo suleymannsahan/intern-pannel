@@ -6480,12 +6480,27 @@
       }
     }
 
+    // Bir görevin iş planında geciken (gecikti) aşama olup olmadığını hesaplar.
+    // Kart içindeki "Geciken aşama var" uyarısıyla birebir aynı mantık (ipAsamaDurum).
+    function taskGecikmeVar(task) {
+      if (!task || !task.is_plani) return false;
+      // Onaylanmış/tamamlanmış görevlerde gecikme uyarısı gösterme
+      if (task.status === 'APPROVED' || task.status === 'COMPLETED') return false;
+      let plan;
+      try { plan = JSON.parse(task.is_plani); } catch (e) { return false; }
+      if (!plan || !Array.isArray(plan.adimlar)) return false;
+      return plan.adimlar.some((a, i) => ipAsamaDurum(a, i, plan.adimlar) === 'gecikti');
+    }
+
     function createTaskCard(task, isPast, isManager) {
       const taskLogs = dailyLogsList.filter(l => l.task_id === task.id);
+      const gecikmeVar = taskGecikmeVar(task);
       const card = document.createElement('button');
       card.type = 'button';
       card.id = 'task-' + task.id;
-      card.className = "text-left w-full bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-md backdrop-blur-sm hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg hover:-translate-y-0.5 transition-all";
+      card.className = gecikmeVar
+        ? "text-left w-full bg-rose-50/90 dark:bg-rose-950/30 border-2 border-rose-400 dark:border-rose-500/70 rounded-2xl p-4 shadow-md shadow-rose-500/10 backdrop-blur-sm hover:border-rose-500 dark:hover:border-rose-400 hover:shadow-lg hover:-translate-y-0.5 transition-all"
+        : "text-left w-full bg-white/80 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700/80 rounded-2xl p-4 shadow-md backdrop-blur-sm hover:border-cyan-500 dark:hover:border-cyan-500 hover:shadow-lg hover:-translate-y-0.5 transition-all";
       card.onclick = () => openTaskDetailModal(task.id, isManager);
 
       let statusBadge = `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-amber-500/10 text-amber-500 border border-amber-500/30">Devam Ediyor</span>`;
@@ -6496,11 +6511,15 @@
       const noteCount = taskLogs.length;
       const revCount = (task.revisions && task.revisions.length) || 0;
 
+      const gecikmeRozeti = gecikmeVar
+        ? `<span class="px-2 py-0.5 text-[11px] rounded-md font-bold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/40 animate-pulse whitespace-nowrap"><i class="fa-solid fa-triangle-exclamation me-1"></i>Gecikme</span>`
+        : '';
+
       // Kart sadece özet gösterir; detay için tıklanır (modal açılır)
       card.innerHTML = `
         <div class="flex justify-between items-start gap-2">
-          <h4 class="font-bold text-base text-cyan-600 dark:text-cyan-300 break-words min-w-0">${task.title}</h4>
-          ${statusBadge}
+          <h4 class="font-bold text-base ${gecikmeVar ? 'text-rose-600 dark:text-rose-400' : 'text-cyan-600 dark:text-cyan-300'} break-words min-w-0">${task.title}</h4>
+          <div class="flex items-center gap-1.5 flex-shrink-0 flex-wrap justify-end">${gecikmeRozeti}${statusBadge}</div>
         </div>
         <div class="mt-2 text-[11px] text-slate-500 dark:text-slate-400 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span><i class="fa-regular fa-user me-1"></i>${task.assignee_name || 'Bilinmiyor'}</span>
@@ -7469,7 +7488,7 @@
   </div>
 
   <!-- ===== İŞ PLANI TAM EKRAN MODAL ===== -->
-  <div id="ipTamEkranModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-2 sm:p-6">
+  <div id="ipTamEkranModal" class="hidden fixed inset-0 bg-black/70 backdrop-blur-sm z-[75] flex items-center justify-center p-2 sm:p-6">
     <div class="bg-white dark:bg-slate-800 rounded-2xl w-full h-full max-w-6xl border border-slate-200 dark:border-slate-700 shadow-2xl flex flex-col">
       <div class="flex items-center justify-between p-5 border-b border-slate-200 dark:border-slate-700 flex-shrink-0">
         <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-300 flex items-center gap-2"><i class="fa-solid fa-chart-gantt"></i> <span id="ipTamEkranBaslik">İş Planı</span></h3>
@@ -7504,7 +7523,7 @@
   </style>
 
   <!-- Plan Güncelle mini modalı -->
-  <div id="ipGuncelleModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
+  <div id="ipGuncelleModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl p-6">
       <h3 class="font-bold text-lg text-cyan-600 dark:text-cyan-300 mb-2 flex items-center gap-2"><i class="fa-solid fa-arrows-rotate"></i> Planı Güncelle</h3>
       <p class="text-xs text-slate-500 dark:text-slate-400 mb-4">Tamamlanan aşamalar korunur. Kalan aşamalar, son tamamlanan aşamanın bitişinden başlayarak yeni bitiş tarihine göre yeniden hesaplanır.</p>
@@ -7521,7 +7540,7 @@
   <div id="toastContainer" class="fixed bottom-24 right-4 z-[100] flex flex-col gap-3 items-end pointer-events-none max-w-[calc(100vw-2rem)]"></div>
 
   <!-- Aşama Bitir — gerçek tarih sorma modalı -->
-  <div id="asamaBitirModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[70] flex items-center justify-center p-4">
+  <div id="asamaBitirModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-[90] flex items-center justify-center p-4">
     <div class="bg-white dark:bg-slate-800 rounded-2xl w-full max-w-md border border-slate-200 dark:border-slate-700 shadow-2xl p-6">
       <h3 class="font-bold text-lg text-emerald-600 dark:text-emerald-300 mb-1 flex items-center gap-2"><i class="fa-solid fa-check-circle"></i> Aşamayı Bitir</h3>
       <p class="text-xs text-slate-500 dark:text-slate-400 mb-4"><b id="asamaBitirAsamaAd" class="text-slate-700 dark:text-slate-200"></b> aşamasını gerçekte hangi tarihlerde tamamladınız? Girdiğiniz tarihler <b>görevi verenin onayına</b> gönderilir; onaylanınca aşama "bitti" olarak kaydedilir.</p>
@@ -7976,6 +7995,53 @@
     // Sağ alt pop-up: aynı geciken aşama için oturum boyunca tekrar pop-up çıkmasını önler
     const toastlananGecikmeler = new Set();
 
+    // --- Sağ alt pop-up: "aynı gün bir daha gösterme" (kullanıcı hesabına bağlı, sunucuda kalıcı) ---
+    // Kullanıcı pop-up'a (göreve git) veya X'e tıkladığında ilgili anahtar o GÜN için susturulur.
+    // Susturma sunucuda tutulur; aynı gün hangi cihaz/tarayıcıdan girilirse girilsin tekrar çıkmaz.
+    // Ertesi gün (tarih değişince) kayıtlar geçersiz olur; gecikme sürüyorsa pop-up yeniden çıkar.
+    // Not: Bu yalnızca sağ alt pop-up'ı susturur; zil ('bildirimPanel') aşama çözülene kadar dolu kalır.
+    function _bugunStr() { return new Date().toISOString().split('T')[0]; }
+
+    // Gün bazlı önbellek: aynı yenileme turunda (gecikme + onay) tek istek yeter.
+    let _toastGorulduCache = { tarih: null, set: new Set(), yukleniyor: null };
+
+    async function toastGorulenleriYukle() {
+      const bugun = _bugunStr();
+      const uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : null;
+      if (!uid) return new Set();
+      // Bugün için önbellek hazırsa onu kullan
+      if (_toastGorulduCache.tarih === bugun && _toastGorulduCache.set) return _toastGorulduCache.set;
+      // Eşzamanlı çağrılar aynı isteği paylaşsın
+      if (_toastGorulduCache.yukleniyor) return _toastGorulduCache.yukleniyor;
+      _toastGorulduCache.yukleniyor = (async () => {
+        try {
+          const res = await fetch(`${API_BASE_URL}/api/toast-gorulenler?userId=${uid}`);
+          const data = await res.json();
+          const set = new Set(Array.isArray(data) ? data : []);
+          _toastGorulduCache = { tarih: bugun, set, yukleniyor: null };
+          return set;
+        } catch (e) {
+          _toastGorulduCache.yukleniyor = null; // hata: susturmayı uygulama, pop-up çıksın (fail-open)
+          return new Set();
+        }
+      })();
+      return _toastGorulduCache.yukleniyor;
+    }
+
+    function toastGorulduIsaretle(anahtar) {
+      if (!anahtar) return;
+      const uid = (typeof currentUser !== 'undefined' && currentUser && currentUser.id) ? currentUser.id : null;
+      if (!uid) return;
+      // Önbelleği hemen güncelle ki bu oturumda tekrar çıkmasın (sunucu yanıtını beklemeden)
+      if (_toastGorulduCache.tarih === _bugunStr() && _toastGorulduCache.set) _toastGorulduCache.set.add(anahtar);
+      // Sunucuya kalıcı yaz (bekletmeden)
+      fetch(`${API_BASE_URL}/api/toast-gorulenler`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: uid, anahtar })
+      }).catch(() => {});
+    }
+
     // Gecikme kontrolü + bildirimleri yükle (panel/dashboard açılınca ve periyodik çağrılır)
     async function bildirimleriYenile() {
       if (!currentUser) return;
@@ -7993,8 +8059,9 @@
 
     // Henüz pop-up olarak gösterilmemiş geciken aşamalar için sağ alt pop-up aç.
     // Kaynak: tasksList + ipAsamaDurum (kartlardaki "Geciken aşama var" ile birebir aynı).
-    function gecikenGorevleriToastla() {
+    async function gecikenGorevleriToastla() {
       if (!Array.isArray(tasksList)) return;
+      const gorulduSet = await toastGorulenleriYukle(); // bugün zaten susturulmuş anahtarlar (sunucudan)
       let sira = 0;
       let bulunanGecikme = 0;
       for (const task of tasksList) {
@@ -8006,12 +8073,14 @@
           if (ipAsamaDurum(plan.adimlar[i], i, plan.adimlar) !== 'gecikti') continue;
           bulunanGecikme++;
           const anahtar = `${task.id}:${i}`;
+          const kaliciAnahtar = `gecikme:${anahtar}`;
           if (toastlananGecikmeler.has(anahtar)) continue; // bu oturumda zaten gösterildi
+          if (gorulduSet.has(kaliciAnahtar)) { toastlananGecikmeler.add(anahtar); continue; } // bugün zaten görüldü
           toastlananGecikmeler.add(anahtar);
           const asamaAd = plan.adimlar[i].ad || `Aşama ${i + 1}`;
           const mesaj = `"${task.title}" görevinde "${asamaAd}" aşaması gecikti.`;
           const tId = task.id;
-          setTimeout(() => bildirimToastGoster(mesaj, () => goreveGit(tId)), (sira++) * 400);
+          setTimeout(() => bildirimToastGoster(mesaj, () => goreveGit(tId), undefined, kaliciAnahtar), (sira++) * 400);
         }
       }
       console.log(`[Bildirim] Pop-up kontrolü: ${bulunanGecikme} geciken aşama bulundu (yeni gösterilen: ${sira}).`);
@@ -8019,8 +8088,9 @@
 
     // Görevi verene: onay bekleyen aşamalar için sağ alt pop-up
     const toastlananOnaylar = new Set();
-    function onayBekleyenleriToastla() {
+    async function onayBekleyenleriToastla() {
       if (!Array.isArray(tasksList) || typeof currentUser === 'undefined' || !currentUser) return;
+      const gorulduSet = await toastGorulenleriYukle(); // bugün zaten susturulmuş anahtarlar (sunucudan)
       let sira = 0;
       for (const task of tasksList) {
         if (!task.is_plani) continue;
@@ -8033,36 +8103,66 @@
         for (let i = 0; i < plan.adimlar.length; i++) {
           if (plan.adimlar[i].durum !== 'onay_bekliyor') continue;
           const anahtar = `${task.id}:${i}`;
+          const kaliciAnahtar = `onay:${anahtar}`;
           if (toastlananOnaylar.has(anahtar)) continue;
+          if (gorulduSet.has(kaliciAnahtar)) { toastlananOnaylar.add(anahtar); continue; } // bugün zaten görüldü
           toastlananOnaylar.add(anahtar);
           const asamaAd = plan.adimlar[i].ad || `Aşama ${i + 1}`;
           const talep = plan.adimlar[i].talepEden ? ` (${plan.adimlar[i].talepEden})` : '';
           const mesaj = `"${task.title}" görevinde "${asamaAd}" aşaması tamamlandı${talep}, onayını bekliyor.`;
           const tId = task.id;
-          setTimeout(() => bildirimToastGoster(mesaj, () => { goreveGit(tId); isPlaniTamEkranAc(tId); }, 'onay'), (sira++) * 400);
+          setTimeout(() => bildirimToastGoster(mesaj, () => { goreveGit(tId); isPlaniTamEkranAc(tId); }, 'onay', kaliciAnahtar), (sira++) * 400);
         }
       }
     }
 
     // İlgili görev kartına kaydır ve kısa süre vurgula.
     // Aynı id birden fazla bölümde olabildiği için GÖRÜNÜR olan kartı seçeriz.
-    function goreveGit(taskId) {
+    // Görünen (offsetParent !== null) task-<id> kartını döndürür, yoksa null.
+    function _gorunurGorevKarti(taskId) {
       const adaylar = document.querySelectorAll(`[id="task-${taskId}"]`);
       let kart = null;
-      adaylar.forEach(el => { if (el.offsetParent !== null) kart = el; }); // ekranda görünen kart
-      if (!kart && adaylar.length) kart = adaylar[0];                       // görünür yoksa ilkini al
-      if (kart) {
-        kart.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        kart.classList.add('ring-2', 'ring-cyan-500', 'ring-offset-2', 'ring-offset-slate-950');
-        setTimeout(() => kart.classList.remove('ring-2', 'ring-cyan-500', 'ring-offset-2', 'ring-offset-slate-950'), 2500);
-      } else {
-        console.warn('[Bildirim] Görev kartı bulunamadı: task-' + taskId);
+      adaylar.forEach(el => { if (el.offsetParent !== null) kart = el; });
+      return kart;
+    }
+
+    function _gorevKartiniVurgula(kart) {
+      kart.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      kart.classList.add('ring-2', 'ring-cyan-500', 'ring-offset-2', 'ring-offset-slate-950');
+      setTimeout(() => kart.classList.remove('ring-2', 'ring-cyan-500', 'ring-offset-2', 'ring-offset-slate-950'), 2500);
+    }
+
+    function goreveGit(taskId) {
+      // 1) Kart zaten ekranda görünüyorsa doğrudan ona git.
+      const mevcut = _gorunurGorevKarti(taskId);
+      if (mevcut) { _gorevKartiniVurgula(mevcut); return; }
+
+      // 2) Görünmüyorsa: görev listesini içeren "Görevler" penceresini aç,
+      //    sonra kartın DOM'a gelmesini kısa aralıklarla bekleyip vurgula.
+      const dropdown = document.getElementById('tasksDropdown');
+      if (dropdown && dropdown.classList.contains('hidden') && typeof toggleTasksDropdown === 'function') {
+        toggleTasksDropdown(); // loadTasks() + renderTaskList() bunu tetikler
       }
+
+      // Kart render olana kadar (loadTasks async) belirli sayıda dene.
+      let deneme = 0;
+      const maxDeneme = 40; // ~4 sn (40 x 100ms)
+      const bekle = setInterval(() => {
+        deneme++;
+        const kart = _gorunurGorevKarti(taskId);
+        if (kart) {
+          clearInterval(bekle);
+          _gorevKartiniVurgula(kart);
+        } else if (deneme >= maxDeneme) {
+          clearInterval(bekle);
+          console.warn('[Bildirim] Görev kartı bulunamadı: task-' + taskId);
+        }
+      }, 100);
     }
 
     // Sağ alt köşeden kayarak açılan tek bir pop-up (toast) oluşturur.
     // Otomatik kapanmaz: kullanıcı tıklayana (göreve git) veya X'e basana kadar durur.
-    function bildirimToastGoster(mesaj, onTikla, tip) {
+    function bildirimToastGoster(mesaj, onTikla, tip, gorulduKey) {
       const container = document.getElementById('toastContainer');
       if (!container) return;
 
@@ -8096,6 +8196,8 @@
       requestAnimationFrame(() => el.classList.remove('translate-x-[120%]', 'opacity-0'));
 
       const kapat = () => {
+        // Kullanıcı etkileşince (X ya da göreve git) bu anahtar o gün için susturulur.
+        if (gorulduKey) toastGorulduIsaretle(gorulduKey);
         el.classList.add('translate-x-[120%]', 'opacity-0');
         setTimeout(() => el.remove(), 300);
       };

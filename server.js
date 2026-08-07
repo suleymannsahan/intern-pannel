@@ -389,6 +389,20 @@ async function initDb() {
         created_at TEXT NOT NULL
       )
     `);
+
+    // Sağ alt pop-up "bugün görüldü" kayıtları (cihazdan bağımsız susturma).
+    // Kullanıcı bir pop-up'a (göreve git) ya da X'e tıkladığında ilgili anahtar
+    // o gün için buraya yazılır; aynı gün başka cihazdan girse de tekrar çıkmaz.
+    await db.execute(`
+      CREATE TABLE IF NOT EXISTS toast_gorulenler (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id INTEGER NOT NULL,
+        anahtar TEXT NOT NULL,
+        tarih TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        UNIQUE(user_id, anahtar, tarih)
+      )
+    `);
     // ===== AI ŞEMASI SONU =====
 
     console.log('Turso bulut veritabanı tabloları hazır.');
@@ -2765,34 +2779,64 @@ app.post('/api/bildirimler/gecikme-kontrol', async (req, res) => {
       try { plan = JSON.parse(task.is_plani); } catch (e) { continue; }
       if (!plan.adimlar) continue;
 
-      // created_by kimin? (görevi veren) — users tablosundan id bul
-      // created_by isim/eposta olabilir; güvenli olması için önce eşleşmeyi deneriz
-      let hedefUserId = null;
-      const uRes = await db.execute({
-        sql: `SELECT id FROM users WHERE name = ? OR email = ? LIMIT 1`,
-        args: [task.created_by, task.created_by]
-      });
-      if (uRes.rows[0]) hedefUserId = uRes.rows[0].id;
-      if (!hedefUserId) continue; // görevi vereni bulamadıysak atla
+      // --- Bildirim alacak kişiler (toast'ı gören kitleyle aynı olsun) ---
+      // 1) görevi veren (created_by)  2) göreve atanan (assigned_to)
+      // 3) atananın birimindeki gözetmenler (stajyer olmayanlar)
+      const aliciIdSet = new Set();
 
-      // Aşamaları kontrol et: bitmemiş + planlanan bitişi geçmiş = gecikmiş
+      // 1) Görevi veren — created_by isim ya da e-posta olabilir
+      if (task.created_by) {
+        const uRes = await db.execute({
+          sql: `SELECT id FROM users WHERE name = ? OR email = ? LIMIT 1`,
+          args: [task.created_by, task.created_by]
+        });
+        if (uRes.rows[0]) aliciIdSet.add(uRes.rows[0].id);
+      }
+
+      // 2) Göreve atanan (users.id) + atananın birimini öğren
+      let atananBirim = null;
+      if (task.assigned_to) {
+        const aRes = await db.execute({
+          sql: `SELECT id, department FROM users WHERE id = ? LIMIT 1`,
+          args: [task.assigned_to]
+        });
+        if (aRes.rows[0]) { aliciIdSet.add(aRes.rows[0].id); atananBirim = aRes.rows[0].department; }
+      }
+
+      // 3) Atananın birimindeki gözetmenler (Mühendis/Lider/Müdür vb.) — panelde bu görevi görüp toast alanlar
+      if (atananBirim) {
+        const gozRes = await db.execute({
+          sql: `SELECT id FROM users WHERE department = ? AND role != 'INTERN'`,
+          args: [atananBirim]
+        });
+        for (const r of gozRes.rows) aliciIdSet.add(r.id);
+      }
+
+      if (aliciIdSet.size === 0) continue; // kimseyi çözemediysek atla
+
+      // Aşamaları kontrol et — frontend 'gecikti' kuralıyla birebir hizalı:
+      // önceki aşama bitmiş olmalı, aşama onay beklemiyor olmalı ve planlanan bitiş geçmiş olmalı.
       for (let i = 0; i < plan.adimlar.length; i++) {
         const a = plan.adimlar[i];
-        if (a.durum === 'bitti') continue;
+        if (a.durum === 'bitti' || a.durum === 'onay_bekliyor') continue;
+        const oncekiBitti = (i === 0) || (plan.adimlar[i-1] && plan.adimlar[i-1].durum === 'bitti');
+        if (!oncekiBitti) continue; // henüz sırası gelmemiş: toast da 'beklemede' gösterir
         const bit = parseTR(a.bitis);
         if (bugun > bit) {
-          // Bu aşama için daha önce bildirim üretilmiş mi?
-          const varMi = await db.execute({
-            sql: `SELECT id FROM notifications WHERE task_id = ? AND tip = ? LIMIT 1`,
-            args: [task.id, `gecikme_${i}`]
-          });
-          if (varMi.rows.length === 0) {
-            const gecenGun = Math.round((bugun - bit) / (1000*60*60*24));
-            await db.execute({
-              sql: `INSERT INTO notifications (user_id, task_id, tip, mesaj, okundu, created_at) VALUES (?, ?, ?, ?, 0, ?)`,
-              args: [hedefUserId, task.id, `gecikme_${i}`,
-                     `"${task.title}" görevinde "${a.ad}" aşaması gecikti (${gecenGun} gündür bekliyor).`, bugunStr]
+          const gecenGun = Math.round((bugun - bit) / (1000*60*60*24));
+          const mesaj = `"${task.title}" görevinde "${a.ad}" aşaması gecikti (${gecenGun} gündür bekliyor).`;
+          for (const uid of aliciIdSet) {
+            // Kullanıcı bazlı tekilleştirme: her alıcı için bu aşamada bir kez üret
+            const varMi = await db.execute({
+              sql: `SELECT id FROM notifications WHERE task_id = ? AND tip = ? AND user_id = ? LIMIT 1`,
+              args: [task.id, `gecikme_${i}`, uid]
             });
+            if (varMi.rows.length === 0) {
+              await db.execute({
+                sql: `INSERT INTO notifications (user_id, task_id, tip, mesaj, okundu, created_at) VALUES (?, ?, ?, ?, 0, ?)`,
+                args: [uid, task.id, `gecikme_${i}`, mesaj, bugunStr]
+              });
+            }
           }
         }
       }
@@ -2828,6 +2872,42 @@ app.post('/api/bildirimler/okundu', async (req, res) => {
       await db.execute({ sql: `UPDATE notifications SET okundu = 1 WHERE id = ?`, args: [bildirimId] });
     }
     res.json({ message: 'Okundu işaretlendi.' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sağ alt pop-up: kullanıcının BUGÜN susturduğu (görülmüş) anahtarları getir.
+// Anahtar biçimi ör: "gecikme:12:0", "onay:12:0".
+app.get('/api/toast-gorulenler', async (req, res) => {
+  try {
+    const { userId } = req.query;
+    if (!userId) return res.json([]);
+    const bugun = new Date().toISOString().split('T')[0];
+    // Dünden kalan kayıtları temizle ki tablo şişmesin (ertesi gün pop-up tekrar çıkabilsin).
+    await db.execute({ sql: `DELETE FROM toast_gorulenler WHERE tarih < ?`, args: [bugun] });
+    const result = await db.execute({
+      sql: `SELECT anahtar FROM toast_gorulenler WHERE user_id = ? AND tarih = ?`,
+      args: [userId, bugun]
+    });
+    res.json(result.rows.map(r => r.anahtar));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Sağ alt pop-up: bir anahtarı BUGÜN için susturulmuş olarak işaretle (idempotent).
+app.post('/api/toast-gorulenler', async (req, res) => {
+  try {
+    const { userId, anahtar } = req.body;
+    if (!userId || !anahtar) return res.status(400).json({ error: 'userId ve anahtar gerekli.' });
+    const bugun = new Date().toISOString().split('T')[0];
+    const simdi = new Date().toISOString();
+    await db.execute({
+      sql: `INSERT OR IGNORE INTO toast_gorulenler (user_id, anahtar, tarih, created_at) VALUES (?, ?, ?, ?)`,
+      args: [userId, anahtar, bugun, simdi]
+    });
+    res.json({ message: 'İşaretlendi.' });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
